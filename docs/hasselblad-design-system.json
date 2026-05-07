@@ -1,0 +1,487 @@
+{
+  "$schema": "https://design-system-schema.org/v1",
+  "meta": {
+    "brand": "Hasselblad",
+    "source": "https://www.hasselblad.com/",
+    "extracted": "2026-05-07",
+    "description": "Hasselblad 공식 웹사이트 기반 디자인 시스템 — 포인트 컬러 Kodak Yellow(#E8B800) 적용"
+  },
+
+  "colors": {
+    "primitive": {
+      "black":      "#000000",
+      "white":      "#ffffff",
+      "yellow":     "#E8B800",
+      "yellowDark": "#BF9700",
+      "gray": {
+        "100": "#e6e6e6",
+        "200": "#d8d8d8",
+        "300": "#666666",
+        "400": "#535759",
+        "500": "#3b3e40",
+        "600": "#262b2e",
+        "700": "#6c7073"
+      },
+      "blue": {
+        "default": "#0070d5",
+        "hover":   "#2490e3",
+        "active":  "#0058b0"
+      },
+      "red": {
+        "error": "#cb2d2d"
+      }
+    },
+    "semantic": {
+      "background": {
+        "primary":      "#000000",
+        "secondary":    "#ffffff",
+        "nav":          "#000000",
+        "navBar":       "#262b2e",
+        "navBarSticky": "#000000",
+        "overlay":      "rgba(0,0,0,0.5)",
+        "footer":       "#000000"
+      },
+      "text": {
+        "primary":   "#000000",
+        "onDark":    "#ffffff",
+        "muted":     "rgba(0,0,0,0.65)",
+        "bold":      "rgba(0,0,0,0.85)",
+        "disabled":  "rgba(0,0,0,0.25)",
+        "accent":    "#E8B800",
+        "link":      "#0070d5",
+        "linkHover": "#2490e3",
+        "linkActive":"#0058b0"
+      },
+      "border": {
+        "default":     "rgba(0,0,0,0.15)",
+        "divider":     "#d8d8d8",
+        "onDark":      "rgba(255,255,255,1)",
+        "input":       "#000000",
+        "inputOnDark": "#ffffff"
+      },
+      "button": {
+        "primaryGradientStart":       "#535759",
+        "primaryGradientEnd":         "#3b3e40",
+        "primaryGradientHoverStart":  "#6c7073",
+        "primaryGradientHoverEnd":    "#535759",
+        "primaryGradientActiveStart": "#3b3e40",
+        "primaryGradientActiveEnd":   "#535759",
+        "primaryText":   "#ffffff",
+        "ghostBg":       "rgba(0,0,0,0.04)",
+        "ghostBgHover":  "rgba(0,0,0,0.06)",
+        "ghostBgActive": "rgba(0,0,0,0.15)",
+        "ghostBorder":   "rgba(0,0,0,0.04)"
+      },
+      "state": {
+        "error":    "#cb2d2d",
+        "disabled": "rgba(0,0,0,0.25)"
+      }
+    },
+    "cssVars": {
+      "--accent":                      "#E8B800",
+      "--accent-dark":                 "#BF9700",
+      "--accent-text-on":              "#000000",
+      "--button-bg":                   "rgba(0,0,0,0.04)",
+      "--button-bg-hover":             "rgba(0,0,0,0.06)",
+      "--button-bg-active":            "rgba(0,0,0,0.15)",
+      "--button-border":               "rgba(0,0,0,0.04)",
+      "--button-border-size":          "0px",
+      "--button-primary-bg":           "linear-gradient(#535759,#3b3e40)",
+      "--button-primary-bg-hover":     "linear-gradient(#6c7073,#535759)",
+      "--button-primary-bg-active":    "linear-gradient(#3b3e40,#535759)",
+      "--button-primary-text-color":   "#fff",
+      "--button-primary-color-1":      "#535759",
+      "--button-primary-color-2":      "#3b3e40",
+      "--button-primary-color-3":      "#6c7073",
+      "--black-bg":                    "rgba(0,0,0,0.04)",
+      "--black-bg-hover":              "rgba(0,0,0,0.06)",
+      "--black-border":                "rgba(0,0,0,0.15)",
+      "--black-disabled":              "rgba(0,0,0,0.25)",
+      "--text-default":                "rgba(0,0,0,0.65)",
+      "--text-blod":                   "rgba(0,0,0,0.85)",
+      "--white":                       "#fff",
+      "--dialog-bg":                   "#fff",
+      "--dialog-border":               "rgba(0,0,0,0.09)",
+      "--link-color":                  "#0070d5",
+      "--link-color-hover":            "#2490e3",
+      "--link-color-active":           "#0058b0",
+      "--close-button-text":           "#000",
+      "--close-button-bg":             "transparent",
+      "--close-button-bg-hover":       "rgba(0,0,0,0.04)"
+    }
+  },
+
+  "typography": {
+    "fontFamilies": {
+      "body":    "outfit, \"Helvetica Neue\", Arial, Verdana, sans-serif",
+      "heading": "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+      "ui":      "\"Tw Cen\", Arial, sans-serif"
+    },
+    "fontFiles": {
+      "outfit": "/assets/fonts/outfit/Outfit-Light.ttf",
+      "twCen": [
+        "/assets/fonts/6630f703-611d-4ffb-9b65-f9ba9ab9bc0a.woff2",
+        "/assets/fonts/1518dba1-9cea-4db9-9dd8-e6512b98bf36.woff",
+        "/assets/fonts/2e7bc211-9848-41db-bd5d-6fbdaa7f3861.ttf"
+      ]
+    },
+    "fontSizes": {
+      "xs":  "12px",
+      "sm":  "13px",
+      "base":"14px",
+      "lg":  "15px",
+      "xl":  "18px",
+      "2xl": "20px",
+      "3xl": "30px"
+    },
+    "fontWeights": {
+      "regular": "400",
+      "normal":  "400"
+    },
+    "lineHeights": {
+      "body":    "2em",
+      "heading": "calc(1em + 4px)",
+      "tight":   "1em",
+      "normal":  "1.5"
+    },
+    "letterSpacing": {
+      "body":    "0.04em",
+      "heading": "0.167em",
+      "button":  "1.8px",
+      "nav":     "0.167em",
+      "cta":     "0.15em"
+    },
+    "textTransform": {
+      "heading": "uppercase",
+      "button":  "uppercase",
+      "nav":     "uppercase",
+      "label":   "uppercase"
+    },
+    "scale": {
+      "body": {
+        "fontFamily":    "outfit, \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "fontSize":      "14px",
+        "fontWeight":    "400",
+        "lineHeight":    "2em",
+        "letterSpacing": "0.04em",
+        "color":         "#000000"
+      },
+      "h1": {
+        "fontFamily":    "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "fontSize":      "30px",
+        "fontWeight":    "400",
+        "lineHeight":    "calc(1em + 4px)",
+        "letterSpacing": "0.167em",
+        "textTransform": "uppercase",
+        "margin":        "2em 0 0.5em",
+        "strongColor":   "#E8B800"
+      },
+      "h2": {
+        "fontFamily":    "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "fontSize":      "20px",
+        "fontWeight":    "400",
+        "lineHeight":    "calc(1em + 4px)",
+        "letterSpacing": "0.167em",
+        "textTransform": "uppercase",
+        "margin":        "2em 0 0.5em",
+        "strongColor":   "#E8B800"
+      },
+      "h3": {
+        "fontFamily":    "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "fontSize":      "18px",
+        "fontWeight":    "400",
+        "lineHeight":    "calc(1em + 4px)",
+        "letterSpacing": "0.167em",
+        "textTransform": "uppercase",
+        "margin":        "2em 0 0.5em",
+        "strongColor":   "#E8B800"
+      },
+      "h4": {
+        "fontFamily":    "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "fontSize":      "15px",
+        "fontWeight":    "400",
+        "lineHeight":    "calc(1em + 4px)",
+        "letterSpacing": "0.167em",
+        "textTransform": "uppercase",
+        "margin":        "2em 0 0.5em",
+        "strongColor":   "#E8B800"
+      },
+      "label": {
+        "fontFamily":    "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "fontSize":      "12px",
+        "textTransform": "uppercase",
+        "margin":        "20px auto auto"
+      }
+    }
+  },
+
+  "spacing": {
+    "0":  "0px",
+    "1":  "4px",
+    "2":  "8px",
+    "3":  "10px",
+    "4":  "12px",
+    "5":  "14px",
+    "6":  "16px",
+    "7":  "20px",
+    "8":  "24px",
+    "9":  "32px",
+    "10": "48px",
+    "11": "64px"
+  },
+
+  "layout": {
+    "maxWidth":         "1280px",
+    "containerPadding": "0 20px",
+    "navHeight":        "60px",
+    "breakpoints": {
+      "mobile":   "max-width: 767px",
+      "tablet":   "min-width: 768px",
+      "tabletMd": "min-width: 768px) and (max-width: 959px",
+      "desktop":  "min-width: 1200px"
+    }
+  },
+
+  "components": {
+    "button": {
+      "description": "CTA 버튼. border-radius 없음, uppercase, 넓은 letter-spacing이 특징",
+      "variants": {
+        "ghost": {
+          "description": "투명 배경 + 외곽선 버튼 (주로 어두운 배경 위에서 사용)",
+          "backgroundColor": "transparent",
+          "color":           "#ffffff",
+          "border":          "1px solid #ffffff",
+          "borderRadius":    "0px",
+          "padding":         "6px 12px",
+          "fontSize":        "12px",
+          "fontFamily":      "\"Tw Cen\", Arial, sans-serif",
+          "fontWeight":      "400",
+          "letterSpacing":   "1.8px",
+          "textTransform":   "uppercase",
+          "transition":      "0.5s"
+        },
+        "ghostDark": {
+          "description": "밝은 배경 위 어두운 ghost 버튼",
+          "backgroundColor": "transparent",
+          "color":           "#000000",
+          "border":          "1px solid #000000",
+          "borderRadius":    "0px",
+          "padding":         "6px 12px",
+          "fontSize":        "12px",
+          "fontFamily":      "\"Tw Cen\", Arial, sans-serif",
+          "fontWeight":      "400",
+          "letterSpacing":   "1.8px",
+          "textTransform":   "uppercase"
+        },
+        "primary": {
+          "description": "채워진 그라디언트 버튼 (gray)",
+          "background":    "linear-gradient(#535759, #3b3e40)",
+          "color":         "#ffffff",
+          "border":        "none",
+          "borderRadius":  "0px",
+          "padding":       "8px 10px",
+          "fontSize":      "13px",
+          "fontFamily":    "\"Tw Cen\", Arial, sans-serif",
+          "fontWeight":    "400",
+          "letterSpacing": "0.15em",
+          "textTransform": "uppercase",
+          "states": {
+            "hover":  { "background": "linear-gradient(#6c7073, #535759)" },
+            "active": { "background": "linear-gradient(#3b3e40, #535759)" }
+          }
+        },
+        "accent": {
+          "description": "포인트 컬러 버튼 — 노란 배경 + 검정 텍스트. 대비 9.8:1(WCAG AAA). 가장 강조가 필요한 CTA에 사용.",
+          "backgroundColor": "#E8B800",
+          "color":           "#000000",
+          "border":          "none",
+          "borderRadius":    "0px",
+          "padding":         "8px 10px",
+          "fontSize":        "13px",
+          "fontFamily":      "\"Tw Cen\", Arial, sans-serif",
+          "fontWeight":      "400",
+          "letterSpacing":   "0.15em",
+          "textTransform":   "uppercase",
+          "states": {
+            "hover": {
+              "backgroundColor": "#BF9700",
+              "color":           "#000000"
+            }
+          }
+        },
+        "store": {
+          "description": "Store CTA – 흰 배경, 검정 텍스트, hover 시 Kodak Yellow",
+          "backgroundColor": "#ffffff",
+          "color":           "#000000",
+          "border":          "none",
+          "borderRadius":    "0px",
+          "padding":         "8px 10px",
+          "fontSize":        "13px",
+          "fontFamily":      "\"Tw Cen\", Arial, sans-serif",
+          "letterSpacing":   "0.15em",
+          "textTransform":   "uppercase",
+          "states": {
+            "hover": {
+              "backgroundColor": "#E8B800",
+              "color":           "#000000"
+            }
+          }
+        }
+      }
+    },
+
+    "nav": {
+      "height":          "60px",
+      "backgroundColor": "#000000",
+      "color":           "#ffffff",
+      "fontFamily":      "\"Tw Cen\", Arial, sans-serif",
+      "fontSize":        "12px",
+      "fontWeight":      "400",
+      "letterSpacing":   "0.167em",
+      "textTransform":   "uppercase",
+      "logo": {
+        "width":  "180px",
+        "height": "20px",
+        "src":    "/assets/icons/logo-white.svg"
+      },
+      "states": {
+        "transparent": {
+          "description": "hero 위에서 nav가 투명해짐 (absolute)",
+          "backgroundColor": "transparent",
+          "position":        "absolute"
+        },
+        "sticky": {
+          "backgroundColor": "#000000"
+        }
+      },
+      "activeLink": {
+        "color": "#E8B800"
+      }
+    },
+
+    "input": {
+      "description": "하단 border만 있는 미니멀 인풋",
+      "borderTop":       "none",
+      "borderLeft":      "none",
+      "borderRight":     "none",
+      "borderBottom":    "1px solid #000000",
+      "borderRadius":    "0px",
+      "padding":         "5px 2px",
+      "height":          "31px",
+      "lineHeight":      "1em",
+      "fontSize":        "14px",
+      "fontFamily":      "outfit, \"Helvetica Neue\", Arial, Verdana, sans-serif",
+      "letterSpacing":   "0.04em",
+      "backgroundColor": "transparent",
+      "color":           "#000000",
+      "variants": {
+        "onDark": {
+          "borderBottom": "1px solid #ffffff",
+          "color":        "#ffffff"
+        },
+        "disabled": {
+          "color":           "#e6e6e6",
+          "backgroundColor": "#ffffff",
+          "borderBottom":    "1px solid #e6e6e6"
+        },
+        "error": {
+          "backgroundImage":    "url(/assets/icons/warning.svg)",
+          "backgroundPosition": "98% center",
+          "backgroundSize":     "18px"
+        }
+      }
+    },
+
+    "select": {
+      "height":        "31px",
+      "lineHeight":    "1.6em",
+      "borderBottom":  "1px solid #000000",
+      "borderTop":     "none",
+      "borderLeft":    "none",
+      "borderRight":   "none",
+      "color":         "#000000",
+      "letterSpacing": "0.04em",
+      "variants": {
+        "onDark": {
+          "color":           "#ffffff",
+          "borderBottom":    "1px solid #ffffff",
+          "backgroundColor": "#000000"
+        }
+      }
+    },
+
+    "checkbox": {
+      "size":       "12px",
+      "border":     "1px solid #666666",
+      "background": "transparent",
+      "states": {
+        "checked": {
+          "borderBottom": "3px solid #E8B800",
+          "borderRight":  "3px solid #E8B800"
+        }
+      }
+    },
+
+    "footer": {
+      "backgroundColor": "#000000",
+      "color":           "#ffffff",
+      "fontSize":        "14px",
+      "paddingBottom":   "64px",
+      "newsletter": {
+        "inputBorderBottom": "1px solid #ffffff",
+        "inputColor":        "#ffffff",
+        "selectColor":       "#ffffff",
+        "selectBg":          "#000000"
+      }
+    },
+
+    "dialog": {
+      "backgroundColor": "#ffffff",
+      "border":          "rgba(0,0,0,0.09)",
+      "header": {
+        "borderBottom":       "1px solid #dee2e6",
+        "padding":            "1.5rem",
+        "titleFontFamily":    "\"Tw Cen\", \"Helvetica Neue\", Arial, Verdana, sans-serif",
+        "titleLetterSpacing": "2px",
+        "titleTextTransform": "uppercase"
+      }
+    },
+
+    "overlay": {
+      "backgroundColor": "rgba(0,0,0,0.5)"
+    }
+  },
+
+  "effects": {
+    "transitions": {
+      "fast":    "0.1s",
+      "default": "0.3s",
+      "slow":    "0.5s"
+    },
+    "fontSmoothing": "-webkit-font-smoothing: antialiased"
+  },
+
+  "icons": {
+    "menu":      "/assets/icons/menu-white.svg",
+    "close":     "/assets/icons/close-icon-white.svg",
+    "menuArrow": "/assets/icons/menu-arrow-down.svg",
+    "loading":   "/assets/icons/loading-indicator.svg",
+    "warning":   "/assets/icons/warning.svg",
+    "logoWhite": "/assets/icons/logo-white.svg"
+  },
+
+  "notes": {
+    "designPrinciples": [
+      "극도로 미니멀한 흑백 팔레트 — 포인트 컬러는 Kodak Yellow(#E8B800) 하나",
+      "border-radius 없음 (0px) — 모든 버튼·인풋이 각진 직사각형",
+      "버튼은 항상 uppercase + wide letter-spacing",
+      "폰트 2종 구분: body는 Outfit(sans-serif 모던), heading/UI는 Tw Cen(정통 카메라 브랜드 느낌)",
+      "인풋은 하단 border만 표시하는 미니멀 스타일",
+      "hover 인터랙션: 배경색이 Kodak Yellow(#E8B800)로 전환. 노란 배경 위 텍스트는 반드시 검정(#000).",
+      "Hero 섹션에서 nav는 transparent absolute — 스크롤 후 black sticky로 전환"
+    ],
+    "accentUsage": "#E8B800(Kodak Yellow)는 hover 상태, active 링크, 체크박스 체크마크, h1~h5 > strong 텍스트, accent 버튼에 사용. 노란 배경 위 텍스트는 항상 #000000(대비 9.8:1, WCAG AAA). hover/active 다크 톤은 #BF9700.",
+    "accentColorRationale": "채도 높은 크롬 옐로우 계열로 흑백 팔레트 대비 최적. 기존 오렌지보다 더 중성적이고 현대적인 인상. 어두운 배경 기준 대비 9.8:1로 WCAG AAA 충족.",
+    "changedFrom": "#d95e00 (Hasselblad 오리지널 오렌지)"
+  }
+}
