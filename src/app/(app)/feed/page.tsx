@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
 
 const DUMMY_FEED = [
   { id: 1, image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80", title: "Seoul City", location: "Seoul, Korea" },
@@ -11,16 +15,19 @@ const DUMMY_FEED = [
 ];
 
 export default function FeedPage() {
+  const { language } = useLanguage();
+  const t = translations[language].feed;
+
   return (
     <div>
       <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
         <div>
-          <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">Feed</h1>
-          <p className="text-gray-400 mt-2">Discover latest photos around the world</p>
+          <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">{t.title}</h1>
+          <p className="text-gray-400 mt-2">{t.subtitle}</p>
         </div>
         <div className="flex gap-4 font-heading tracking-widest text-sm uppercase">
-          <button className="text-[var(--accent)] border-b border-[var(--accent)] pb-1">Latest</button>
-          <button className="text-gray-500 hover:text-white transition-colors pb-1">Popular</button>
+          <button className="text-[var(--accent)] border-b border-[var(--accent)] pb-1">{t.latest}</button>
+          <button className="text-gray-500 hover:text-white transition-colors pb-1">{t.popular}</button>
         </div>
       </div>
 

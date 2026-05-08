@@ -64,8 +64,26 @@
   --color-gray-600: var(--gray-600);
   --color-gray-700: var(--gray-700);
 
-  --font-sans: 'Pretendard Variable', 'Outfit', "Helvetica Neue", Arial, sans-serif;
-  --font-heading: 'Pretendard Variable', "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  /* Font mapping variables */
+  --font-sans: var(--font-sans-dynamic);
+  --font-heading: var(--font-heading-dynamic);
+}
+
+@layer base {
+  :root {
+    --font-sans-dynamic: var(--font-outfit), 'Pretendard Variable', "Helvetica Neue", Arial, sans-serif;
+    --font-heading-dynamic: var(--font-outfit), "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  }
+  
+  :root[lang="en"] {
+    --font-sans-dynamic: var(--font-outfit), 'Pretendard Variable', "Helvetica Neue", Arial, sans-serif;
+    --font-heading-dynamic: var(--font-outfit), "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  :root[lang="ko"] {
+    --font-sans-dynamic: 'Pretendard Variable', var(--font-outfit), "Helvetica Neue", Arial, sans-serif;
+    --font-heading-dynamic: 'Pretendard Variable', "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  }
 }
 
 body {

@@ -1,9 +1,17 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Menu, Search } from "lucide-react";
 import { cn } from "../ui/Button";
+import { LanguageSwitcher } from "../ui/LanguageSwitcher";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
 
 export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "sticky" }) {
+  const { language } = useLanguage();
+  const t = translations[language].nav;
+
   return (
     <nav
       className={cn(
@@ -23,16 +31,17 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
 
       {/* Center Nav Links */}
       <div className="hidden md:flex items-center gap-8">
-        <Link href="/feed" className="hover:text-[var(--accent)] transition-colors">Feed</Link>
-        <Link href="/upload" className="hover:text-[var(--accent)] transition-colors">Upload</Link>
+        <Link href="/feed" className="hover:text-[var(--accent)] transition-colors">{t.feed}</Link>
+        <Link href="/upload" className="hover:text-[var(--accent)] transition-colors">{t.upload}</Link>
       </div>
 
       {/* Right User Actions */}
       <div className="flex items-center gap-6">
+        <LanguageSwitcher />
         <button className="hover:text-[var(--accent)] transition-colors">
           <Search className="w-5 h-5" />
         </button>
-        <Link href="/login" className="hover:text-[var(--accent)] transition-colors">Login</Link>
+        <Link href="/login" className="hover:text-[var(--accent)] transition-colors">{t.login}</Link>
       </div>
     </nav>
   );
