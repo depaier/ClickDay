@@ -164,7 +164,12 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     });
 
     mapRef.current = map;
-    return () => map.remove();
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // posts 데이터 업데이트 시 소스 갱신
@@ -173,6 +178,7 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     if (!map) return;
 
     const updateData = () => {
+      if (!mapRef.current) return;
       const source = map.getSource("posts") as maplibregl.GeoJSONSource;
       if (source) {
         source.setData({
@@ -189,7 +195,7 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     if (map.isStyleLoaded()) {
       updateData();
     } else {
-      map.once("styledata", updateData);
+      map.once("load", updateData);
     }
   }, [posts]);
 

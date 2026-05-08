@@ -8,6 +8,7 @@ import { translations } from "@/constants/translations";
 import exifr from "exifr";
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface ExifData {
   make?: string;
@@ -28,8 +29,16 @@ export default function UploadPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [locationName, setLocationName] = useState("");
+  const [description, setDescription] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const handleFile = useCallback(async (selectedFile: File) => {
     if (!selectedFile.type.startsWith("image/")) return;
@@ -39,13 +48,11 @@ export default function UploadPage() {
     setPreviewUrl(url);
 
     try {
-      // EXIF 데이터 추출 (GPS 옵션 명시)
       const data = await exifr.parse(selectedFile, {
         gps: true,
         tiff: true,
       });
-      console.log("Parsed EXIF:", data);
-
+      
       if (data) {
         setExif({
           make: data.Make,
@@ -90,10 +97,64 @@ export default function UploadPage() {
     setPreviewUrl(null);
     setExif(null);
     setLocation(null);
+    setLocationName("");
+    setDescription("");
+  };
+
+  const handleSubmit = async () => {
+    if (!file || !location) {
+      alert("Please select a photo and location.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // 1. 이미지 업로드
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('clickday')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. 공개 URL 가져오기
+      const { data: { publicUrl } } = supabase.storage
+        .from('clickday')
+        .getPublicUrl(uploadData.path);
+
+      // 3. DB 데이터 삽입
+      const { error: dbError } = await supabase.from('posts').insert({
+        latitude: location.lat,
+        longitude: location.lng,
+        location_name: locationName || exif?.model || "Unknown Location",
+        image_url: publicUrl,
+        camera_model: exif?.model,
+        aperture: exif?.fNumber,
+        shutter_speed: exif?.exposureTime,
+        iso: exif?.iso,
+        description: description,
+      });
+
+      if (dbError) throw dbError;
+
+      alert("Post uploaded successfully!");
+      resetUpload();
+    } catch (error: any) {
+      console.error("Upload error details:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        ...error
+      });
+      alert(error.message || "Failed to upload post.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto pb-20">
+    <div className="max-w-3xl mx-auto pb-32">
       <h1 className="text-3xl font-heading tracking-[0.2em] uppercase mb-2">{t.title}</h1>
       <p className="text-gray-400 mb-8 border-b border-white/10 pb-6">{t.subtitle}</p>
 
@@ -131,6 +192,30 @@ export default function UploadPage() {
           </button>
         </div>
       )}
+
+      {/* Input Fields */}
+      <div className={`space-y-6 mb-12 ${!file ? "opacity-50 pointer-events-none" : ""}`}>
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Location Name</label>
+          <input 
+            type="text" 
+            value={locationName}
+            onChange={(e) => setLocationName(e.target.value)}
+            placeholder="e.g. Seoul City Hall"
+            className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Description</label>
+          <textarea 
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Share your story..."
+            className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors resize-none"
+          />
+        </div>
+      </div>
 
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -183,6 +268,20 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+
+      {/* Submit Button */}
+      {file && (
+        <div className="mt-12 flex justify-center">
+          <Button 
+            className="px-12 py-6 text-lg font-heading tracking-[0.2em] uppercase"
+            onClick={handleSubmit}
+            disabled={isUploading || !location}
+          >
+            {isUploading ? "Uploading..." : "Publish Post"}
+          </Button>
+        </div>
+      )}
+
       {isModalOpen && (
         <LocationPickerModal 
           onClose={() => setIsModalOpen(false)}
