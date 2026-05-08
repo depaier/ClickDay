@@ -5,11 +5,12 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 interface Post {
-  id: number;
+  id: string | number;
   lat: number;
   lng: number;
   title: string;
   image_url?: string;
+  [key: string]: any;
 }
 
 interface GlobeMapProps {
@@ -161,18 +162,26 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
   // posts 데이터 업데이트 시 소스 갱신
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
-    const source = map.getSource("posts") as maplibregl.GeoJSONSource;
-    if (source) {
-      source.setData({
-        type: "FeatureCollection",
-        features: posts.map((post) => ({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [post.lng, post.lat] },
-          properties: { ...post },
-        })),
-      });
+    const updateData = () => {
+      const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData({
+          type: "FeatureCollection",
+          features: posts.map((post) => ({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [post.lng, post.lat] },
+            properties: { ...post },
+          })),
+        });
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateData();
+    } else {
+      map.once("styledata", updateData);
     }
   }, [posts]);
 
