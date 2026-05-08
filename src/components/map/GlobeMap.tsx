@@ -5,11 +5,12 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 interface Post {
-  id: number;
+  id: string | number;
   lat: number;
   lng: number;
   title: string;
   image_url?: string;
+  [key: string]: any;
 }
 
 interface GlobeMapProps {
@@ -56,6 +57,14 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     map.on("load", () => {
       map.setProjection({ type: "globe" });
       addCustomIcon(map);
+
+      // 스타일 내 누락된 이미지로 인한 콘솔 오류 방지
+      map.on("styleimagemissing", (e) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
+      });
 
       // GeoJSON 소스 추가 (클러스터링 활성화)
       map.addSource("posts", {
@@ -155,24 +164,38 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     });
 
     mapRef.current = map;
-    return () => map.remove();
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // posts 데이터 업데이트 시 소스 갱신
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
-    const source = map.getSource("posts") as maplibregl.GeoJSONSource;
-    if (source) {
-      source.setData({
-        type: "FeatureCollection",
-        features: posts.map((post) => ({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [post.lng, post.lat] },
-          properties: { ...post },
-        })),
-      });
+    const updateData = () => {
+      if (!mapRef.current) return;
+      const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+      if (source) {
+        source.setData({
+          type: "FeatureCollection",
+          features: posts.map((post) => ({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [post.lng, post.lat] },
+            properties: { ...post },
+          })),
+        });
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateData();
+    } else {
+      map.once("load", updateData);
     }
   }, [posts]);
 
