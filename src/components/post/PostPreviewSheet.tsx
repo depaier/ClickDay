@@ -3,12 +3,22 @@ import { X, MapPin, Camera, Aperture, Clock, Hash } from "lucide-react";
 import { Button } from "../ui/Button";
 
 interface Post {
-  id: number;
+  id: string | number;
   lat: number;
   lng: number;
   title: string;
   image_url?: string;
-  [key: string]: unknown;
+  camera_model?: string;
+  aperture?: string | number;
+  shutter_speed?: string;
+  iso?: number;
+  description?: string;
+  profiles?: {
+    username: string;
+    avatar_url: string;
+  };
+  tags?: string[];
+  [key: string]: any;
 }
 
 interface PostPreviewSheetProps {
@@ -34,7 +44,7 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={post.image_url || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32"} 
-            alt="Photography" 
+            alt={post.title || "Photography"} 
             className="w-full h-full object-cover"
           />
         </div>
@@ -43,17 +53,17 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
           {/* Photographer info */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" />
+              <img src={post.profiles?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} alt="avatar" />
             </div>
             <div>
-              <p className="font-bold text-sm">@photographer_kr</p>
-              <p className="text-xs text-gray-500">2 hours ago</p>
+              <p className="font-bold text-sm">@{post.profiles?.username || "photographer_kr"}</p>
+              <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
             </div>
           </div>
 
           {/* Description */}
           <p className="text-sm text-gray-700 leading-relaxed">
-            Beautiful sunset shot from the Seoul tower. Used my favorite Fujifilm recipe for these colors.
+            {post.description || "Beautiful sunset shot from the Seoul tower. Used my favorite Fujifilm recipe for these colors."}
           </p>
 
           {/* EXIF Data */}
@@ -63,53 +73,51 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2 text-gray-700">
                 <Camera className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span>Sony α7 IV</span>
+                <span>{post.camera_model || "Unknown Camera"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <Aperture className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span>FE 24-70mm GM</span>
+                <span>{post.focal_length ? `${post.focal_length}mm` : "Unknown Lens"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <div className="font-bold font-mono text-[10px] w-4 text-center text-[var(--accent-dark)]">F</div>
-                <span>f/2.8</span>
+                <span>{post.aperture ? `f/${post.aperture}` : "Unknown"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <Clock className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span>1/500s</span>
+                <span>{post.shutter_speed || "Unknown"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <div className="font-bold font-mono text-[10px] w-4 text-center text-[var(--accent-dark)]">ISO</div>
-                <span>ISO 400</span>
+                <span>{post.iso ? `ISO ${post.iso}` : "Unknown"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <MapPin className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span>Namsan Tower</span>
+                <span className="truncate max-w-[100px]">{post.title || "Unknown Location"}</span>
               </div>
             </div>
           </div>
 
-          {/* Recipe */}
-          <div className="space-y-4">
-            <h3 className="font-heading text-xs text-gray-400 tracking-[0.167em] uppercase border-b border-gray-200 pb-2">Edit Recipe</h3>
-            <div className="bg-[var(--button-bg)] p-4 text-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold">Kodak Portra 400</span>
-                <span className="text-xs px-2 py-1 bg-white border border-gray-200 uppercase font-heading">Lightroom</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mt-3">
-                <div className="flex justify-between"><span>Exposure</span><span>+0.5</span></div>
-                <div className="flex justify-between"><span>Contrast</span><span>-10</span></div>
-                <div className="flex justify-between"><span>Highlights</span><span>-20</span></div>
-                <div className="flex justify-between"><span>Shadows</span><span>+15</span></div>
+          {/* Recipe (if exists) */}
+          {post.recipe_name && (
+            <div className="space-y-4">
+              <h3 className="font-heading text-xs text-gray-400 tracking-[0.167em] uppercase border-b border-gray-200 pb-2">Edit Recipe</h3>
+              <div className="bg-[var(--button-bg)] p-4 text-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold">{post.recipe_name}</span>
+                  <span className="text-xs px-2 py-1 bg-white border border-gray-200 uppercase font-heading">{post.recipe_type || "Custom"}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2 pt-2">
-            <span className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1"><Hash className="w-3 h-3 mr-1"/>Seoul</span>
-            <span className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1"><Hash className="w-3 h-3 mr-1"/>NightScape</span>
-            <span className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1"><Hash className="w-3 h-3 mr-1"/>SonyAlpha</span>
+            {(post.tags || ["Seoul", "NightScape", "SonyAlpha"]).map((tag, idx) => (
+              <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1">
+                <Hash className="w-3 h-3 mr-1"/>{tag}
+              </span>
+            ))}
           </div>
 
         </div>
