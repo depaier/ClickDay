@@ -57,6 +57,14 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
       map.setProjection({ type: "globe" });
       addCustomIcon(map);
 
+      // 스타일 내 누락된 이미지로 인한 콘솔 오류 방지
+      map.on("styleimagemissing", (e) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
+      });
+
       // GeoJSON 소스 추가 (클러스터링 활성화)
       map.addSource("posts", {
         type: "geojson",
