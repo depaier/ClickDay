@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -20,49 +20,28 @@ interface GlobeMapProps {
 export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
 
-  const handleMarkerClick = useCallback(
-    (post: Post) => onMarkerClick(post),
-    [onMarkerClick]
-  );
+  // SVG 핀을 이미지로 변환하여 지도에 등록하는 함수
+  const addCustomIcon = (map: maplibregl.Map) => {
+    const svgString = `
+      <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518"/>
+        <circle cx="16" cy="16" r="6" fill="#0A0A0A"/>
+      </svg>
+    `;
+    const img = new Image();
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = () => {
+      if (!map.hasImage("custom-pin")) {
+        map.addImage("custom-pin", img);
+      }
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  };
 
-  // 마커 추가 함수
-  const addMarkers = useCallback(
-    (map: maplibregl.Map) => {
-      // 기존 마커 전부 제거
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
-
-      posts.forEach((post) => {
-        const el = document.createElement("div");
-        el.style.cssText = `
-          width: 32px;
-          height: 40px;
-          cursor: pointer;
-          transition: transform 0.15s ease;
-        `;
-        el.innerHTML = `
-          <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518"/>
-            <circle cx="16" cy="16" r="6" fill="#0A0A0A"/>
-          </svg>
-        `;
-        el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.2)"; });
-        el.addEventListener("mouseleave", () => { el.style.transform = "scale(1)"; });
-        el.addEventListener("click", () => handleMarkerClick(post));
-
-        const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
-          .setLngLat([post.lng, post.lat])
-          .addTo(map);
-
-        markersRef.current.push(marker);
-      });
-    },
-    [posts, handleMarkerClick]
-  );
-
-  // 지도 초기화 (한 번만)
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
@@ -74,43 +53,130 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
       attributionControl: false,
     });
 
-    map.on("style.load", () => {
+    map.on("load", () => {
       map.setProjection({ type: "globe" });
-      addMarkers(map);
+      addCustomIcon(map);
+
+      // GeoJSON 소스 추가 (클러스터링 활성화)
+      map.addSource("posts", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: posts.map((post) => ({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [post.lng, post.lat] },
+            properties: { ...post },
+          })),
+        },
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50,
+      });
+
+      // 1. 클러스터 원 레이어
+      map.addLayer({
+        id: "clusters",
+        type: "circle",
+        source: "posts",
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": [
+            "step",
+            ["get", "point_count"],
+            "#F5C518", // 10개 미만
+            10,
+            "#f1f075", // 10~30개
+            30,
+            "#f28cb1", // 30개 이상
+          ],
+          "circle-radius": [
+            "step",
+            ["get", "point_count"],
+            20, 10, 30, 30, 40
+          ],
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#fff"
+        },
+      });
+
+      // 2. 클러스터 숫자 레이어
+      map.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: "posts",
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": "{point_count}",
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 12,
+        },
+        paint: {
+          "text-color": "#000"
+        }
+      });
+
+      // 3. 개별 마커 레이어 (기존 핀 사용)
+      map.addLayer({
+        id: "unclustered-point",
+        type: "symbol",
+        source: "posts",
+        filter: ["!", ["has", "point_count"]],
+        layout: {
+          "icon-image": "custom-pin",
+          "icon-size": 0.8,
+          "icon-anchor": "bottom",
+          "icon-allow-overlap": true,
+        },
+      });
+
+      // 클릭 이벤트 처리
+      map.on("click", "clusters", async (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+        const clusterId = features[0].properties.cluster_id;
+        const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+        const expansionZoom = await source.getClusterExpansionZoom(clusterId);
+
+        map.easeTo({
+          center: (features[0].geometry as any).coordinates,
+          zoom: expansionZoom,
+        });
+      });
+
+      map.on("click", "unclustered-point", (e) => {
+        const props = e.features![0].properties as Post;
+        onMarkerClick(props);
+      });
+
+      // 마우스 커서 변경
+      map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
+      map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
+      map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
+      map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
     });
 
-    map.addControl(
-      new maplibregl.AttributionControl({ compact: true }),
-      "bottom-right"
-    );
-
     mapRef.current = map;
-
-    return () => {
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
-    };
+    return () => map.remove();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // posts 변경 시 마커 재렌더링
+  // posts 데이터 업데이트 시 소스 갱신
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !map.isStyleLoaded()) return;
 
-    if (map.isStyleLoaded()) {
-      addMarkers(map);
-    } else {
-      map.once("style.load", () => addMarkers(map));
+    const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+    if (source) {
+      source.setData({
+        type: "FeatureCollection",
+        features: posts.map((post) => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [post.lng, post.lat] },
+          properties: { ...post },
+        })),
+      });
     }
-  }, [posts, addMarkers]);
+  }, [posts]);
 
   return (
-    <div
-      ref={mapContainer}
-      className="w-full h-full"
-      style={{ background: "#00000A" }}
-    />
+    <div ref={mapContainer} className="w-full h-full bg-[#00000A]" />
   );
 };
