@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Primitive Colors */
+    --black: #000000;
+    --white: #ffffff;
+    --yellow: #E8B800;
+    --yellow-dark: #BF9700;
+    
+    --gray-100: #e6e6e6;
+    --gray-200: #d8d8d8;
+    --gray-300: #666666;
+    --gray-400: #535759;
+    --gray-500: #3b3e40;
+    --gray-600: #262b2e;
+    --gray-700: #6c7073;
+
+    --blue: #0070d5;
+    --blue-hover: #2490e3;
+    --blue-active: #0058b0;
+    --red-error: #cb2d2d;
+
+    /* Semantic Colors */
+    --bg-primary: #000000;
+    --bg-secondary: #ffffff;
+    --bg-nav: #000000;
+    --bg-navbar: #262b2e;
+    --bg-overlay: rgba(0,0,0,0.5);
+    
+    --text-primary: #000000;
+    --text-on-dark: #ffffff;
+    --text-muted: rgba(0,0,0,0.65);
+    --text-bold: rgba(0,0,0,0.85);
+    --text-accent: #E8B800;
+    
+    --border-default: rgba(0,0,0,0.15);
+    --border-divider: #d8d8d8;
+
+    /* Hasselblad specific Design System Vars */
+    --accent: #E8B800;
+    --accent-dark: #BF9700;
+    --accent-text-on: #000000;
+    --button-bg: rgba(0,0,0,0.04);
+    --button-bg-hover: rgba(0,0,0,0.06);
+    --button-bg-active: rgba(0,0,0,0.15);
+    --button-primary-bg: linear-gradient(#535759, #3b3e40);
+    --button-primary-bg-hover: linear-gradient(#6c7073, #535759);
+    --button-primary-text-color: #fff;
+    --link-color: #0070d5;
+  }
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-text-on: var(--accent-text-on);
+  
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+
+  /* Font mapping variables */
+  --font-sans: var(--font-sans-dynamic);
+  --font-heading: var(--font-heading-dynamic);
+}
+
+@layer base {
+  :root {
+    --font-sans-dynamic: var(--font-outfit), 'Pretendard Variable', "Helvetica Neue", Arial, sans-serif;
+    --font-heading-dynamic: var(--font-outfit), "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  }
+  
+  :root[lang="en"] {
+    --font-sans-dynamic: var(--font-outfit), 'Pretendard Variable', "Helvetica Neue", Arial, sans-serif;
+    --font-heading-dynamic: var(--font-outfit), "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  :root[lang="ko"] {
+    --font-sans-dynamic: 'Pretendard Variable', var(--font-outfit), "Helvetica Neue", Arial, sans-serif;
+    --font-heading-dynamic: 'Pretendard Variable', "Tw Cen", "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-on-dark);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 2em;
+  letter-spacing: 0.04em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: 0.167em;
+  text-transform: uppercase;
+}
