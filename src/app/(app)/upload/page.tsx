@@ -130,7 +130,7 @@ export default function UploadPage() {
         user_id: user.id,
         latitude: location.lat,
         longitude: location.lng,
-        location_name: locationName || exif?.model || "Unknown Location",
+        location_name: locationName || "",
         image_url: publicUrl,
         camera_model: exif?.model,
         aperture: exif?.fNumber,
@@ -200,17 +200,17 @@ export default function UploadPage() {
       {/* Input Fields */}
       <div className={`space-y-6 mb-12 ${!file ? "opacity-50 pointer-events-none" : ""}`}>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Location Name</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.photoTitle}</label>
           <input 
             type="text" 
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
-            placeholder="e.g. Seoul City Hall"
+            placeholder="e.g. Sunset in Seoul"
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Description</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.description}</label>
           <textarea 
             rows={3}
             value={description}

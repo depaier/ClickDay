@@ -1,5 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { MapPin } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
+import { supabase } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
@@ -58,6 +64,33 @@ export default function FeedPage() {
     fetchFeed();
   }, [supabase]);
 
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"latest" | "popular">("latest");
+
+  useEffect(() => {
+    fetchPosts();
+  }, [filter]);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    let query = supabase.from("posts").select("*");
+
+    if (filter === "latest") {
+      query = query.order("created_at", { ascending: false });
+    } else {
+      // 인기순 로직 (현재는 임시로 최신순 유지하되 UI만 처리)
+      query = query.order("created_at", { ascending: false });
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setPosts(data);
+    }
+    setLoading(false);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
@@ -65,9 +98,23 @@ export default function FeedPage() {
           <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">{t.title}</h1>
           <p className="text-gray-400 mt-2">{t.subtitle}</p>
         </div>
-        <div className="flex gap-4 font-heading tracking-widest text-sm uppercase">
-          <button className="text-[var(--accent)] border-b border-[var(--accent)] pb-1">{t.latest}</button>
-          <button className="text-gray-500 hover:text-white transition-colors pb-1">{t.popular}</button>
+        <div className="flex gap-6 font-heading tracking-widest text-sm uppercase">
+          <button 
+            onClick={() => setFilter("latest")}
+            className={`transition-colors pb-1 border-b ${
+              filter === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+            }`}
+          >
+            {t.latest}
+          </button>
+          <button 
+            onClick={() => setFilter("popular")}
+            className={`transition-colors pb-1 border-b ${
+              filter === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+            }`}
+          >
+            {t.popular}
+          </button>
         </div>
       </div>
 
