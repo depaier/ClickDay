@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MapPin, Heart } from "lucide-react";
 import { LikeButton } from "./LikeButton";
 import { BookmarkButton } from "./BookmarkButton";
@@ -17,6 +18,10 @@ interface PostCardProps {
     user_id: string;
     latitude?: number;
     longitude?: number;
+    profiles?: {
+      username: string;
+      avatar_url: string;
+    };
   };
   isLiked: boolean;
   isBookmarked?: boolean;
@@ -24,6 +29,7 @@ interface PostCardProps {
 
 export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
 
   return (
     <div 
@@ -40,6 +46,25 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
             className="w-full h-auto group-hover:scale-105 transition-transform duration-500 block"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center">
+            {/* Photographer Link */}
+            {post.profiles && (
+              <button 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/users/@${post.profiles?.username}`);
+                }}
+                className="mb-4 flex flex-col items-center group/user"
+              >
+                <div className="w-10 h-10 rounded-full border border-white/20 overflow-hidden mb-2 group-hover/user:border-[var(--accent)] transition-colors">
+                  <img src={post.profiles.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[10px] font-heading tracking-widest uppercase group-hover/user:text-[var(--accent)] transition-colors">
+                  @{post.profiles.username}
+                </span>
+              </button>
+            )}
+
             <div className="flex items-center gap-4 mb-2">
               <div className="flex items-center gap-1.5">
                 <Heart size={18} className="fill-white text-white" />

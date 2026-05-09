@@ -33,7 +33,7 @@ export default function FeedPage() {
       setIsLoading(true);
       try {
         // Fetch posts
-        let query = supabase.from("posts").select("*");
+        let query = supabase.from("posts").select("*, profiles(username, avatar_url)");
 
         if (filter === "latest") {
           query = query.order("created_at", { ascending: false });
