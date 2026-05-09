@@ -1,0 +1,151 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Camera, MapPin, Save, ArrowLeft } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
+import { useRouter } from "next/navigation";
+import { UploadMap } from "@/components/map/UploadMap";
+import { LocationPickerModal } from "@/components/map/LocationPickerModal";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
+
+interface EditPostFormProps {
+  post: any;
+}
+
+export function EditPostForm({ post }: EditPostFormProps) {
+  const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language].upload;
+  
+  const [locationName, setLocationName] = useState(post.location_name || "");
+  const [description, setDescription] = useState(post.description || "");
+  const [location, setLocation] = useState({ lat: post.latitude, lng: post.longitude });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const handleSubmit = async () => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          location_name: locationName,
+          description: description,
+          latitude: location.lat,
+          longitude: location.lng,
+        })
+        .eq('id', post.id);
+
+      if (error) throw error;
+
+      alert("Post updated successfully!");
+      router.push(`/posts/${post.id}`);
+      router.refresh();
+    } catch (error: any) {
+      console.error("Update error:", error);
+      alert(error.message || "Failed to update post.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Image Preview */}
+      <div className="relative aspect-video w-full bg-[#111] rounded-sm overflow-hidden border border-white/5">
+        <img src={post.image_url} alt="Post" className="w-full h-full object-contain" />
+      </div>
+
+      {/* Input Fields */}
+      <div className="space-y-6">
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.photoTitle}</label>
+          <input 
+            type="text" 
+            value={locationName}
+            onChange={(e) => setLocationName(e.target.value)}
+            className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.description}</label>
+          <textarea 
+            rows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors resize-none"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* EXIF Data */}
+        <div>
+          <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm">
+            <Camera className="w-4 h-4 mr-2 text-[var(--accent)]" />
+            {t.exifTitle}
+          </h2>
+          <div className="bg-[#111] p-6 space-y-4 text-sm border border-white/5">
+            <div className="flex justify-between border-b border-white/5 pb-2">
+              <span className="text-gray-500">{t.camera}</span>
+              <span>{post.camera_model || "-"}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2">
+              <span className="text-gray-500">Aperture</span>
+              <span>{post.aperture ? `f/${post.aperture}` : "-"}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2">
+              <span className="text-gray-500">Exposure</span>
+              <span>{post.shutter_speed || "-"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Location Picker */}
+        <div>
+          <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm">
+            <MapPin className="w-4 h-4 mr-2 text-[var(--accent)]" />
+            {t.locationTitle}
+          </h2>
+          <div className="bg-[#111] h-[200px] border border-white/5 relative overflow-hidden">
+            <UploadMap location={location} onLocationChange={setLocation} />
+            <div 
+              className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/20 transition-colors"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <p className="text-white text-xs uppercase tracking-tighter">Click to change location</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-between items-center pt-8 border-t border-white/10">
+        <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" /> Cancel
+        </Button>
+        <Button 
+          className="px-12 py-6 text-sm font-heading tracking-[0.2em] uppercase flex items-center gap-2"
+          onClick={handleSubmit}
+          disabled={isUpdating}
+        >
+          <Save className="w-4 h-4" /> {isUpdating ? "Updating..." : "Save Changes"}
+        </Button>
+      </div>
+
+      {isModalOpen && (
+        <LocationPickerModal 
+          onClose={() => setIsModalOpen(false)}
+          onSave={(loc) => setLocation(loc)}
+        />
+      )}
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -28,9 +29,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-black text-white">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </AuthProvider>
       </body>
     </html>
   );

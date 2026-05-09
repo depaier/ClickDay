@@ -1,22 +1,78 @@
 "use client";
 
-import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
+import { createClient } from "@/lib/supabase/client";
+import { PostCard } from "@/components/post/PostCard";
 
-const DUMMY_FEED = [
-  { id: 1, image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80", title: "Seoul City", location: "Seoul, Korea" },
-  { id: 2, image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=800&q=80", title: "Namsan Tower", location: "Seoul, Korea" },
-  { id: 3, image: "https://images.unsplash.com/photo-1538681105587-85640961bf8b?auto=format&fit=crop&w=800&q=80", title: "Gyeongbokgung", location: "Seoul, Korea" },
-  { id: 4, image: "https://images.unsplash.com/photo-1588602058473-b67ec1655979?auto=format&fit=crop&w=800&q=80", title: "Han River", location: "Seoul, Korea" },
-  { id: 5, image: "https://images.unsplash.com/photo-1598509524136-421ebba06d9a?auto=format&fit=crop&w=800&q=80", title: "Busan Beach", location: "Busan, Korea" },
-  { id: 6, image: "https://images.unsplash.com/photo-1563514757348-73595eb9170e?auto=format&fit=crop&w=800&q=80", title: "Jeju Island", location: "Jeju, Korea" },
-];
+interface Post {
+  id: string;
+  image_url: string;
+  location_name: string | null;
+  like_count: number;
+  user_id: string;
+  created_at: string;
+}
+
+const supabase = createClient();
 
 export default function FeedPage() {
   const { language } = useLanguage();
   const t = translations[language].feed;
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<"latest" | "popular">("latest");
+
+  useEffect(() => {
+    async function fetchFeed() {
+      setIsLoading(true);
+      try {
+        // Fetch posts
+        let query = supabase.from("posts").select("*");
+
+        if (filter === "latest") {
+          query = query.order("created_at", { ascending: false });
+        } else {
+          // For now, popular is also sorted by latest but could be liked_count in the future
+          query = query.order("like_count", { ascending: false });
+        }
+
+        const { data: postsData, error: postsError } = await query;
+
+        if (postsError) throw postsError;
+        setPosts(postsData || []);
+
+        // Fetch current user's interactions if logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          try {
+            const [likesRes, bookmarksRes] = await Promise.all([
+              supabase.from('likes').select('post_id').eq('user_id', user.id),
+              supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
+            ]);
+            
+            if (likesRes.data) {
+              setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
+            }
+            if (bookmarksRes.data) {
+              setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
+            }
+          } catch (interactionError) {
+            console.error("Background interaction fetch failed:", interactionError);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching feed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchFeed();
+  }, [supabase, filter]);
 
   return (
     <div>
@@ -25,33 +81,49 @@ export default function FeedPage() {
           <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">{t.title}</h1>
           <p className="text-gray-400 mt-2">{t.subtitle}</p>
         </div>
-        <div className="flex gap-4 font-heading tracking-widest text-sm uppercase">
-          <button className="text-[var(--accent)] border-b border-[var(--accent)] pb-1">{t.latest}</button>
-          <button className="text-gray-500 hover:text-white transition-colors pb-1">{t.popular}</button>
+        <div className="flex gap-6 font-heading tracking-widest text-sm uppercase">
+          <button 
+            onClick={() => setFilter("latest")}
+            className={`transition-colors pb-1 border-b ${
+              filter === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+            }`}
+          >
+            {t.latest}
+          </button>
+          <button 
+            onClick={() => setFilter("popular")}
+            className={`transition-colors pb-1 border-b ${
+              filter === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+            }`}
+          >
+            {t.popular}
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {DUMMY_FEED.map((item) => (
-          <Link href={`/posts/${item.id}`} key={item.id} className="group cursor-pointer">
-            <div className="relative aspect-[4/5] overflow-hidden bg-[#222]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={item.image} 
-                alt={item.title} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                <h3 className="font-heading tracking-wider uppercase text-lg">{item.title}</h3>
-                <div className="flex items-center text-gray-300 text-sm mt-2">
-                  <MapPin className="w-4 h-4 mr-1 text-[var(--accent)]" />
-                  {item.location}
-                </div>
-              </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              isLiked={likedPostIds.has(post.id)} 
+              isBookmarked={bookmarkedPostIds.has(post.id)}
+            />
+          ))}
+          {posts.length === 0 && (
+            <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
+              <p className="text-gray-500 font-heading tracking-widest uppercase">No posts found</p>
             </div>
-          </Link>
-        ))}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

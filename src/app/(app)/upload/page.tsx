@@ -8,7 +8,10 @@ import { translations } from "@/constants/translations";
 import exifr from "exifr";
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
+
+const supabase = createClient();
 
 interface ExifData {
   make?: string;
@@ -22,6 +25,7 @@ interface ExifData {
 export default function UploadPage() {
   const { language } = useLanguage();
   const t = translations[language].upload;
+  const { user } = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -34,11 +38,6 @@ export default function UploadPage() {
   const [description, setDescription] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const handleFile = useCallback(async (selectedFile: File) => {
     if (!selectedFile.type.startsWith("image/")) return;
@@ -102,8 +101,8 @@ export default function UploadPage() {
   };
 
   const handleSubmit = async () => {
-    if (!file || !location) {
-      alert("Please select a photo and location.");
+    if (!file || !location || !user) {
+      alert("Please select a photo, location, and ensure you are logged in.");
       return;
     }
 
@@ -125,9 +124,10 @@ export default function UploadPage() {
 
       // 3. DB 데이터 삽입
       const { error: dbError } = await supabase.from('posts').insert({
+        user_id: user.id,
         latitude: location.lat,
         longitude: location.lng,
-        location_name: locationName || exif?.model || "Unknown Location",
+        location_name: locationName || "",
         image_url: publicUrl,
         camera_model: exif?.model,
         aperture: exif?.fNumber,
@@ -196,17 +196,17 @@ export default function UploadPage() {
       {/* Input Fields */}
       <div className={`space-y-6 mb-12 ${!file ? "opacity-50 pointer-events-none" : ""}`}>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Location Name</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.photoTitle}</label>
           <input 
             type="text" 
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
-            placeholder="e.g. Seoul City Hall"
+            placeholder="e.g. Sunset in Seoul"
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Description</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.description}</label>
           <textarea 
             rows={3}
             value={description}

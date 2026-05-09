@@ -8,6 +8,7 @@ export const translations = {
       bookmarks: "Bookmarks",
       settings: "Settings",
       logout: "Logout",
+      profile: "Profile",
     },
     auth: {
       login: "Login",
@@ -18,11 +19,13 @@ export const translations = {
       username: "Username",
       email: "Email",
       password: "Password",
+      confirmPassword: "Confirm Password",
       signIn: "Sign In",
       signInShort: "Log in",
       noAccount: "Don't have an account?",
       haveAccount: "Already have an account?",
       emailPlaceholder: "your@email.com",
+      usernamePlaceholder: "username",
     },
     home: {
       heroTitle: "ClickDay",
@@ -47,6 +50,15 @@ export const translations = {
       lens: "Lens",
       settings: "Settings",
       mapPreview: "Map Preview (Needs GPS Data)",
+      photoTitle: "Photo Title",
+      description: "Description",
+    },
+    profile: {
+      myPosts: "My Photos",
+      stats: "Stats",
+      editProfile: "Edit Profile",
+      bio: "No bio yet.",
+      savedPosts: "Saved Photos",
     }
   },
   ko: {
@@ -58,6 +70,7 @@ export const translations = {
       bookmarks: "북마크",
       settings: "설정",
       logout: "로그아웃",
+      profile: "프로필",
     },
     auth: {
       login: "로그인",
@@ -68,11 +81,13 @@ export const translations = {
       username: "사용자 이름",
       email: "이메일",
       password: "비밀번호",
+      confirmPassword: "비밀번호 확인",
       signIn: "로그인",
       signInShort: "로그인",
       noAccount: "계정이 없으신가요?",
       haveAccount: "이미 계정이 있으신가요?",
       emailPlaceholder: "이메일을 입력하세요",
+      usernamePlaceholder: "사용자 아이디",
     },
     home: {
       heroTitle: "클릭데이",
@@ -97,6 +112,15 @@ export const translations = {
       lens: "렌즈",
       settings: "설정",
       mapPreview: "지도 미리보기 (GPS 데이터 필요)",
+      photoTitle: "사진 제목",
+      description: "설명글",
+    },
+    profile: {
+      myPosts: "내 사진",
+      stats: "통계",
+      editProfile: "프로필 수정",
+      bio: "소개글이 없습니다.",
+      savedPosts: "저장된 사진",
     }
   }
 };

@@ -3,14 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import { Menu, Search } from "lucide-react";
-import { cn } from "../ui/Button";
+import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "../ui/LanguageSwitcher";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { translations } from "@/constants/translations";
 
 export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "sticky" }) {
   const { language } = useLanguage();
   const t = translations[language].nav;
+  const { user, profile, signOut } = useAuth();
 
   return (
     <nav
@@ -41,7 +43,22 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
         <button className="hover:text-[var(--accent)] transition-colors">
           <Search className="w-5 h-5" />
         </button>
-        <Link href="/login" className="hover:text-[var(--accent)] transition-colors">{t.login}</Link>
+        
+        {user ? (
+          <div className="flex items-center gap-6">
+            <Link href="/profile" className="hover:text-[var(--accent)] transition-colors">
+              {profile?.username || t.profile}
+            </Link>
+            <button 
+              onClick={() => signOut()}
+              className="hover:text-[var(--accent)] transition-colors uppercase"
+            >
+              {t.logout}
+            </button>
+          </div>
+        ) : (
+          <Link href="/login" className="hover:text-[var(--accent)] transition-colors">{t.login}</Link>
+        )}
       </div>
     </nav>
   );
