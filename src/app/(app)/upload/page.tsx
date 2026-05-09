@@ -124,29 +124,6 @@ export default function UploadPage() {
     });
 
     try {
-      const data = await exifr.parse(selectedFile, {
-        gps: true,
-        tiff: true,
-      });
-      
-      if (data) {
-        const make = data.Make?.toLowerCase() || "";
-        let brand = null;
-        for (const [key, value] of Object.entries(BRAND_MAPPING)) {
-          if (make.includes(key)) {
-            brand = value;
-            break;
-          }
-        }
-        setCameraBrand(brand);
-
-        setExif({
-          make: data.Make,
-          model: data.Model,
-          lens: data.LensModel || data.LensInfo,
-          fNumber: data.FNumber ? Math.round(data.FNumber * 100) / 100 : undefined,
-          exposureTime: data.ExposureTime ? `1/${Math.round(1 / data.ExposureTime)}` : undefined,
-          iso: data.ISO,
       // 1. Parse EXIF (Isolate this so if it fails, we still try to convert/upload)
       try {
         console.log("Attempting to parse EXIF (Attempt 1)...");
@@ -160,7 +137,6 @@ export default function UploadPage() {
           exif: true,
         });
 
-        
         // If Attempt 1 failed to get GPS, try Attempt 2 with specialized GPS parser
         if (!data || (data.latitude === undefined && data.longitude === undefined)) {
           console.log("Attempt 1 had limited data, trying specialized GPS parse (Attempt 2)...");
@@ -170,10 +146,19 @@ export default function UploadPage() {
           }
         }
 
-
-        
         if (data) {
           console.log("EXIF data found:", data);
+          
+          const make = data.Make?.toLowerCase() || "";
+          let brand = null;
+          for (const [key, value] of Object.entries(BRAND_MAPPING)) {
+            if (make.includes(key)) {
+              brand = value;
+              break;
+            }
+          }
+          setCameraBrand(brand);
+
           setExif({
             make: data.Make,
             model: data.Model,
@@ -204,6 +189,16 @@ export default function UploadPage() {
             const exifGroup = tags.exif || {};
             const gpsGroup = tags.gps || {};
             
+            const makeStr = exifGroup.Make?.description?.toLowerCase() || "";
+            let brand = null;
+            for (const [key, value] of Object.entries(BRAND_MAPPING)) {
+              if (makeStr.includes(key)) {
+                brand = value;
+                break;
+              }
+            }
+            setCameraBrand(brand);
+            
             // Format fNumber and exposure time safely
             let parsedFNumber;
             if (exifGroup.FNumber?.value && Array.isArray(exifGroup.FNumber.value)) {
@@ -222,7 +217,6 @@ export default function UploadPage() {
                   ? exifGroup.ISOSpeedRatings.value 
                   : undefined),
             });
-
 
             // ExifReader provides Latitude/Longitude as floats in expanded mode
             if (gpsGroup.Latitude !== undefined && gpsGroup.Longitude !== undefined) {
