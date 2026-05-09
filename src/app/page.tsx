@@ -4,23 +4,19 @@ import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap } from "@/components/map/GlobeMap";
-import { createBrowserClient } from "@supabase/ssr";
+import { supabase } from "@/lib/supabase/client";
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from('posts')
         .select(`
           id,
+          user_id,
           latitude,
           longitude,
           location_name,
