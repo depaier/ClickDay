@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Grid, Bookmark, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
+import { PostCard } from "@/components/post/PostCard";
+
 
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
@@ -12,9 +14,11 @@ import { getFollowCounts, getFollowStatus } from "@/lib/actions/follow-actions";
 
 interface PageProps {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function UserProfilePage({ params }: PageProps) {
+
+export default async function UserProfilePage({ params, searchParams }: PageProps) {
   const { username: rawUsername } = await params;
   // @ 기호 처리 및 디코딩
   const username = decodeURIComponent(rawUsername).replace(/^@/, "");
@@ -44,14 +48,43 @@ export default async function UserProfilePage({ params }: PageProps) {
     supabase.auth.getUser()
   ]);
 
+  const { tab = "posts" } = await searchParams;
   const isOwnProfile = currentUser?.id === profile.id;
 
-  // Fetch posts
-  const { data: posts } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: false });
+  // Fetch current user's likes and bookmarks for these posts if logged in
+  let likedPostIds = new Set<string>();
+  let bookmarkedPostIds = new Set<string>();
+  
+  if (currentUser) {
+    const [likes, bookmarks] = await Promise.all([
+      supabase.from("likes").select("post_id").eq("user_id", currentUser.id),
+      supabase.from("bookmarks").select("post_id").eq("user_id", currentUser.id)
+    ]);
+    
+    if (likes.data) likedPostIds = new Set(likes.data.map(l => l.post_id));
+    if (bookmarks.data) bookmarkedPostIds = new Set(bookmarks.data.map(b => b.post_id));
+  }
+
+  // Fetch posts based on active tab
+  let posts: any[] = [];
+  if (tab === "saved" && isOwnProfile) {
+    const { data: bookmarkedData } = await supabase
+      .from("bookmarks")
+      .select("post_id, posts(*, profiles(username, avatar_url))")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+    
+    posts = bookmarkedData?.map(b => b.posts).filter(p => p !== null) || [];
+  } else {
+    const { data: ownPosts } = await supabase
+      .from("posts")
+      .select("*, profiles(username, avatar_url)")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+    posts = ownPosts || [];
+  }
+
+
 
   return (
     <div>
@@ -118,20 +151,24 @@ export default async function UserProfilePage({ params }: PageProps) {
       <ProfileTabs isOwnProfile={isOwnProfile} />
 
       <MasonryGrid>
-        {[1,2,3,4,5,6].map((i) => (
-          <Link href={`/posts/${i}`} key={i} className="block mb-6 bg-[#111] relative group border border-white/5 overflow-hidden rounded-sm">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={`https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80&sig=${i}`}
-              alt={`Post ${i}`}
-              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
-            />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-              <span className="font-heading tracking-widest uppercase text-sm text-white drop-shadow-md">View</span>
-            </div>
-          </Link>
+        {posts?.map((post) => (
+          <PostCard 
+            key={post.id} 
+            post={post as any} 
+            isLiked={likedPostIds.has(post.id)}
+            isBookmarked={bookmarkedPostIds.has(post.id)}
+          />
         ))}
+        {(!posts || posts.length === 0) && (
+          <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
+            <p className="text-gray-500 font-heading tracking-widest uppercase">
+              {tab === "saved" ? "No saved posts yet" : "No uploads yet"}
+            </p>
+          </div>
+        )}
+
       </MasonryGrid>
+
 
     </div>
   );

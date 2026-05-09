@@ -148,8 +148,16 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
 
     map.on("click", "unclustered-point", (e) => {
       const props = e.features![0].properties as Post;
-      onMarkerClick(props);
+      // MapLibre GeoJSON properties flatten objects, so find the original post object
+      // which contains the nested 'profiles' object.
+      const originalPost = postsRef.current.find(p => p.id.toString() === props.id.toString());
+      if (originalPost) {
+        onMarkerClick(originalPost);
+      } else {
+        onMarkerClick(props);
+      }
     });
+
 
     // 마우스 커서 변경
     map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
