@@ -1,8 +1,11 @@
 "use client";
 
+import React, { useState } from "react";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { MapPin, Heart } from "lucide-react";
 import { LikeButton } from "./LikeButton";
+import { BookmarkButton } from "./BookmarkButton";
+import { GeocodedAddress } from "../map/GeocodedAddress";
 import { cn } from "@/lib/utils";
 
 interface PostCardProps {
@@ -12,13 +15,22 @@ interface PostCardProps {
     location_name: string | null;
     like_count: number;
     user_id: string;
+    latitude?: number;
+    longitude?: number;
   };
   isLiked: boolean;
+  isBookmarked?: boolean;
 }
 
-export function PostCard({ post, isLiked }: PostCardProps) {
+export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="group relative">
+    <div 
+      className="group relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <Link href={`/posts/${post.id}`} className="block cursor-pointer">
         <div className="relative aspect-[4/5] overflow-hidden bg-[#222] rounded-sm border border-white/5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -27,25 +39,50 @@ export function PostCard({ post, isLiked }: PostCardProps) {
             alt={post.location_name || "Post"} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-            <h3 className="font-heading tracking-wider uppercase text-lg text-white">
-              {post.location_name || "Untitled"}
-            </h3>
-            <div className="flex items-center text-gray-300 text-sm mt-2">
-              <MapPin className="w-4 h-4 mr-1 text-[var(--accent)]" />
-              {post.location_name}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center gap-1.5">
+                <Heart size={18} className="fill-white text-white" />
+                <span className="font-heading text-sm tracking-widest">{post.like_count || 0}</span>
+              </div>
+            </div>
+            
+            {post.location_name && (
+              <h3 className="font-heading tracking-[0.2em] uppercase text-[10px] text-white/90 line-clamp-1 mb-1">
+                {post.location_name}
+              </h3>
+            )}
+            
+            <div className="flex items-center text-white/60 text-[9px] tracking-wider uppercase">
+              <MapPin className="w-3 h-3 mr-1 text-[var(--accent)]" />
+              {/* @ts-ignore - post might not have lat/lng but GeocodedAddress handles it */}
+              {(post.latitude && post.longitude && isHovered) ? (
+                <GeocodedAddress 
+                  latitude={post.latitude} 
+                  longitude={post.longitude} 
+                  className="line-clamp-1"
+                  fallback={post.location_name}
+                />
+              ) : (
+                post.location_name
+              )}
             </div>
           </div>
         </div>
       </Link>
       
       {/* Overlay Actions (Visible on hover or mobile) */}
-      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
         <LikeButton 
           postId={post.id} 
           initialLikeCount={post.like_count} 
           initialIsLiked={isLiked}
-          className="bg-black/50 backdrop-blur-md"
+          className="bg-black/50 backdrop-blur-md border-white/5"
+        />
+        <BookmarkButton
+          postId={post.id}
+          initialIsBookmarked={isBookmarked}
+          className="bg-black/50 backdrop-blur-md border-white/5"
         />
       </div>
     </div>

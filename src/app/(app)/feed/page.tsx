@@ -1,12 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { MapPin } from "lucide-react";
-import { useLanguage } from "@/components/providers/LanguageProvider";
-import { translations } from "@/constants/translations";
-import { supabase } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
@@ -21,37 +15,53 @@ interface Post {
   created_at: string;
 }
 
+const supabase = createClient();
+
 export default function FeedPage() {
   const { language } = useLanguage();
   const t = translations[language].feed;
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const [filter, setFilter] = useState<"latest" | "popular">("latest");
 
   useEffect(() => {
     async function fetchFeed() {
       setIsLoading(true);
       try {
         // Fetch posts
-        const { data: postsData, error: postsError } = await supabase
-          .from("posts")
-          .select("*")
-          .order("created_at", { ascending: false });
+        let query = supabase.from("posts").select("*");
+
+        if (filter === "latest") {
+          query = query.order("created_at", { ascending: false });
+        } else {
+          // For now, popular is also sorted by latest but could be liked_count in the future
+          query = query.order("like_count", { ascending: false });
+        }
+
+        const { data: postsData, error: postsError } = await query;
 
         if (postsError) throw postsError;
         setPosts(postsData || []);
 
-        // Fetch current user's likes if logged in
+        // Fetch current user's interactions if logged in
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: likesData, error: likesError } = await supabase
-            .from("likes")
-            .select("post_id")
-            .eq("user_id", user.id);
-
-          if (!likesError && likesData) {
-            setLikedPostIds(new Set(likesData.map(l => l.post_id)));
+          try {
+            const [likesRes, bookmarksRes] = await Promise.all([
+              supabase.from('likes').select('post_id').eq('user_id', user.id),
+              supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
+            ]);
+            
+            if (likesRes.data) {
+              setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
+            }
+            if (bookmarksRes.data) {
+              setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
+            }
+          } catch (interactionError) {
+            console.error("Background interaction fetch failed:", interactionError);
           }
         }
       } catch (error) {
@@ -62,34 +72,7 @@ export default function FeedPage() {
     }
 
     fetchFeed();
-  }, [supabase]);
-
-  const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"latest" | "popular">("latest");
-
-  useEffect(() => {
-    fetchPosts();
-  }, [filter]);
-
-  const fetchPosts = async () => {
-    setLoading(true);
-    let query = supabase.from("posts").select("*");
-
-    if (filter === "latest") {
-      query = query.order("created_at", { ascending: false });
-    } else {
-      // 인기순 로직 (현재는 임시로 최신순 유지하되 UI만 처리)
-      query = query.order("created_at", { ascending: false });
-    }
-
-    const { data, error } = await query;
-
-    if (!error && data) {
-      setPosts(data);
-    }
-    setLoading(false);
-  };
+  }, [supabase, filter]);
 
   return (
     <div>
@@ -131,6 +114,7 @@ export default function FeedPage() {
               key={post.id} 
               post={post} 
               isLiked={likedPostIds.has(post.id)} 
+              isBookmarked={bookmarkedPostIds.has(post.id)}
             />
           ))}
           {posts.length === 0 && (

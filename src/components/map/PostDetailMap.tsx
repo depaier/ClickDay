@@ -59,30 +59,25 @@ export const PostDetailMap: React.FC<PostDetailMapProps> = ({ latitude, longitud
     // 역지오코딩 (Nominatim 이용)
     const fetchAddress = async () => {
       try {
-        const acceptLang = language === "ko" ? "ko-KR" : "en-US";
+        const acceptLang = language === "ko" ? "ko" : "en";
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1&accept-language=${acceptLang}`,
-          {
-            headers: {
-              'User-Agent': 'ClickDay-App/1.0'
-            }
-          }
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${acceptLang}`
         );
         const data = await response.json();
-        if (data && data.address) {
-          const { country, city, town, village, state } = data.address;
-          const cityName = city || town || village || state;
+        if (data) {
+          const country = data.countryName;
+          const cityName = data.city || data.locality || data.principalSubdivision;
           
           if (language === "ko") {
             // 한국어: 대한민국, 서울시
             const parts = [];
             if (country) parts.push(country);
-            if (cityName) parts.push(cityName);
+            if (cityName && cityName !== country) parts.push(cityName);
             setAddress(parts.join(", "));
           } else {
-            // 영어: Seoul, Republic of Korea
+            // 영어: Seoul, South Korea
             const parts = [];
-            if (cityName) parts.push(cityName);
+            if (cityName && cityName !== country) parts.push(cityName);
             if (country) parts.push(country);
             setAddress(parts.join(", "));
           }

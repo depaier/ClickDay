@@ -123,9 +123,6 @@ export default function UploadPage() {
         .getPublicUrl(uploadData.path);
 
       // 3. DB 데이터 삽입
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("Attempting to upload with User ID:", user?.id);
-      
       const { error: dbError } = await supabase.from('posts').insert({
         user_id: user.id,
         latitude: location.lat,
@@ -137,7 +134,6 @@ export default function UploadPage() {
         shutter_speed: exif?.exposureTime,
         iso: exif?.iso,
         description: description,
-        user_id: user?.id, // 작성자 ID 추가
       });
 
       if (dbError) throw dbError;

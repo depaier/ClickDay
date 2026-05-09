@@ -7,43 +7,61 @@ interface GeocodedAddressProps {
   latitude: number;
   longitude: number;
   className?: string;
+  fallback?: string | null;
 }
 
-export function GeocodedAddress({ latitude, longitude, className }: GeocodedAddressProps) {
+// Simple in-memory cache for reverse geocoding
+const addressCache = new Map<string, string>();
+
+export function GeocodedAddress({ latitude, longitude, className, fallback }: GeocodedAddressProps) {
   const { language } = useLanguage();
   const [address, setAddress] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    const cacheKey = `${latitude},${longitude},${language}`;
+    if (addressCache.has(cacheKey)) {
+      setAddress(addressCache.get(cacheKey)!);
+      return;
+    }
+
     const fetchAddress = async () => {
       try {
-        const acceptLang = language === "ko" ? "ko-KR" : "en-US";
+        setIsLoading(true);
+        const acceptLang = language === "ko" ? "ko" : "en";
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1&accept-language=${acceptLang}`,
-          {
-            headers: {
-              'User-Agent': 'ClickDay-App/1.0'
-            }
-          }
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${acceptLang}`
         );
+        
+        if (!response.ok) throw new Error("API error");
+        
         const data = await response.json();
-        if (data && data.address) {
-          const { country, city, town, village, state } = data.address;
-          const cityName = city || town || village || state;
+        if (data) {
+          const country = data.countryName;
+          const cityName = data.city || data.locality || data.principalSubdivision;
           
+          let result = "";
           if (language === "ko") {
             const parts = [];
             if (country) parts.push(country);
-            if (cityName) parts.push(cityName);
-            setAddress(parts.join(", "));
+            if (cityName && cityName !== country) parts.push(cityName);
+            result = parts.join(", ");
           } else {
             const parts = [];
-            if (cityName) parts.push(cityName);
+            if (cityName && cityName !== country) parts.push(cityName);
             if (country) parts.push(country);
-            setAddress(parts.join(", "));
+            result = parts.join(", ");
+          }
+          
+          if (result) {
+            setAddress(result);
+            addressCache.set(cacheKey, result);
           }
         }
       } catch (error) {
-        console.error("Reverse geocoding failed:", error);
+        // Silently fail to avoid console noise, fallback will be shown
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -52,7 +70,8 @@ export function GeocodedAddress({ latitude, longitude, className }: GeocodedAddr
     }
   }, [latitude, longitude, language]);
 
-  if (!address) return null;
+  if (!address && !isLoading) return fallback ? <span className={className}>{fallback}</span> : null;
+  if (isLoading && !address) return fallback ? <span className={className}>{fallback}</span> : <span className={className}>...</span>;
 
   return <span className={className}>{address}</span>;
 }

@@ -22,8 +22,17 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
 
+  const postsRef = useRef(posts);
+  
+  // Update ref when posts change
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
+
   // SVG 핀을 이미지로 변환하여 지도에 등록하는 함수
   const addCustomIcon = (map: maplibregl.Map) => {
+    if (map.hasImage("custom-pin")) return;
+    
     const svgString = `
       <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518"/>
@@ -43,53 +52,15 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     img.src = url;
   };
 
-  useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
-
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: "https://tiles.openfreemap.org/styles/dark",
-      center: [126.978, 37.5665],
-      zoom: 2,
-      attributionControl: false,
-      fadeDuration: 0, // 심볼 페이드 애니메이션 제거 (잔상 방지)
-    });
-
-    map.on("load", () => {
-      map.setProjection({ type: "globe" });
-      addCustomIcon(map);
-
-      // 스타일 내 누락된 이미지로 인한 콘솔 오류 방지
-      map.on("styleimagemissing", (e) => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 1;
-        canvas.height = 1;
-        map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
-      });
-
-      // 초기 데이터 설정
-      setupSourceAndLayers(map);
-    });
-
-    mapRef.current = map;
-    
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
-
   const setupSourceAndLayers = (map: maplibregl.Map) => {
-    if (map.getSource("posts")) return;
+    if (!map || map.getSource("posts")) return;
 
     // GeoJSON 소스 추가 (클러스터링 활성화)
     map.addSource("posts", {
       type: "geojson",
       data: {
         type: "FeatureCollection",
-        features: posts.map((post) => ({
+        features: postsRef.current.map((post) => ({
           type: "Feature",
           geometry: { type: "Point", coordinates: [post.lng, post.lat] },
           properties: { ...post },
@@ -138,7 +109,7 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
         "text-anchor": "center",
         "text-justify": "center",
         "text-offset": [0, 0],
-        "text-allow-overlap": true, // fadeDuration이 0이므로 true로 설정해도 잔상이 생기지 않음
+        "text-allow-overlap": true,
         "text-ignore-placement": true,
         "text-pitch-alignment": "viewport",
         "text-rotation-alignment": "viewport",
@@ -187,38 +158,70 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
   };
 
-  // posts 데이터 업데이트 시 소스 갱신
-  useEffect(() => {
+  const updateData = () => {
     const map = mapRef.current;
     if (!map) return;
 
-    const updateData = () => {
-      if (!mapRef.current) return;
-      const source = mapRef.current.getSource("posts") as maplibregl.GeoJSONSource;
-      if (source) {
-        source.setData({
-          type: "FeatureCollection",
-          features: posts.map((post) => ({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [post.lng, post.lat] },
-            properties: { ...post },
-          })),
-        });
-      } else {
-        // 소스가 없으면 다시 시도 (스타일이 로드된 상태여야 함)
-        if (mapRef.current.isStyleLoaded()) {
-          setupSourceAndLayers(mapRef.current);
-        } else {
-          mapRef.current.once("styledata", updateData);
-        }
+    if (!map.isStyleLoaded()) {
+      // 스타일이 로드되지 않았으면 로드될 때까지 기다림
+      map.once("styledata", updateData);
+      return;
+    }
+
+    const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+    if (source) {
+      source.setData({
+        type: "FeatureCollection",
+        features: postsRef.current.map((post) => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [post.lng, post.lat] },
+          properties: { ...post },
+        })),
+      });
+    } else {
+      setupSourceAndLayers(map);
+    }
+  };
+
+  useEffect(() => {
+    if (!mapContainer.current || mapRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: "https://tiles.openfreemap.org/styles/dark",
+      center: [126.978, 37.5665],
+      zoom: 2,
+      attributionControl: false,
+      fadeDuration: 0,
+    });
+
+    map.on("load", () => {
+      map.setProjection({ type: "globe" });
+      addCustomIcon(map);
+
+      map.on("styleimagemissing", (e) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
+      });
+
+      setupSourceAndLayers(map);
+    });
+
+    mapRef.current = map;
+    
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
       }
     };
+  }, []);
 
-    if (map.isStyleLoaded()) {
-      updateData();
-    } else {
-      map.once("load", updateData);
-    }
+  // posts 데이터 업데이트 시 소스 갱신
+  useEffect(() => {
+    updateData();
   }, [posts]);
 
   return (

@@ -24,74 +24,71 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [loading, setLoading] = useState(true);
 
-  const fetchUserPosts = React.useCallback(async () => {
-    try {
-      const { data, error } = await supabase
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadData = async () => {
+      if (!user?.id) return;
+      
+      setLoading(true);
+      
+      // Failsafe timeout to ensure loading state doesn't get stuck
+      const failsafe = setTimeout(() => {
+        if (isMounted) setLoading(false);
+      }, 5000);
+      
+      try {
+        const [postsRes, savedRes] = await Promise.all([
+          supabase
+            .from("posts")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("bookmarks")
+            .select(`post_id, posts (*)`)
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+        ]);
+        
+        if (isMounted) {
+          if (postsRes.data) setPosts(postsRes.data);
+          if (savedRes.data) {
+            const formattedSavedPosts = savedRes.data.map((item: any) => item.posts).filter(Boolean);
+            setSavedPosts(formattedSavedPosts);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+      } finally {
+        clearTimeout(failsafe);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  // Handle window focus to refresh data
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
         .from("posts")
         .select("*")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching posts:", error);
-        return;
-      }
-
-      if (data) {
-        setPosts(data);
-      }
-    } catch (err) {
-      console.error("Unexpected error fetching posts:", err);
-    }
-  }, [user?.id]);
-
-  const fetchSavedPosts = React.useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("bookmarks")
-        .select(`
-          post_id,
-          posts (*)
-        `)
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching saved posts:", error);
-        return;
-      }
-
-      if (data) {
-        const formattedSavedPosts = data.map((item: any) => item.posts).filter(Boolean);
-        setSavedPosts(formattedSavedPosts);
-      }
-    } catch (err) {
-      console.error("Unexpected error fetching saved posts:", err);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (user?.id) {
-      setLoading(true);
-      Promise.all([
-        fetchUserPosts(),
-        fetchSavedPosts()
-      ]).finally(() => setLoading(false));
-    }
-  }, [user?.id, fetchUserPosts, fetchSavedPosts]);
-
-  // Handle window focus to refresh data if it might be stale
-  useEffect(() => {
-    const handleFocus = () => {
-      if (user?.id) {
-        fetchUserPosts();
-        fetchSavedPosts();
-      }
+      if (data) setPosts(data);
     };
 
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-  }, [user?.id, fetchUserPosts, fetchSavedPosts]);
+  }, [user?.id]);
+
 
   if (authLoading) {
     return (
