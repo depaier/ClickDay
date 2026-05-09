@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { useAuth } from "../providers/AuthProvider";
 import { DeletePostButton } from "./DeletePostButton";
 import { LikeButton } from "./LikeButton";
+import { BookmarkButton } from "./BookmarkButton";
 import Link from "next/link";
 
 interface Post {
@@ -31,10 +32,11 @@ interface Post {
 interface PostPreviewSheetProps {
   post: Post;
   isLiked?: boolean;
+  isBookmarked?: boolean;
   onClose: () => void;
 }
 
-export function PostPreviewSheet({ post, isLiked = false, onClose }: PostPreviewSheetProps) {
+export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, onClose }: PostPreviewSheetProps) {
   if (!post) return null;
 
   return (
@@ -69,15 +71,24 @@ export function PostPreviewSheet({ post, isLiked = false, onClose }: PostPreview
                 <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
               </div>
             </div>
-            <LikeButton 
-              postId={post.id.toString()} 
-              initialLikeCount={post.like_count || 0} 
-              initialIsLiked={isLiked}
-              variant="outline"
-              size="sm"
-              showCount
-              className="bg-gray-50 border-gray-200"
-            />
+            <div className="flex items-center gap-1">
+              <LikeButton 
+                postId={post.id.toString()} 
+                initialLikeCount={post.like_count || 0} 
+                initialIsLiked={isLiked}
+                variant="ghost"
+                size="sm"
+                showCount
+                className="text-gray-900"
+              />
+              <BookmarkButton
+                postId={post.id.toString()}
+                initialIsBookmarked={isBookmarked}
+                variant="ghost"
+                size="sm"
+                className="text-gray-900"
+              />
+            </div>
           </div>
 
           {/* Description */}
@@ -129,13 +140,12 @@ export function PostPreviewSheet({ post, isLiked = false, onClose }: PostPreview
         </div>
 
         {/* Action Buttons */}
-        <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100 space-y-3">
+        <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100">
           <Link href={`/posts/${post.id}`}>
             <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
               View Full Details
             </Button>
           </Link>
-          <Button variant="ghost" className="w-full h-10 text-xs text-gray-400">Save to Bookmarks</Button>
         </div>
       </div>
     </div>

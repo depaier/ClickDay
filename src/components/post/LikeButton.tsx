@@ -85,7 +85,7 @@ export function LikeButton({
         className={cn(
           "rounded-full transition-all duration-300",
           isLiked && "text-red-500 hover:text-red-600",
-          !isLiked && "text-white hover:text-red-400"
+          !isLiked && "text-inherit opacity-70 hover:opacity-100 hover:text-red-400"
         )}
       >
         <Heart 
