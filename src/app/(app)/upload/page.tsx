@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { UploadCloud, Camera, MapPin, X } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -30,6 +30,17 @@ interface ExifData {
   iso?: number;
 }
 
+const BRAND_MAPPING: Record<string, string> = {
+  "apple": "iphone",
+  "samsung": "samsung",
+  "sony": "sony",
+  "canon": "canon",
+  "fujifilm": "fujifilm",
+  "nikon": "nikon",
+  "leica": "leica",
+  "hasselblad": "hasselblad",
+};
+
 export default function UploadPage() {
   const { language } = useLanguage();
   const t = translations[language].upload;
@@ -44,6 +55,47 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [locationName, setLocationName] = useState("");
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState<string>("");
+  const [cameraBrand, setCameraBrand] = useState<string | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!location) {
+      setRegion(null);
+      return;
+    }
+
+    const detectRegion = async () => {
+      try {
+        const response = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lng}&localityLanguage=en`
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        if (data.countryCode !== "KR" && data.countryName !== "South Korea") {
+          setRegion(null);
+          return;
+        }
+
+        const province = (data.principalSubdivision || data.city || "").toLowerCase();
+        
+        if (province.includes("seoul")) setRegion("seoul");
+        else if (province.includes("gyeonggi")) setRegion("gyeonggi");
+        else if (province.includes("incheon")) setRegion("incheon");
+        else if (province.includes("gangwon")) setRegion("gangwon");
+        else if (province.includes("chungcheong")) setRegion("chungcheong");
+        else if (province.includes("jeolla")) setRegion("jeolla");
+        else if (province.includes("gyeongsang")) setRegion("gyeongsang");
+        else if (province.includes("jeju")) setRegion("jeju");
+        
+      } catch (e) {
+        console.error("Auto region detection failed", e);
+      }
+    };
+
+    detectRegion();
+  }, [location]);
   const [isConverting, setIsConverting] = useState(false);
 
 
@@ -72,6 +124,29 @@ export default function UploadPage() {
     });
 
     try {
+      const data = await exifr.parse(selectedFile, {
+        gps: true,
+        tiff: true,
+      });
+      
+      if (data) {
+        const make = data.Make?.toLowerCase() || "";
+        let brand = null;
+        for (const [key, value] of Object.entries(BRAND_MAPPING)) {
+          if (make.includes(key)) {
+            brand = value;
+            break;
+          }
+        }
+        setCameraBrand(brand);
+
+        setExif({
+          make: data.Make,
+          model: data.Model,
+          lens: data.LensModel || data.LensInfo,
+          fNumber: data.FNumber ? Math.round(data.FNumber * 100) / 100 : undefined,
+          exposureTime: data.ExposureTime ? `1/${Math.round(1 / data.ExposureTime)}` : undefined,
+          iso: data.ISO,
       // 1. Parse EXIF (Isolate this so if it fails, we still try to convert/upload)
       try {
         console.log("Attempting to parse EXIF (Attempt 1)...");
@@ -289,6 +364,8 @@ export default function UploadPage() {
         .getPublicUrl(uploadData.path);
 
       // 3. DB 데이터 삽입
+      const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== "");
+
       const { error: dbError } = await supabase.from('posts').insert({
         user_id: user.id,
         latitude: location.lat,
@@ -300,6 +377,9 @@ export default function UploadPage() {
         shutter_speed: exif?.exposureTime,
         iso: exif?.iso,
         description: description,
+        tags: tagArray,
+        camera_brand: cameraBrand,
+        region: region,
       });
 
       if (dbError) throw dbError;
@@ -387,6 +467,50 @@ export default function UploadPage() {
             placeholder="Share your story..."
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors resize-none"
           />
+        </div>
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Tags (comma separated)</label>
+          <input 
+            type="text" 
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="e.g. landscape, night, seoul"
+            className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Camera Brand</label>
+            <select 
+              value={cameraBrand || ""} 
+              onChange={(e) => setCameraBrand(e.target.value || null)}
+              className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
+            >
+              <option value="">None / Auto</option>
+              {Object.entries(BRAND_MAPPING).map(([key, value]) => (
+                <option key={value} value={value}>{value.charAt(0).toUpperCase() + value.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Region (Korea)</label>
+            <select 
+              value={region || ""} 
+              onChange={(e) => setRegion(e.target.value || null)}
+              className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
+            >
+              <option value="">None / Auto</option>
+              <option value="seoul">Seoul (서울)</option>
+              <option value="gyeonggi">Gyeonggi (경기)</option>
+              <option value="incheon">Incheon (인천)</option>
+              <option value="gangwon">Gangwon (강원)</option>
+              <option value="chungcheong">Chungcheong (충청)</option>
+              <option value="jeolla">Jeolla (전라)</option>
+              <option value="gyeongsang">Gyeongsang (경상)</option>
+              <option value="jeju">Jeju (제주)</option>
+            </select>
+          </div>
         </div>
       </div>
 
