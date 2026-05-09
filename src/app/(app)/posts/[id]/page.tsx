@@ -126,7 +126,7 @@ export default async function PostDetailPage({ params }: PageProps) {
                 postId={id} 
                 initialLikeCount={post.like_count || 0} 
                 initialIsLiked={isLiked}
-                variant="outline"
+                variant="ghost"
                 size="default"
                 showCount
                 className="bg-white/5 border-white/10 px-4 py-1 h-10 rounded-full"
