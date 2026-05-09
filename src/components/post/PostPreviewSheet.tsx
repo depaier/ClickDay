@@ -1,6 +1,9 @@
 import React from "react";
-import { X, MapPin, Camera, Aperture, Clock, Hash } from "lucide-react";
+import { X, MapPin, Camera, Aperture, Clock, Hash, Edit, Trash2 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { useAuth } from "../providers/AuthProvider";
+import { DeletePostButton } from "./DeletePostButton";
+import Link from "next/link";
 
 interface Post {
   id: string | number;
@@ -13,6 +16,9 @@ interface Post {
   shutter_speed?: string;
   iso?: number;
   description?: string;
+  user_id?: string;
+  profile_id?: string;
+  created_at?: string;
   profiles?: {
     username: string;
     avatar_url: string;
@@ -33,7 +39,7 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
     <div className="absolute right-0 top-[60px] bottom-0 w-full md:w-[400px] bg-white text-black shadow-2xl z-50 transform transition-transform duration-300 translate-x-0 border-l border-gray-200 overflow-y-auto">
       <div className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 flex justify-between items-center p-4 border-b border-gray-200">
         <h2 className="font-heading text-lg font-bold tracking-[0.1em] uppercase">Photo Details</h2>
-        <button onClick={onClose} className="p-2 hover:bg-[var(--button-bg-hover)] transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-gray-100 transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -98,19 +104,6 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
             </div>
           </div>
 
-          {/* Recipe (if exists) */}
-          {post.recipe_name && (
-            <div className="space-y-4">
-              <h3 className="font-heading text-xs text-gray-400 tracking-[0.167em] uppercase border-b border-gray-200 pb-2">Edit Recipe</h3>
-              <div className="bg-[var(--button-bg)] p-4 text-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold">{post.recipe_name}</span>
-                  <span className="text-xs px-2 py-1 bg-white border border-gray-200 uppercase font-heading">{post.recipe_type || "Custom"}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Tags */}
           <div className="flex flex-wrap gap-2 pt-2">
             {(post.tags || ["Seoul", "NightScape", "SonyAlpha"]).map((tag, idx) => (
@@ -122,9 +115,14 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
 
         </div>
 
-        {/* Action Button */}
-        <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100">
-          <Button variant="accent" className="w-full h-12 text-sm">Save to Bookmarks</Button>
+        {/* Action Buttons */}
+        <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100 space-y-3">
+          <Link href={`/posts/${post.id}`}>
+            <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
+              View Full Details
+            </Button>
+          </Link>
+          <Button variant="ghost" className="w-full h-10 text-xs text-gray-400">Save to Bookmarks</Button>
         </div>
       </div>
     </div>

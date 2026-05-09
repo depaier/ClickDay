@@ -8,7 +8,7 @@ import { translations } from "@/constants/translations";
 import exifr from "exifr";
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
-import { createBrowserClient } from "@supabase/ssr";
+import { supabase } from "@/lib/supabase/client";
 
 interface ExifData {
   make?: string;
@@ -34,11 +34,6 @@ export default function UploadPage() {
   const [description, setDescription] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const handleFile = useCallback(async (selectedFile: File) => {
     if (!selectedFile.type.startsWith("image/")) return;
@@ -124,6 +119,9 @@ export default function UploadPage() {
         .getPublicUrl(uploadData.path);
 
       // 3. DB 데이터 삽입
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Attempting to upload with User ID:", user?.id);
+      
       const { error: dbError } = await supabase.from('posts').insert({
         latitude: location.lat,
         longitude: location.lng,
@@ -134,6 +132,7 @@ export default function UploadPage() {
         shutter_speed: exif?.exposureTime,
         iso: exif?.iso,
         description: description,
+        user_id: user?.id, // 작성자 ID 추가
       });
 
       if (dbError) throw dbError;
