@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Menu, Search } from "lucide-react";
-import { cn } from "../ui/Button";
+import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "../ui/LanguageSwitcher";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useAuth } from "@/components/providers/AuthProvider";

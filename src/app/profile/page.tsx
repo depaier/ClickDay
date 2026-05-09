@@ -5,7 +5,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 import { Camera, MapPin, Grid, Heart, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

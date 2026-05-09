@@ -3,6 +3,7 @@ import { X, MapPin, Camera, Aperture, Clock, Hash, Edit, Trash2 } from "lucide-r
 import { Button } from "../ui/Button";
 import { useAuth } from "../providers/AuthProvider";
 import { DeletePostButton } from "./DeletePostButton";
+import { LikeButton } from "./LikeButton";
 import Link from "next/link";
 
 interface Post {
@@ -29,10 +30,11 @@ interface Post {
 
 interface PostPreviewSheetProps {
   post: Post;
+  isLiked?: boolean;
   onClose: () => void;
 }
 
-export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
+export function PostPreviewSheet({ post, isLiked = false, onClose }: PostPreviewSheetProps) {
   if (!post) return null;
 
   return (
@@ -57,14 +59,25 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
 
         <div className="p-6 space-y-8">
           {/* Photographer info */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-              <img src={post.profiles?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} alt="avatar" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                <img src={post.profiles?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} alt="avatar" />
+              </div>
+              <div>
+                <p className="font-bold text-sm">@{post.profiles?.username || "photographer_kr"}</p>
+                <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-bold text-sm">@{post.profiles?.username || "photographer_kr"}</p>
-              <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
-            </div>
+            <LikeButton 
+              postId={post.id.toString()} 
+              initialLikeCount={post.like_count || 0} 
+              initialIsLiked={isLiked}
+              variant="outline"
+              size="sm"
+              showCount
+              className="bg-gray-50 border-gray-200"
+            />
           </div>
 
           {/* Description */}
