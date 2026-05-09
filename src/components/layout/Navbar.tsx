@@ -12,7 +12,7 @@ import { translations } from "@/constants/translations";
 export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "sticky" }) {
   const { language } = useLanguage();
   const t = translations[language].nav;
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   return (
     <nav
@@ -46,7 +46,9 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
         
         {user ? (
           <div className="flex items-center gap-6">
-            <Link href="/profile" className="hover:text-[var(--accent)] transition-colors">{t.profile}</Link>
+            <Link href="/profile" className="hover:text-[var(--accent)] transition-colors">
+              {profile?.username || t.profile}
+            </Link>
             <button 
               onClick={() => signOut()}
               className="hover:text-[var(--accent)] transition-colors uppercase"

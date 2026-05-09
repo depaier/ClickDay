@@ -9,6 +9,8 @@ import exifr from "exifr";
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
 import { supabase } from "@/lib/supabase/client";
+import { createBrowserClient } from "@supabase/ssr";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface ExifData {
   make?: string;
@@ -22,6 +24,7 @@ interface ExifData {
 export default function UploadPage() {
   const { language } = useLanguage();
   const t = translations[language].upload;
+  const { user } = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -97,8 +100,8 @@ export default function UploadPage() {
   };
 
   const handleSubmit = async () => {
-    if (!file || !location) {
-      alert("Please select a photo and location.");
+    if (!file || !location || !user) {
+      alert("Please select a photo, location, and ensure you are logged in.");
       return;
     }
 
@@ -123,6 +126,7 @@ export default function UploadPage() {
       console.log("Attempting to upload with User ID:", user?.id);
       
       const { error: dbError } = await supabase.from('posts').insert({
+        user_id: user.id,
         latitude: location.lat,
         longitude: location.lng,
         location_name: locationName || exif?.model || "Unknown Location",

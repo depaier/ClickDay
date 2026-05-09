@@ -50,6 +50,12 @@ export const translations = {
       lens: "Lens",
       settings: "Settings",
       mapPreview: "Map Preview (Needs GPS Data)",
+    },
+    profile: {
+      myPosts: "My Photos",
+      stats: "Stats",
+      editProfile: "Edit Profile",
+      bio: "No bio yet.",
     }
   },
   ko: {
@@ -103,6 +109,12 @@ export const translations = {
       lens: "렌즈",
       settings: "설정",
       mapPreview: "지도 미리보기 (GPS 데이터 필요)",
+    },
+    profile: {
+      myPosts: "내 사진",
+      stats: "통계",
+      editProfile: "프로필 수정",
+      bio: "소개글이 없습니다.",
     }
   }
 };
