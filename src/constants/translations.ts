@@ -8,6 +8,7 @@ export const translations = {
       bookmarks: "Bookmarks",
       settings: "Settings",
       logout: "Logout",
+      profile: "Profile",
     },
     auth: {
       login: "Login",
@@ -18,11 +19,13 @@ export const translations = {
       username: "Username",
       email: "Email",
       password: "Password",
+      confirmPassword: "Confirm Password",
       signIn: "Sign In",
       signInShort: "Log in",
       noAccount: "Don't have an account?",
       haveAccount: "Already have an account?",
       emailPlaceholder: "your@email.com",
+      usernamePlaceholder: "username",
     },
     home: {
       heroTitle: "ClickDay",
@@ -58,6 +61,7 @@ export const translations = {
       bookmarks: "북마크",
       settings: "설정",
       logout: "로그아웃",
+      profile: "프로필",
     },
     auth: {
       login: "로그인",
@@ -68,11 +72,13 @@ export const translations = {
       username: "사용자 이름",
       email: "이메일",
       password: "비밀번호",
+      confirmPassword: "비밀번호 확인",
       signIn: "로그인",
       signInShort: "로그인",
       noAccount: "계정이 없으신가요?",
       haveAccount: "이미 계정이 있으신가요?",
       emailPlaceholder: "이메일을 입력하세요",
+      usernamePlaceholder: "사용자 아이디",
     },
     home: {
       heroTitle: "클릭데이",
