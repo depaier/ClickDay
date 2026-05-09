@@ -90,14 +90,13 @@ function FilterDrawerContent() {
                     key={id}
                     onClick={() => updateParam("region", currentRegion === id ? null : id)}
                     className={cn(
-                      "flex items-center justify-between px-4 py-3 text-[10px] tracking-widest uppercase border transition-all duration-300",
+                      "flex items-center justify-center px-4 py-3 text-[10px] tracking-widest uppercase border transition-all duration-300",
                       currentRegion === id 
                         ? "bg-[var(--accent)] border-[var(--accent)] text-black font-bold shadow-[0_0_15px_rgba(var(--accent-rgb),0.2)]" 
                         : "bg-white/5 border-white/5 text-gray-400 hover:border-white/20 hover:bg-white/10"
                     )}
                   >
                     {(t.regions as any)[id]}
-                    {currentRegion === id && <Check size={12} />}
                   </button>
                 ))}
               </div>
@@ -110,21 +109,44 @@ function FilterDrawerContent() {
                 {t.brands.title}
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {brands.map((id) => (
-                  <button
-                    key={id}
-                    onClick={() => updateParam("brand", currentBrand === id ? null : id)}
-                    className={cn(
-                      "flex items-center justify-between px-4 py-3 text-[10px] tracking-widest uppercase border transition-all duration-300",
-                      currentBrand === id 
-                        ? "bg-[var(--accent)] border-[var(--accent)] text-black font-bold shadow-[0_0_15px_rgba(var(--accent-rgb),0.2)]" 
-                        : "bg-white/5 border-white/5 text-gray-400 hover:border-white/20 hover:bg-white/10"
-                    )}
-                  >
-                    {(t.brands as any)[id]}
-                    {currentBrand === id && <Check size={12} />}
-                  </button>
-                ))}
+                {brands.map((id) => {
+                  const logoPath = {
+                    iphone: '/logos/iphone.svg',
+                    samsung: '/logos/samsung.svg',
+                    canon: '/logos/canon.svg',
+                    fujifilm: '/logos/fuji.svg',
+                    hasselblad: '/logos/hassel.svg',
+                    leica: '/logos/leica.svg',
+                    nikon: '/logos/nikon.svg',
+                    sony: '/logos/sony.svg'
+                  }[id as string];
+
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => updateParam("brand", currentBrand === id ? null : id)}
+                      className={cn(
+                        "relative group flex items-center justify-center p-3 min-h-[64px] text-[10px] tracking-widest uppercase border transition-all duration-300",
+                        currentBrand === id 
+                          ? "bg-[var(--accent)] border-[var(--accent)] text-black font-bold shadow-[0_0_15px_rgba(var(--accent-rgb),0.2)]" 
+                          : "bg-white/5 border-white/5 text-gray-400 hover:border-white/20 hover:bg-white/10"
+                      )}
+                    >
+                      {logoPath ? (
+                        <img 
+                          src={logoPath} 
+                          alt={(t.brands as any)[id]} 
+                          className={cn(
+                            "h-8 w-auto object-contain transition-all",
+                            currentBrand === id ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+                          )}
+                        />
+                      ) : (
+                        <span>{(t.brands as any)[id]}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
