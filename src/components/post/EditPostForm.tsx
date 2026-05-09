@@ -7,6 +7,8 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
 
 interface EditPostFormProps {
   post: any;
@@ -14,6 +16,9 @@ interface EditPostFormProps {
 
 export function EditPostForm({ post }: EditPostFormProps) {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language].upload;
+  
   const [locationName, setLocationName] = useState(post.location_name || "");
   const [description, setDescription] = useState(post.description || "");
   const [location, setLocation] = useState({ lat: post.latitude, lng: post.longitude });
@@ -53,14 +58,15 @@ export function EditPostForm({ post }: EditPostFormProps) {
 
   return (
     <div className="space-y-8">
-      {/* Image Preview (Read-only for now) */}
+      {/* Image Preview */}
       <div className="relative aspect-video w-full bg-[#111] rounded-sm overflow-hidden border border-white/5">
         <img src={post.image_url} alt="Post" className="w-full h-full object-contain" />
       </div>
 
+      {/* Input Fields */}
       <div className="space-y-6">
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Location Name</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.photoTitle}</label>
           <input 
             type="text" 
             value={locationName}
@@ -69,7 +75,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Description</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.description}</label>
           <textarea 
             rows={4}
             value={description}
@@ -80,15 +86,15 @@ export function EditPostForm({ post }: EditPostFormProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* EXIF Data (Read-only) */}
+        {/* EXIF Data */}
         <div>
           <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm">
             <Camera className="w-4 h-4 mr-2 text-[var(--accent)]" />
-            Camera Settings
+            {t.exifTitle}
           </h2>
           <div className="bg-[#111] p-6 space-y-4 text-sm border border-white/5">
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-gray-500">Model</span>
+              <span className="text-gray-500">{t.camera}</span>
               <span>{post.camera_model || "-"}</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
@@ -106,7 +112,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
         <div>
           <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm">
             <MapPin className="w-4 h-4 mr-2 text-[var(--accent)]" />
-            Location
+            {t.locationTitle}
           </h2>
           <div className="bg-[#111] h-[200px] border border-white/5 relative overflow-hidden">
             <UploadMap location={location} onLocationChange={setLocation} />
@@ -120,6 +126,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
         </div>
       </div>
 
+      {/* Actions */}
       <div className="flex justify-between items-center pt-8 border-t border-white/10">
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" /> Cancel

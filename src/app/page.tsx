@@ -31,7 +31,7 @@ export default function Home() {
           tags,
           recipe_name,
           recipe_type,
-          profiles(username, avatar_url)
+          profiles:user_id(username, avatar_url)
         `);
         
       if (data) {

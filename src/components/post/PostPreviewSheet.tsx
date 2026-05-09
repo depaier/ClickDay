@@ -1,15 +1,14 @@
 import React from "react";
-import { X, MapPin, Camera, Aperture, Clock, Hash, Edit, Trash2 } from "lucide-react";
+import { X, MapPin, Camera, Aperture, Clock, Hash } from "lucide-react";
 import { Button } from "../ui/Button";
-import { useAuth } from "../providers/AuthProvider";
-import { DeletePostButton } from "./DeletePostButton";
 import Link from "next/link";
+import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 
 interface Post {
   id: string | number;
-  lat: number;
-  lng: number;
-  title: string;
+  latitude: number;
+  longitude: number;
+  location_name: string;
   image_url?: string;
   camera_model?: string;
   aperture?: string | number;
@@ -49,8 +48,8 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
         <div className="w-full h-[300px] bg-black flex items-center justify-center overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
-            src={post.image_url || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32"} 
-            alt={post.title || "Photography"} 
+            src={post.image_url} 
+            alt={post.location_name || "Photography"} 
             className="w-full h-full object-cover"
           />
         </div>
@@ -58,18 +57,29 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
         <div className="p-6 space-y-8">
           {/* Photographer info */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-              <img src={post.profiles?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} alt="avatar" />
-            </div>
-            <div>
-              <p className="font-bold text-sm">@{post.profiles?.username || "photographer_kr"}</p>
-              <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
-            </div>
+            {(() => {
+              const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+              return (
+                <>
+                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gray-800" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">@{profile?.username || "unknown"}</p>
+                    <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Description */}
           <p className="text-sm text-gray-700 leading-relaxed">
-            {post.description || "Beautiful sunset shot from the Seoul tower. Used my favorite Fujifilm recipe for these colors."}
+            {post.description || "No description provided."}
           </p>
 
           {/* EXIF Data */}
@@ -79,11 +89,11 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2 text-gray-700">
                 <Camera className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span>{post.camera_model || "Unknown Camera"}</span>
+                <span className="truncate">{post.camera_model || "Unknown"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <Aperture className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span>{post.focal_length ? `${post.focal_length}mm` : "Unknown Lens"}</span>
+                <span>{post.focal_length ? `${post.focal_length}mm` : "Unknown"}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <div className="font-bold font-mono text-[10px] w-4 text-center text-[var(--accent-dark)]">F</div>
@@ -99,19 +109,25 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <MapPin className="w-4 h-4 text-[var(--accent-dark)]" />
-                <span className="truncate max-w-[100px]">{post.title || "Unknown Location"}</span>
+                <GeocodedAddress 
+                  latitude={post.latitude} 
+                  longitude={post.longitude} 
+                  className="truncate max-w-[120px]"
+                />
               </div>
             </div>
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-2 pt-2">
-            {(post.tags || ["Seoul", "NightScape", "SonyAlpha"]).map((tag, idx) => (
-              <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1">
-                <Hash className="w-3 h-3 mr-1"/>{tag}
-              </span>
-            ))}
-          </div>
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {post.tags.map((tag, idx) => (
+                <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1">
+                  <Hash className="w-3 h-3 mr-1"/>{tag}
+                </span>
+              ))}
+            </div>
+          )}
 
         </div>
 

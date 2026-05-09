@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase/client";
 import { Camera, MapPin, Grid, Heart, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 
 export default function ProfilePage() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -134,7 +135,7 @@ export default function ProfilePage() {
             {posts.map((post) => (
               <Link 
                 key={post.id} 
-                href={`/post/${post.id}`}
+                href={`/posts/${post.id}`}
                 className="relative aspect-square group overflow-hidden bg-zinc-900 border border-white/5"
               >
                 <Image 
@@ -150,10 +151,10 @@ export default function ProfilePage() {
                       <span className="text-xs font-heading">0</span>
                     </div>
                   </div>
-                  {post.location_name && (
+                  {(post.latitude && post.longitude) && (
                     <div className="mt-2 flex items-center gap-1 text-[10px] uppercase tracking-tighter text-zinc-300">
                       <MapPin size={10} />
-                      {post.location_name}
+                      <GeocodedAddress latitude={post.latitude} longitude={post.longitude} />
                     </div>
                   )}
                 </div>

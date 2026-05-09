@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import { DeletePostButton } from "@/components/post/DeletePostButton";
 import Link from "next/link";
+import { PostDetailMap } from "@/components/map/PostDetailMap";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -96,24 +97,11 @@ export default async function PostDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Action Buttons for Owner */}
-        {isOwner && (
-          <div className="flex gap-4 p-4 bg-white/5 rounded-sm border border-white/10">
-            <Link href={`/posts/${id}/edit`} className="flex-1">
-              <Button variant="accent" className="w-full h-12 flex items-center justify-center gap-2">
-                <Edit className="w-4 h-4" /> Edit Post
-              </Button>
-            </Link>
-            <div className="flex-1">
-              <DeletePostButton postId={id} imageUrl={post.image_url} />
-            </div>
-          </div>
-        )}
 
         {/* Description */}
         <div>
           <h1 className="text-xl font-heading tracking-wider uppercase mb-2">
-            {post.location_name || "Untitled"}
+            {post.location_name && post.location_name !== post.camera_model ? post.location_name : "Untitled"}
           </h1>
           <p className="text-gray-400 text-sm leading-relaxed mb-4">
             {post.description || "No description provided."}
@@ -165,13 +153,24 @@ export default async function PostDetailPage({ params }: PageProps) {
             <MapPin className="w-4 h-4 mr-2" />
             Location
           </h3>
-          <div className="mb-4">{post.location_name}</div>
-          <div className="bg-[#222] h-[150px] flex flex-col items-center justify-center text-gray-500 border border-white/5 rounded-sm overflow-hidden">
-             {/* 지도 컴포넌트 추가 가능 */}
-             <div className="text-xs uppercase tracking-widest opacity-50">Map Data Available</div>
-             <div className="text-[10px] font-mono mt-1 opacity-30">{post.latitude}, {post.longitude}</div>
+          <div className="h-[250px] overflow-hidden">
+             <PostDetailMap latitude={post.latitude} longitude={post.longitude} />
           </div>
         </div>
+
+        {/* Action Buttons for Owner */}
+        {isOwner && (
+          <div className="flex gap-4 p-4 bg-white/5 rounded-sm border border-white/10 mt-auto">
+            <Link href={`/posts/${id}/edit`} className="flex-1">
+              <Button variant="accent" className="w-full h-12 flex items-center justify-center gap-2">
+                <Edit className="w-4 h-4" /> Edit Post
+              </Button>
+            </Link>
+            <div className="flex-1">
+              <DeletePostButton postId={id} imageUrl={post.image_url} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

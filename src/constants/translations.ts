@@ -50,6 +50,8 @@ export const translations = {
       lens: "Lens",
       settings: "Settings",
       mapPreview: "Map Preview (Needs GPS Data)",
+      photoTitle: "Photo Title",
+      description: "Description",
     },
     profile: {
       myPosts: "My Photos",
@@ -109,6 +111,8 @@ export const translations = {
       lens: "렌즈",
       settings: "설정",
       mapPreview: "지도 미리보기 (GPS 데이터 필요)",
+      photoTitle: "사진 제목",
+      description: "설명글",
     },
     profile: {
       myPosts: "내 사진",
