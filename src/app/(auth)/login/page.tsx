@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 export default function LoginPage() {
   const { language } = useLanguage();
