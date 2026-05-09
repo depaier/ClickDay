@@ -5,6 +5,8 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/post/PostCard";
+import { MasonryGrid } from "@/components/layout/MasonryGrid";
+
 
 interface Post {
   id: string;
@@ -102,13 +104,14 @@ export default function FeedPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MasonryGrid>
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm" />
+            <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm mb-6" />
           ))}
-        </div>
+        </MasonryGrid>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MasonryGrid>
+
           {posts.map((post) => (
             <PostCard 
               key={post.id} 
@@ -122,8 +125,9 @@ export default function FeedPage() {
               <p className="text-gray-500 font-heading tracking-widest uppercase">No posts found</p>
             </div>
           )}
-        </div>
+        </MasonryGrid>
       )}
+
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Grid, Bookmark, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { MasonryGrid } from "@/components/layout/MasonryGrid";
+
 
 export default function UserProfilePage() {
   return (
@@ -46,22 +48,22 @@ export default function UserProfilePage() {
         </button>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-3 gap-1 md:gap-4">
+      <MasonryGrid>
         {[1,2,3,4,5,6].map((i) => (
-          <Link href={`/posts/${i}`} key={i} className="aspect-square bg-[#111] relative group border border-white/5">
+          <Link href={`/posts/${i}`} key={i} className="block mb-6 bg-[#111] relative group border border-white/5 overflow-hidden rounded-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={`https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80&sig=${i}`}
               alt={`Post ${i}`}
-              className="w-full h-full object-cover"
+              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
               <span className="font-heading tracking-widest uppercase text-sm text-white drop-shadow-md">View</span>
             </div>
           </Link>
         ))}
-      </div>
+      </MasonryGrid>
+
     </div>
   );
 }
