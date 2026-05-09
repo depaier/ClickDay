@@ -11,7 +11,7 @@ interface LikeButtonProps {
   initialLikeCount: number;
   initialIsLiked: boolean;
   size?: "default" | "sm" | "icon" | "lg";
-  variant?: "ghost" | "outline" | "accent";
+  variant?: "primary" | "ghost" | "ghostDark" | "accent" | "store";
   className?: string;
   showCount?: boolean;
 }
@@ -29,6 +29,11 @@ export function LikeButton({
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    setIsLiked(initialIsLiked);
+    setLikeCount(initialLikeCount);
+  }, [postId, initialIsLiked, initialLikeCount]);
 
   const handleToggleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,32 +80,36 @@ export function LikeButton({
     }
   };
 
-  return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <Button
-        variant={variant}
-        size={size}
-        onClick={handleToggleLike}
-        disabled={isLoading}
+  const buttonContent = (
+    <>
+      <Heart 
         className={cn(
-          "rounded-full transition-all duration-300",
-          isLiked && "text-red-500 hover:text-red-600",
-          !isLiked && "text-inherit opacity-70 hover:opacity-100 hover:text-red-400"
-        )}
-      >
-        <Heart 
-          className={cn(
-            "w-5 h-5 transition-transform duration-300",
-            isLiked && "fill-current scale-110",
-            isLoading && "opacity-50"
-          )} 
-        />
-      </Button>
+          "w-5 h-5 transition-transform duration-300",
+          isLiked && "fill-current scale-110",
+          isLoading && "opacity-50"
+        )} 
+      />
       {showCount && (
-        <span className="text-sm font-mono tracking-tighter text-gray-400">
+        <span className="text-sm font-mono tracking-tighter ml-2">
           {likeCount}
         </span>
       )}
-    </div>
+    </>
+  );
+
+  return (
+    <Button
+      variant={variant}
+      size={showCount ? "default" : size}
+      onClick={handleToggleLike}
+      disabled={isLoading}
+      className={cn(
+        "rounded-full transition-all duration-300 border-white/10",
+        isLiked ? "text-red-500 hover:text-red-600 border-red-500/20" : "text-gray-400 hover:text-red-400 hover:border-red-400/20",
+        className
+      )}
+    >
+      {buttonContent}
+    </Button>
   );
 }

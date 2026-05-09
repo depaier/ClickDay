@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
@@ -10,7 +10,7 @@ interface BookmarkButtonProps {
   postId: string;
   initialIsBookmarked: boolean;
   size?: "default" | "sm" | "icon" | "lg";
-  variant?: "ghost" | "outline" | "accent";
+  variant?: "primary" | "ghost" | "ghostDark" | "accent" | "store";
   className?: string;
   iconClassName?: string;
 }
@@ -26,6 +26,10 @@ export function BookmarkButton({
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    setIsBookmarked(initialIsBookmarked);
+  }, [postId, initialIsBookmarked]);
 
   const handleToggleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,9 +81,8 @@ export function BookmarkButton({
       onClick={handleToggleBookmark}
       disabled={isLoading}
       className={cn(
-        "rounded-full transition-all duration-300",
-        isBookmarked && "text-yellow-500 hover:text-yellow-600",
-        !isBookmarked && "text-gray-400 hover:text-yellow-400",
+        "rounded-full transition-all duration-300 border-white/10",
+        isBookmarked ? "text-yellow-500 hover:text-yellow-600 border-yellow-500/20" : "text-gray-400 hover:text-yellow-400 hover:border-yellow-400/20",
         className
       )}
     >
