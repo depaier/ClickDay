@@ -37,6 +37,37 @@ export const translations = {
       subtitle: "Discover latest photos around the world",
       latest: "Latest",
       popular: "Popular",
+      filters: {
+        all: "All",
+        clicking: "Clicking",
+        popular: "Popular",
+        night: "Night",
+        landscape: "Landscape",
+        street: "Street",
+        portrait: "Portrait",
+        brands: {
+          title: "Brands",
+          iphone: "iPhone",
+          samsung: "Samsung",
+          sony: "Sony",
+          canon: "Canon",
+          fujifilm: "Fujifilm",
+          nikon: "Nikon",
+          leica: "Leica",
+          hasselblad: "Hasselblad",
+        },
+        regions: {
+          title: "Regions",
+          seoul: "Seoul",
+          gyeonggi: "Gyeonggi",
+          incheon: "Incheon",
+          gangwon: "Gangwon",
+          chungcheong: "Chungcheong",
+          jeolla: "Jeolla",
+          gyeongsang: "Gyeongsang",
+          jeju: "Jeju",
+        }
+      }
     },
     upload: {
       title: "Upload Photo",
@@ -59,6 +90,11 @@ export const translations = {
       editProfile: "Edit Profile",
       bio: "No bio yet.",
       savedPosts: "Saved Photos",
+      follow: "Click",
+      following: "Clicking",
+      followers: "Clickers",
+      unclick: "Unclick",
+      posts: "Posts",
     }
   },
   ko: {
@@ -99,6 +135,37 @@ export const translations = {
       subtitle: "전 세계의 최신 사진을 찾아보세요",
       latest: "최신순",
       popular: "인기순",
+      filters: {
+        all: "전체",
+        clicking: "클리킹",
+        popular: "인기",
+        night: "야경",
+        landscape: "풍경",
+        street: "스트릿",
+        portrait: "인물",
+        brands: {
+          title: "브랜드",
+          iphone: "아이폰",
+          samsung: "삼성",
+          sony: "소니",
+          canon: "캐논",
+          fujifilm: "후지필름",
+          nikon: "니콘",
+          leica: "라이카",
+          hasselblad: "핫셀블라드",
+        },
+        regions: {
+          title: "지역",
+          seoul: "서울",
+          gyeonggi: "경기",
+          incheon: "인천",
+          gangwon: "강원",
+          chungcheong: "충청",
+          jeolla: "전라",
+          gyeongsang: "경상",
+          jeju: "제주",
+        }
+      }
     },
     upload: {
       title: "사진 업로드",
@@ -121,6 +188,11 @@ export const translations = {
       editProfile: "프로필 수정",
       bio: "소개글이 없습니다.",
       savedPosts: "저장된 사진",
+      follow: "클릭",
+      following: "클리킹",
+      followers: "클리커",
+      unclick: "클릭 취소",
+      posts: "게시물",
     }
   }
 };

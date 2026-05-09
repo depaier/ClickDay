@@ -38,17 +38,20 @@ export function GeocodedAddress({ latitude, longitude, className, fallback }: Ge
         const data = await response.json();
         if (data) {
           const country = data.countryName;
-          const cityName = data.city || data.locality || data.principalSubdivision;
+          const province = data.principalSubdivision;
+          const cityName = data.city || data.locality;
           
           let result = "";
           if (language === "ko") {
             const parts = [];
             if (country) parts.push(country);
-            if (cityName && cityName !== country) parts.push(cityName);
+            if (province && province !== country) parts.push(province);
+            if (cityName && cityName !== province && cityName !== country) parts.push(cityName);
             result = parts.join(", ");
           } else {
             const parts = [];
-            if (cityName && cityName !== country) parts.push(cityName);
+            if (cityName && cityName !== province && cityName !== country) parts.push(cityName);
+            if (province && province !== country) parts.push(province);
             if (country) parts.push(country);
             result = parts.join(", ");
           }

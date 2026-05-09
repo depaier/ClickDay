@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/post/PostCard";
+import { FilterChips } from "@/components/feed/FilterChips";
+import { FilterDrawer } from "@/components/feed/FilterDrawer";
+import { useSearchParams, useRouter } from "next/navigation";
+import { MasonryGrid } from "@/components/layout/MasonryGrid";
+
 
 interface Post {
   id: string;
@@ -13,31 +18,80 @@ interface Post {
   like_count: number;
   user_id: string;
   created_at: string;
+  profiles?: {
+    username: string;
+    avatar_url: string;
+  };
 }
 
 const supabase = createClient();
 
-export default function FeedPage() {
+function FeedContent() {
   const { language } = useLanguage();
   const t = translations[language].feed;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get("filter") || "all";
+  const sortParam = searchParams.get("sort") || "latest";
+  const regionParam = searchParams.get("region");
+  const brandParam = searchParams.get("brand");
+  
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<"latest" | "popular">("latest");
+
+  const handleSortChange = (newSort: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sort", newSort);
+    router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
+    console.log("FeedContent: Fetching with params:", { filterParam, sortParam, regionParam, brandParam });
     async function fetchFeed() {
       setIsLoading(true);
       try {
-        // Fetch posts
-        let query = supabase.from("posts").select("*");
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        let query = supabase.from("posts").select("*, profiles(username, avatar_url)");
 
-        if (filter === "latest") {
-          query = query.order("created_at", { ascending: false });
-        } else {
-          // For now, popular is also sorted by latest but could be liked_count in the future
+        // 1. 기본 필터링 로직 (All / Clicking)
+        if (filterParam === "clicking") {
+          if (!user) {
+            setPosts([]);
+            setIsLoading(false);
+            return;
+          }
+          const { data: followingData } = await supabase
+            .from("follows")
+            .select("following_id")
+            .eq("follower_id", user.id);
+          
+          const followingIds = followingData?.map(f => f.following_id) || [];
+          
+          if (followingIds.length > 0) {
+            query = query.in("user_id", followingIds);
+          } else {
+            setPosts([]);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // 2. 고급 필터링 로직 (Region / Brand)
+        if (regionParam) {
+          query = query.eq("region", regionParam);
+        }
+        if (brandParam) {
+          query = query.eq("camera_brand", brandParam);
+        }
+
+        // 3. 정렬 로직 (Sort)
+        if (sortParam === "popular") {
           query = query.order("like_count", { ascending: false });
+        } else {
+          query = query.order("created_at", { ascending: false });
         }
 
         const { data: postsData, error: postsError } = await query;
@@ -45,34 +99,27 @@ export default function FeedPage() {
         if (postsError) throw postsError;
         setPosts(postsData || []);
 
-        // Fetch current user's interactions if logged in
-        const { data: { user } } = await supabase.auth.getUser();
+        // 인터랙션 데이터 가져오기
         if (user) {
-          try {
-            const [likesRes, bookmarksRes] = await Promise.all([
-              supabase.from('likes').select('post_id').eq('user_id', user.id),
-              supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
-            ]);
-            
-            if (likesRes.data) {
-              setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
-            }
-            if (bookmarksRes.data) {
-              setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
-            }
-          } catch (interactionError) {
-            console.error("Background interaction fetch failed:", interactionError);
-          }
+          const [likesRes, bookmarksRes] = await Promise.all([
+            supabase.from('likes').select('post_id').eq('user_id', user.id),
+            supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
+          ]);
+          
+          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
+          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
         }
-      } catch (error) {
-        console.error("Error fetching feed:", error);
+      } catch (error: any) {
+        console.error("Error fetching feed details:", error.message || error);
+        // DB 스키마(컬럼)가 없어서 발생하는 에러일 경우를 대비해 데이터를 비워줍니다.
+        setPosts([]);
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchFeed();
-  }, [supabase, filter]);
+  }, [filterParam, sortParam, regionParam, brandParam]);
 
   return (
     <div>
@@ -81,34 +128,40 @@ export default function FeedPage() {
           <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">{t.title}</h1>
           <p className="text-gray-400 mt-2">{t.subtitle}</p>
         </div>
-        <div className="flex gap-6 font-heading tracking-widest text-sm uppercase">
-          <button 
-            onClick={() => setFilter("latest")}
-            className={`transition-colors pb-1 border-b ${
-              filter === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
-            }`}
-          >
-            {t.latest}
-          </button>
-          <button 
-            onClick={() => setFilter("popular")}
-            className={`transition-colors pb-1 border-b ${
-              filter === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
-            }`}
-          >
-            {t.popular}
-          </button>
+        <div className="flex items-center gap-6 font-heading tracking-widest text-[10px] uppercase">
+          <div className="flex gap-6 border-r border-white/10 pr-6 mr-2">
+            <button 
+              onClick={() => handleSortChange("latest")}
+              className={`transition-all duration-300 pb-1 border-b ${
+                sortParam === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+              }`}
+            >
+              {t.latest}
+            </button>
+            <button 
+              onClick={() => handleSortChange("popular")}
+              className={`transition-all duration-300 pb-1 border-b ${
+                sortParam === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+              }`}
+            >
+              {t.popular}
+            </button>
+          </div>
+          <FilterDrawer />
         </div>
       </div>
 
+      <FilterChips />
+
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MasonryGrid>
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm" />
+            <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm border border-white/5" />
           ))}
-        </div>
+        </MasonryGrid>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MasonryGrid>
+
           {posts.map((post) => (
             <PostCard 
               key={post.id} 
@@ -118,12 +171,26 @@ export default function FeedPage() {
             />
           ))}
           {posts.length === 0 && (
-            <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
-              <p className="text-gray-500 font-heading tracking-widest uppercase">No posts found</p>
+            <div className="col-span-full py-32 text-center border border-dashed border-white/10 rounded-sm bg-white/5">
+              <p className="text-gray-500 font-heading tracking-widest uppercase mb-2">No posts found</p>
+              <p className="text-xs text-gray-600">Try selecting a different filter</p>
             </div>
           )}
-        </div>
+        </MasonryGrid>
       )}
+
     </div>
+  );
+}
+
+export default function FeedPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <FeedContent />
+    </Suspense>
   );
 }

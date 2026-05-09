@@ -46,7 +46,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
         
         {user ? (
           <div className="flex items-center gap-6">
-            <Link href="/profile" className="hover:text-[var(--accent)] transition-colors">
+            <Link href={`/users/@${profile?.username}`} className="hover:text-[var(--accent)] transition-colors">
               {profile?.username || t.profile}
             </Link>
             <button 
