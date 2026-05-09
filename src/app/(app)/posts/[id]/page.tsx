@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import { DeletePostButton } from "@/components/post/DeletePostButton";
 import { LikeButton } from "@/components/post/LikeButton";
+import { BookmarkButton } from "@/components/post/BookmarkButton";
 import Link from "next/link";
 
 interface PageProps {
@@ -47,8 +48,8 @@ export default async function PostDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser();
   const isOwner = user?.id === post.user_id;
 
-  // Check if user liked the post
   let isLiked = false;
+  let isBookmarked = false;
   if (user) {
     const { data: likeData } = await supabase
       .from('likes')
@@ -57,6 +58,15 @@ export default async function PostDetailPage({ params }: PageProps) {
       .eq('user_id', user.id)
       .maybeSingle();
     isLiked = !!likeData;
+
+    // Check if user bookmarked the post
+    const { data: bookmarkData } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('post_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    isBookmarked = !!bookmarkData;
   }
 
   console.log("SERVER SIDE DEBUG:");
@@ -133,9 +143,14 @@ export default async function PostDetailPage({ params }: PageProps) {
                 showCount
                 className="bg-white/5 border-white/10 px-4 py-1 h-10 rounded-full"
               />
-              <Button variant="ghost" size="icon" className="bg-white/5 border-white/10 rounded-full w-10 h-10">
-                <Bookmark className="w-5 h-5 text-white" />
-              </Button>
+              <BookmarkButton
+                postId={id}
+                initialIsBookmarked={isBookmarked}
+                variant="ghost"
+                size="icon"
+                className="bg-white/5 border-white/10 rounded-full w-10 h-10"
+                iconClassName="text-white"
+              />
             </div>
           </div>
           <p className="text-gray-400 text-sm leading-relaxed mb-4">

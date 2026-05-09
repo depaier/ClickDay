@@ -13,6 +13,7 @@ export default function Home() {
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -61,6 +62,16 @@ export default function Home() {
         if (likesData) {
           setLikedPostIds(new Set(likesData.map(l => l.post_id)));
         }
+
+        // Fetch user bookmarks
+        const { data: bookmarksData } = await supabase
+          .from('bookmarks')
+          .select('post_id')
+          .eq('user_id', user.id);
+        
+        if (bookmarksData) {
+          setBookmarkedPostIds(new Set(bookmarksData.map(b => b.post_id)));
+        }
       }
     };
     
@@ -81,6 +92,7 @@ export default function Home() {
         <PostPreviewSheet
           post={selectedPost}
           isLiked={likedPostIds.has(selectedPost.id.toString())}
+          isBookmarked={bookmarkedPostIds.has(selectedPost.id.toString())}
           onClose={() => setSelectedPost(null)}
         />
       )}
