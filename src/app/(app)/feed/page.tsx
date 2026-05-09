@@ -8,6 +8,8 @@ import { PostCard } from "@/components/post/PostCard";
 import { FilterChips } from "@/components/feed/FilterChips";
 import { FilterDrawer } from "@/components/feed/FilterDrawer";
 import { useSearchParams, useRouter } from "next/navigation";
+import { MasonryGrid } from "@/components/layout/MasonryGrid";
+
 
 interface Post {
   id: string;
@@ -152,13 +154,14 @@ function FeedContent() {
       <FilterChips />
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MasonryGrid>
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm border border-white/5" />
           ))}
-        </div>
+        </MasonryGrid>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MasonryGrid>
+
           {posts.map((post) => (
             <PostCard 
               key={post.id} 
@@ -173,8 +176,9 @@ function FeedContent() {
               <p className="text-xs text-gray-600">Try selecting a different filter</p>
             </div>
           )}
-        </div>
+        </MasonryGrid>
       )}
+
     </div>
   );
 }
