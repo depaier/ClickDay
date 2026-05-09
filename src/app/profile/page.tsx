@@ -5,8 +5,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
-import { supabase } from "@/lib/supabase/client";
-import { Camera, MapPin, Grid, Heart, Settings } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
+import { Camera, MapPin, Grid, Heart, Settings, Bookmark } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
@@ -18,27 +20,78 @@ export default function ProfilePage() {
   const navT = translations[language].nav;
   
   const [posts, setPosts] = useState<any[]>([]);
+  const [savedPosts, setSavedPosts] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
   const [loading, setLoading] = useState(true);
 
+  const fetchUserPosts = React.useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching posts:", error);
+        return;
+      }
+
+      if (data) {
+        setPosts(data);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching posts:", err);
+    }
+  }, [user?.id]);
+
+  const fetchSavedPosts = React.useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("bookmarks")
+        .select(`
+          post_id,
+          posts (*)
+        `)
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching saved posts:", error);
+        return;
+      }
+
+      if (data) {
+        const formattedSavedPosts = data.map((item: any) => item.posts).filter(Boolean);
+        setSavedPosts(formattedSavedPosts);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching saved posts:", err);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
-    if (user) {
-      fetchUserPosts();
+    if (user?.id) {
+      setLoading(true);
+      Promise.all([
+        fetchUserPosts(),
+        fetchSavedPosts()
+      ]).finally(() => setLoading(false));
     }
-  }, [user]);
+  }, [user?.id, fetchUserPosts, fetchSavedPosts]);
 
-  const fetchUserPosts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("user_id", user?.id)
-      .order("created_at", { ascending: false });
+  // Handle window focus to refresh data if it might be stale
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user?.id) {
+        fetchUserPosts();
+        fetchSavedPosts();
+      }
+    };
 
-    if (!error && data) {
-      setPosts(data);
-    }
-    setLoading(false);
-  };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [user?.id, fetchUserPosts, fetchSavedPosts]);
 
   if (authLoading) {
     return (
@@ -117,10 +170,24 @@ export default function ProfilePage() {
 
         {/* Content Tabs */}
         <div className="border-t border-white/10 mb-10">
-          <div className="flex justify-center -mt-px">
-            <button className="flex items-center gap-2 px-8 py-4 border-t border-white text-[10px] font-heading tracking-widest uppercase">
+          <div className="flex justify-center -mt-px gap-8">
+            <button 
+              onClick={() => setActiveTab("posts")}
+              className={`flex items-center gap-2 px-8 py-4 border-t text-[10px] font-heading tracking-widest uppercase transition-colors ${
+                activeTab === "posts" ? "border-white text-white" : "border-transparent text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
               <Grid size={14} />
               {t.myPosts}
+            </button>
+            <button 
+              onClick={() => setActiveTab("saved")}
+              className={`flex items-center gap-2 px-8 py-4 border-t text-[10px] font-heading tracking-widest uppercase transition-colors ${
+                activeTab === "saved" ? "border-white text-white" : "border-transparent text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              <Bookmark size={14} />
+              {t.savedPosts}
             </button>
           </div>
         </div>
@@ -130,9 +197,9 @@ export default function ProfilePage() {
           <div className="flex justify-center py-20">
             <div className="w-6 h-6 border border-zinc-500 border-t-white rounded-full animate-spin"></div>
           </div>
-        ) : posts.length > 0 ? (
+        ) : (activeTab === "posts" ? posts : savedPosts).length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
-            {posts.map((post) => (
+            {(activeTab === "posts" ? posts : savedPosts).map((post) => (
               <Link 
                 key={post.id} 
                 href={`/posts/${post.id}`}
@@ -148,7 +215,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
                       <Heart size={16} fill="white" />
-                      <span className="text-xs font-heading">0</span>
+                      <span className="text-xs font-heading">{post.like_count || 0}</span>
                     </div>
                   </div>
                   {(post.latitude && post.longitude) && (

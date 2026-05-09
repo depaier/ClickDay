@@ -1,6 +1,10 @@
 import React from "react";
 import { X, MapPin, Camera, Aperture, Clock, Hash } from "lucide-react";
 import { Button } from "../ui/Button";
+import { useAuth } from "../providers/AuthProvider";
+import { DeletePostButton } from "./DeletePostButton";
+import { LikeButton } from "./LikeButton";
+import { BookmarkButton } from "./BookmarkButton";
 import Link from "next/link";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 
@@ -28,10 +32,12 @@ interface Post {
 
 interface PostPreviewSheetProps {
   post: Post;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
   onClose: () => void;
 }
 
-export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
+export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, onClose }: PostPreviewSheetProps) {
   if (!post) return null;
 
   return (
@@ -56,25 +62,34 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
 
         <div className="p-6 space-y-8">
           {/* Photographer info */}
-          <div className="flex items-center gap-3">
-            {(() => {
-              const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
-              return (
-                <>
-                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gray-800" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">@{profile?.username || "unknown"}</p>
-                    <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
-                  </div>
-                </>
-              );
-            })()}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                <img src={post.profiles?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} alt="avatar" />
+              </div>
+              <div>
+                <p className="font-bold text-sm">@{post.profiles?.username || "photographer_kr"}</p>
+                <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <LikeButton 
+                postId={post.id.toString()} 
+                initialLikeCount={post.like_count || 0} 
+                initialIsLiked={isLiked}
+                variant="ghost"
+                size="sm"
+                showCount
+                className="text-gray-900"
+              />
+              <BookmarkButton
+                postId={post.id.toString()}
+                initialIsBookmarked={isBookmarked}
+                variant="ghost"
+                size="sm"
+                className="text-gray-900"
+              />
+            </div>
           </div>
 
           {/* Description */}
@@ -132,13 +147,12 @@ export function PostPreviewSheet({ post, onClose }: PostPreviewSheetProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100 space-y-3">
+        <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100">
           <Link href={`/posts/${post.id}`}>
             <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
               View Full Details
             </Button>
           </Link>
-          <Button variant="ghost" className="w-full h-10 text-xs text-gray-400">Save to Bookmarks</Button>
         </div>
       </div>
     </div>

@@ -58,6 +58,7 @@ export const translations = {
       stats: "Stats",
       editProfile: "Edit Profile",
       bio: "No bio yet.",
+      savedPosts: "Saved Photos",
     }
   },
   ko: {
@@ -119,6 +120,7 @@ export const translations = {
       stats: "통계",
       editProfile: "프로필 수정",
       bio: "소개글이 없습니다.",
+      savedPosts: "저장된 사진",
     }
   }
 };

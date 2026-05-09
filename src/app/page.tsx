@@ -4,14 +4,20 @@ import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap } from "@/components/map/GlobeMap";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     const fetchPosts = async () => {
+      // Fetch posts
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -31,7 +37,8 @@ export default function Home() {
           tags,
           recipe_name,
           recipe_type,
-          profiles:user_id(username, avatar_url)
+          like_count,
+          profiles(username, avatar_url)
         `);
         
       if (data) {
@@ -42,6 +49,29 @@ export default function Home() {
           title: post.location_name
         }));
         setPosts(formattedPosts);
+      }
+
+      // Fetch user likes
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: likesData } = await supabase
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', user.id);
+        
+        if (likesData) {
+          setLikedPostIds(new Set(likesData.map(l => l.post_id)));
+        }
+
+        // Fetch user bookmarks
+        const { data: bookmarksData } = await supabase
+          .from('bookmarks')
+          .select('post_id')
+          .eq('user_id', user.id);
+        
+        if (bookmarksData) {
+          setBookmarkedPostIds(new Set(bookmarksData.map(b => b.post_id)));
+        }
       }
     };
     
@@ -61,6 +91,8 @@ export default function Home() {
       {selectedPost && (
         <PostPreviewSheet
           post={selectedPost}
+          isLiked={likedPostIds.has(selectedPost.id.toString())}
+          isBookmarked={bookmarkedPostIds.has(selectedPost.id.toString())}
           onClose={() => setSelectedPost(null)}
         />
       )}

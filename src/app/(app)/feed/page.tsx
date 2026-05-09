@@ -6,10 +6,63 @@ import { MapPin } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { supabase } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
+import { createClient } from "@/lib/supabase/client";
+import { PostCard } from "@/components/post/PostCard";
+
+interface Post {
+  id: string;
+  image_url: string;
+  location_name: string | null;
+  like_count: number;
+  user_id: string;
+  created_at: string;
+}
 
 export default function FeedPage() {
   const { language } = useLanguage();
   const t = translations[language].feed;
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchFeed() {
+      setIsLoading(true);
+      try {
+        // Fetch posts
+        const { data: postsData, error: postsError } = await supabase
+          .from("posts")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (postsError) throw postsError;
+        setPosts(postsData || []);
+
+        // Fetch current user's likes if logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: likesData, error: likesError } = await supabase
+            .from("likes")
+            .select("post_id")
+            .eq("user_id", user.id);
+
+          if (!likesError && likesData) {
+            setLikedPostIds(new Set(likesData.map(l => l.post_id)));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching feed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchFeed();
+  }, [supabase]);
 
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,37 +118,26 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : posts.length > 0 ? (
+      {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
-            <Link href={`/posts/${post.id}`} key={post.id} className="group cursor-pointer">
-              <div className="relative aspect-[4/5] overflow-hidden bg-[#111] border border-white/5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={post.image_url} 
-                  alt={post.location_name || "Photography"} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                  <h3 className="font-heading tracking-wider uppercase text-lg">
-                    {post.location_name || "Untitled"}
-                  </h3>
-                  <div className="flex items-center text-gray-300 text-sm mt-2">
-                    <MapPin className="w-4 h-4 mr-1 text-[var(--accent)]" />
-                    {post.location_name || "Unknown Location"}
-                  </div>
-                </div>
-              </div>
-            </Link>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm" />
           ))}
         </div>
       ) : (
-        <div className="py-20 text-center border border-dashed border-white/10 rounded-sm">
-          <p className="text-gray-500 uppercase tracking-widest text-sm">No posts found in the feed.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              isLiked={likedPostIds.has(post.id)} 
+            />
+          ))}
+          {posts.length === 0 && (
+            <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
+              <p className="text-gray-500 font-heading tracking-widest uppercase">No posts found</p>
+            </div>
+          )}
         </div>
       )}
     </div>

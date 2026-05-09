@@ -52,6 +52,7 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
       center: [126.978, 37.5665],
       zoom: 2,
       attributionControl: false,
+      fadeDuration: 0, // 심볼 페이드 애니메이션 제거 (잔상 방지)
     });
 
     map.on("load", () => {
@@ -66,111 +67,125 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
         map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
       });
 
-      // GeoJSON 소스 추가 (클러스터링 활성화)
-      map.addSource("posts", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: posts.map((post) => ({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [post.lng, post.lat] },
-            properties: { ...post },
-          })),
-        },
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50,
-      });
-
-      // 1. 클러스터 원 레이어
-      map.addLayer({
-        id: "clusters",
-        type: "circle",
-        source: "posts",
-        filter: ["has", "point_count"],
-        paint: {
-          "circle-color": [
-            "step",
-            ["get", "point_count"],
-            "#F5C518", // 10개 미만
-            10,
-            "#f1f075", // 10~30개
-            30,
-            "#f28cb1", // 30개 이상
-          ],
-          "circle-radius": [
-            "step",
-            ["get", "point_count"],
-            20, 10, 30, 30, 40
-          ],
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#fff"
-        },
-      });
-
-      // 2. 클러스터 숫자 레이어
-      map.addLayer({
-        id: "cluster-count",
-        type: "symbol",
-        source: "posts",
-        filter: ["has", "point_count"],
-        layout: {
-          "text-field": "{point_count}",
-          "text-font": ["Noto Sans Regular"],
-          "text-size": 12,
-        },
-        paint: {
-          "text-color": "#000"
-        }
-      });
-
-      // 3. 개별 마커 레이어 (기존 핀 사용)
-      map.addLayer({
-        id: "unclustered-point",
-        type: "symbol",
-        source: "posts",
-        filter: ["!", ["has", "point_count"]],
-        layout: {
-          "icon-image": "custom-pin",
-          "icon-size": 0.8,
-          "icon-anchor": "bottom",
-          "icon-allow-overlap": true,
-        },
-      });
-
-      // 클릭 이벤트 처리
-      map.on("click", "clusters", async (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-        const clusterId = features[0].properties.cluster_id;
-        const source = map.getSource("posts") as maplibregl.GeoJSONSource;
-        const expansionZoom = await source.getClusterExpansionZoom(clusterId);
-
-        map.easeTo({
-          center: (features[0].geometry as any).coordinates,
-          zoom: expansionZoom,
-        });
-      });
-
-      map.on("click", "unclustered-point", (e) => {
-        const props = e.features![0].properties as Post;
-        onMarkerClick(props);
-      });
-
-      // 마우스 커서 변경
-      map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-      map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
+      // 초기 데이터 설정
+      setupSourceAndLayers(map);
     });
 
     mapRef.current = map;
+    
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setupSourceAndLayers = (map: maplibregl.Map) => {
+    if (map.getSource("posts")) return;
+
+    // GeoJSON 소스 추가 (클러스터링 활성화)
+    map.addSource("posts", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: posts.map((post) => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [post.lng, post.lat] },
+          properties: { ...post },
+        })),
+      },
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50,
+    });
+
+    // 1. 클러스터 원 레이어
+    map.addLayer({
+      id: "clusters",
+      type: "circle",
+      source: "posts",
+      filter: ["has", "point_count"],
+      paint: {
+        "circle-color": [
+          "step",
+          ["get", "point_count"],
+          "#F5C518",
+          10,
+          "#f1f075",
+          30,
+          "#f28cb1",
+        ],
+        "circle-radius": [
+          "step",
+          ["get", "point_count"],
+          20, 10, 30, 30, 40
+        ],
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#fff",
+      },
+    });
+
+    // 2. 클러스터 숫자 레이어
+    map.addLayer({
+      id: "cluster-count",
+      type: "symbol",
+      source: "posts",
+      filter: ["has", "point_count"],
+      layout: {
+        "text-field": "{point_count}",
+        "text-size": 12,
+        "text-anchor": "center",
+        "text-justify": "center",
+        "text-offset": [0, 0],
+        "text-allow-overlap": true, // fadeDuration이 0이므로 true로 설정해도 잔상이 생기지 않음
+        "text-ignore-placement": true,
+        "text-pitch-alignment": "viewport",
+        "text-rotation-alignment": "viewport",
+      },
+      paint: {
+        "text-color": "#000",
+      }
+    });
+
+    // 3. 개별 마커 레이어
+    map.addLayer({
+      id: "unclustered-point",
+      type: "symbol",
+      source: "posts",
+      filter: ["!", ["has", "point_count"]],
+      layout: {
+        "icon-image": "custom-pin",
+        "icon-size": 0.8,
+        "icon-anchor": "bottom",
+        "icon-allow-overlap": true,
+      },
+    });
+
+    // 클릭 이벤트 처리
+    map.on("click", "clusters", async (e) => {
+      const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+      const clusterId = features[0].properties.cluster_id;
+      const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+      const expansionZoom = await source.getClusterExpansionZoom(clusterId);
+
+      map.easeTo({
+        center: (features[0].geometry as any).coordinates,
+        zoom: expansionZoom,
+      });
+    });
+
+    map.on("click", "unclustered-point", (e) => {
+      const props = e.features![0].properties as Post;
+      onMarkerClick(props);
+    });
+
+    // 마우스 커서 변경
+    map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
+    map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
+  };
 
   // posts 데이터 업데이트 시 소스 갱신
   useEffect(() => {
@@ -179,7 +194,7 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
 
     const updateData = () => {
       if (!mapRef.current) return;
-      const source = map.getSource("posts") as maplibregl.GeoJSONSource;
+      const source = mapRef.current.getSource("posts") as maplibregl.GeoJSONSource;
       if (source) {
         source.setData({
           type: "FeatureCollection",
@@ -189,6 +204,13 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
             properties: { ...post },
           })),
         });
+      } else {
+        // 소스가 없으면 다시 시도 (스타일이 로드된 상태여야 함)
+        if (mapRef.current.isStyleLoaded()) {
+          setupSourceAndLayers(mapRef.current);
+        } else {
+          mapRef.current.once("styledata", updateData);
+        }
       }
     };
 

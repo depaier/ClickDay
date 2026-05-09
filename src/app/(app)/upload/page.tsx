@@ -8,9 +8,10 @@ import { translations } from "@/constants/translations";
 import exifr from "exifr";
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
-import { supabase } from "@/lib/supabase/client";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
+
+const supabase = createClient();
 
 interface ExifData {
   make?: string;

@@ -1,8 +1,11 @@
 import { MapPin, Heart, Bookmark, Camera, Edit } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import { DeletePostButton } from "@/components/post/DeletePostButton";
+import { LikeButton } from "@/components/post/LikeButton";
+import { BookmarkButton } from "@/components/post/BookmarkButton";
 import Link from "next/link";
 import { PostDetailMap } from "@/components/map/PostDetailMap";
 
@@ -46,6 +49,27 @@ export default async function PostDetailPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser();
   const isOwner = user?.id === post.user_id;
 
+  let isLiked = false;
+  let isBookmarked = false;
+  if (user) {
+    const { data: likeData } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('post_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    isLiked = !!likeData;
+
+    // Check if user bookmarked the post
+    const { data: bookmarkData } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('post_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    isBookmarked = !!bookmarkData;
+  }
+
   console.log("SERVER SIDE DEBUG:");
   console.log("- User from Auth:", user?.id);
   console.log("- Post Owner ID:", post.user_id);
@@ -62,14 +86,7 @@ export default async function PostDetailPage({ params }: PageProps) {
           className="max-w-full max-h-[80vh] object-contain"
         />
         
-        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="ghost" size="icon" className="bg-black/50 border-none rounded-full w-10 h-10 backdrop-blur-md">
-            <Heart className="w-5 h-5 text-white" />
-          </Button>
-          <Button variant="ghost" size="icon" className="bg-black/50 border-none rounded-full w-10 h-10 backdrop-blur-md">
-            <Bookmark className="w-5 h-5 text-white" />
-          </Button>
-        </div>
+        {/* Buttons removed from here */}
       </div>
 
       {/* Info Section */}
@@ -100,9 +117,30 @@ export default async function PostDetailPage({ params }: PageProps) {
 
         {/* Description */}
         <div>
-          <h1 className="text-xl font-heading tracking-wider uppercase mb-2">
-            {post.location_name && post.location_name !== post.camera_model ? post.location_name : "Untitled"}
-          </h1>
+          <div className="flex justify-between items-start mb-2">
+            <h1 className="text-xl font-heading tracking-wider uppercase">
+              {post.location_name || "Untitled"}
+            </h1>
+            <div className="flex gap-2">
+              <LikeButton 
+                postId={id} 
+                initialLikeCount={post.like_count || 0} 
+                initialIsLiked={isLiked}
+                variant="outline"
+                size="default"
+                showCount
+                className="bg-white/5 border-white/10 px-4 py-1 h-10 rounded-full"
+              />
+              <BookmarkButton
+                postId={id}
+                initialIsBookmarked={isBookmarked}
+                variant="ghost"
+                size="icon"
+                className="bg-white/5 border-white/10 rounded-full w-10 h-10"
+                iconClassName="text-white"
+              />
+            </div>
+          </div>
           <p className="text-gray-400 text-sm leading-relaxed mb-4">
             {post.description || "No description provided."}
           </p>
