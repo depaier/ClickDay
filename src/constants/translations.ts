@@ -59,6 +59,11 @@ export const translations = {
       editProfile: "Edit Profile",
       bio: "No bio yet.",
       savedPosts: "Saved Photos",
+      follow: "Click",
+      following: "Clicking",
+      followers: "Clickers",
+      unclick: "Unclick",
+      posts: "Posts",
     }
   },
   ko: {
@@ -121,6 +126,11 @@ export const translations = {
       editProfile: "프로필 수정",
       bio: "소개글이 없습니다.",
       savedPosts: "저장된 사진",
+      follow: "클릭",
+      following: "클리킹",
+      followers: "클리커",
+      unclick: "클릭 취소",
+      posts: "게시물",
     }
   }
 };

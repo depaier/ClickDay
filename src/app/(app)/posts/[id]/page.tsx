@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { DeletePostButton } from "@/components/post/DeletePostButton";
 import { LikeButton } from "@/components/post/LikeButton";
 import { BookmarkButton } from "@/components/post/BookmarkButton";
+import { FollowButton } from "@/components/user/FollowButton";
 import Link from "next/link";
 import { PostDetailMap } from "@/components/map/PostDetailMap";
 
@@ -51,6 +52,7 @@ export default async function PostDetailPage({ params }: PageProps) {
 
   let isLiked = false;
   let isBookmarked = false;
+  let isFollowing = false;
   if (user) {
     const { data: likeData } = await supabase
       .from('likes')
@@ -68,6 +70,17 @@ export default async function PostDetailPage({ params }: PageProps) {
       .eq('user_id', user.id)
       .maybeSingle();
     isBookmarked = !!bookmarkData;
+
+    // Check if user is following the post owner
+    if (post.user_id && post.user_id !== user.id) {
+      const { data: followData } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('follower_id', user.id)
+        .eq('following_id', post.user_id)
+        .maybeSingle();
+      isFollowing = !!followData;
+    }
   }
 
   console.log("SERVER SIDE DEBUG:");
@@ -94,23 +107,30 @@ export default async function PostDetailPage({ params }: PageProps) {
         {/* User Info & Actions */}
         <div className="flex items-center justify-between border-b border-white/10 pb-6">
           <div className="flex items-center gap-3">
-            {post.profiles?.avatar_url ? (
-              <img src={post.profiles.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-800" />
-            )}
-            <div>
-              <div className="font-heading tracking-wider uppercase text-sm">
-                @{post.profiles?.username || "unknown"}
+            <Link href={`/users/@${post.profiles?.username}`} className="group flex items-center gap-3">
+              {post.profiles?.avatar_url ? (
+                <img src={post.profiles.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover border border-white/10 group-hover:border-[var(--accent)] transition-colors" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-800 border border-white/10 group-hover:border-[var(--accent)] transition-colors" />
+              )}
+              <div>
+                <div className="font-heading tracking-wider uppercase text-sm group-hover:text-[var(--accent)] transition-colors">
+                  @{post.profiles?.username || "unknown"}
+                </div>
+                <div className="text-gray-500 text-xs">
+                  {new Date(post.created_at).toLocaleDateString()}
+                </div>
               </div>
-              <div className="text-gray-500 text-xs">
-                {new Date(post.created_at).toLocaleDateString()}
-              </div>
-            </div>
+            </Link>
           </div>
           
           <div className="flex gap-2">
-            {!isOwner && <Button variant="ghost" size="sm" className="text-xs h-8">Follow</Button>}
+            {!isOwner && post.user_id && (
+              <FollowButton 
+                targetUserId={post.user_id} 
+                initialIsFollowing={isFollowing} 
+              />
+            )}
           </div>
         </div>
 
