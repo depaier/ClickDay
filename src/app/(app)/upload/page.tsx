@@ -5,11 +5,19 @@ import { Button } from "@/components/ui/Button";
 import { UploadCloud, Camera, MapPin, X } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
-import exifr from "exifr";
+// import exifr from "exifr"; // Removed in favor of full build import below
+
 import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
+// Use the full build of exifr to ensure all parsers (including HEIC) are included
+import exifr from "exifr/dist/full.esm.js";
+// heic-decode is dynamically imported to avoid SSR issues
+
+
+
+
 
 const supabase = createClient();
 
@@ -36,47 +44,205 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [locationName, setLocationName] = useState("");
   const [description, setDescription] = useState("");
+  const [isConverting, setIsConverting] = useState(false);
+
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (selectedFile: File) => {
-    if (!selectedFile.type.startsWith("image/")) return;
+    // Check if it's an image or a HEIC file (which might not have a proper mime type)
+    const isHeic = selectedFile.type === "image/heic" || 
+                   selectedFile.type === "image/heif" || 
+                   selectedFile.name.toLowerCase().endsWith(".heic") || 
+                   selectedFile.name.toLowerCase().endsWith(".heif");
 
-    setFile(selectedFile);
-    const url = URL.createObjectURL(selectedFile);
-    setPreviewUrl(url);
+    if (!selectedFile.type.startsWith("image/") && !isHeic) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    setIsConverting(true);
+    let fileToProcess = selectedFile;
+
+    console.log("Processing file:", {
+      name: selectedFile.name,
+      type: selectedFile.type,
+      size: selectedFile.size,
+      isHeic
+    });
 
     try {
-      const data = await exifr.parse(selectedFile, {
-        gps: true,
-        tiff: true,
-      });
-      
-      if (data) {
-        setExif({
-          make: data.Make,
-          model: data.Model,
-          lens: data.LensModel || data.LensInfo,
-          fNumber: data.FNumber ? Math.round(data.FNumber * 100) / 100 : undefined,
-          exposureTime: data.ExposureTime ? `1/${Math.round(1 / data.ExposureTime)}` : undefined,
-          iso: data.ISO,
+      // 1. Parse EXIF (Isolate this so if it fails, we still try to convert/upload)
+      try {
+        console.log("Attempting to parse EXIF (Attempt 1)...");
+        // Read as ArrayBuffer first to ensure exifr can detect the format reliably
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        
+        // Try general parse first - Force reading the entire file length to find EXIF at the end
+        let data = await exifr.parse(arrayBuffer, {
+          length: arrayBuffer.byteLength,
+          gps: true,
+          exif: true,
         });
 
-        const lat = data.latitude;
-        const lng = data.longitude;
+        
+        // If Attempt 1 failed to get GPS, try Attempt 2 with specialized GPS parser
+        if (!data || (data.latitude === undefined && data.longitude === undefined)) {
+          console.log("Attempt 1 had limited data, trying specialized GPS parse (Attempt 2)...");
+          const gpsData = await exifr.gps(arrayBuffer);
+          if (gpsData) {
+            data = { ...data, ...gpsData };
+          }
+        }
 
-        if (lat !== undefined && lng !== undefined) {
-          setLocation({ lat, lng });
+
+        
+        if (data) {
+          console.log("EXIF data found:", data);
+          setExif({
+            make: data.Make,
+            model: data.Model,
+            lens: data.LensModel || data.LensInfo,
+            fNumber: data.FNumber ? Math.round(data.FNumber * 100) / 100 : undefined,
+            exposureTime: data.ExposureTime ? `1/${Math.round(1 / data.ExposureTime)}` : undefined,
+            iso: data.ISO,
+          });
+
+          const lat = data.latitude;
+          const lng = data.longitude;
+
+          if (lat !== undefined && lng !== undefined) {
+            setLocation({ lat, lng });
+          }
         } else {
-          setLocation(null);
+          console.warn("No metadata found in the file.");
+        }
+      } catch (exifError) {
+        console.warn("EXIF parsing failed with exifr, trying ExifReader fallback...", exifError);
+        try {
+          // Dynamic import of ExifReader as fallback
+          const ExifReader = (await import("exifreader")).default;
+          const tags = await ExifReader.load(selectedFile, { expanded: true });
+          
+          if (tags) {
+            console.log("EXIF data found via ExifReader:", tags);
+            const exifGroup = tags.exif || {};
+            const gpsGroup = tags.gps || {};
+            
+            // Format fNumber and exposure time safely
+            let parsedFNumber;
+            if (exifGroup.FNumber?.value && Array.isArray(exifGroup.FNumber.value)) {
+              parsedFNumber = Math.round((exifGroup.FNumber.value[0] / exifGroup.FNumber.value[1]) * 100) / 100;
+            }
+
+            setExif({
+              make: exifGroup.Make?.description,
+              model: exifGroup.Model?.description,
+              lens: exifGroup.LensModel?.description,
+              fNumber: parsedFNumber,
+              exposureTime: exifGroup.ExposureTime?.description,
+              iso: Array.isArray(exifGroup.ISOSpeedRatings?.value) 
+                ? Number(exifGroup.ISOSpeedRatings.value[0]) 
+                : (typeof exifGroup.ISOSpeedRatings?.value === 'number' 
+                  ? exifGroup.ISOSpeedRatings.value 
+                  : undefined),
+            });
+
+
+            // ExifReader provides Latitude/Longitude as floats in expanded mode
+            if (gpsGroup.Latitude !== undefined && gpsGroup.Longitude !== undefined) {
+              setLocation({ 
+                lat: gpsGroup.Latitude,
+                lng: gpsGroup.Longitude
+              });
+              console.log("Location found via ExifReader");
+            }
+          }
+        } catch (readerError) {
+          console.error("ExifReader also failed to parse metadata:", readerError);
         }
       }
-    } catch (error) {
-      console.error("EXIF parsing error:", error);
-      setExif(null);
-      setLocation(null);
+
+
+
+      // 2. Convert HEIC to JPEG if necessary using heic-decode + Canvas
+      if (isHeic) {
+        try {
+          console.log("Attempting HEIC conversion with heic-decode (Uint8Array)...");
+          const decode = (await import("heic-decode")).default;
+          
+          const arrayBuffer = await selectedFile.arrayBuffer();
+          // Explicitly wrap in Uint8Array to avoid iterator issues in some environments
+          const buffer = new Uint8Array(arrayBuffer);
+          const { width, height, data } = await decode({ buffer });
+          
+          // Create canvas to convert raw pixels to JPEG
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          
+          if (!ctx) throw new Error("Could not get canvas context");
+          
+          const imageData = new ImageData(new Uint8ClampedArray(data), width, height);
+          ctx.putImageData(imageData, 0, 0);
+          
+          // Convert to Blob
+          const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9);
+          });
+          
+          if (!blob) throw new Error("Canvas toBlob failed");
+          
+          fileToProcess = new File([blob], selectedFile.name.replace(/\.(heic|heif)$/i, ".jpg"), {
+            type: "image/jpeg",
+          });
+          console.log("HEIC conversion successful via heic-decode");
+          
+          setFile(fileToProcess);
+          const url = URL.createObjectURL(fileToProcess);
+          setPreviewUrl(url);
+        } catch (convError) {
+          console.error("HEIC full conversion failed, trying thumbnail fallback:", convError);
+          
+          // Fallback: Try to get embedded thumbnail using exifr
+          try {
+            const thumbnailUrl = await exifr.thumbnailUrl(selectedFile);
+            if (thumbnailUrl) {
+              setPreviewUrl(thumbnailUrl);
+              setFile(selectedFile); // Upload original HEIC if preview failed but thumbnail worked
+              console.log("Showing embedded thumbnail as fallback");
+            } else {
+              throw new Error("No thumbnail found");
+            }
+          } catch (thumbError) {
+            console.error("Thumbnail extraction also failed:", thumbError);
+            throw new Error("HEIC_CONVERSION_FAILED");
+          }
+        }
+      } else {
+        // For non-HEIC images
+        setFile(fileToProcess);
+        const url = URL.createObjectURL(fileToProcess);
+        setPreviewUrl(url);
+      }
+
+
+    } catch (error: any) {
+      if (error.message === "HEIC_CONVERSION_FAILED") {
+        alert("This specific HEIC file (possibly a Live Photo or Burst) is not supported by the browser converter. Please try a standard photo or a JPEG/PNG.");
+      } else {
+        console.error("File processing error:", error);
+      }
+      // If we have a file already (conversion failed but maybe it's partially okay?), 
+      // we don't setFile to keep the state consistent, but we don't reset location.
+    } finally {
+      setIsConverting(false);
     }
+
+
   }, []);
+
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -176,10 +342,17 @@ export default function UploadPage() {
             accept="image/jpeg,image/heic,image/png"
             className="hidden"
           />
-          <UploadCloud className={`w-12 h-12 mb-4 ${isDragging ? "text-[var(--accent)]" : "text-gray-400"}`} />
-          <p className="font-heading tracking-widest uppercase mb-2">{t.dragDrop}</p>
-          <p className="text-gray-500 text-sm mb-6">{t.browse}</p>
-          <Button variant="ghost">{t.selectFile}</Button>
+          <UploadCloud className={`w-12 h-12 mb-4 ${isDragging || isConverting ? "text-[var(--accent)]" : "text-gray-400"}`} />
+          <p className="font-heading tracking-widest uppercase mb-2">
+            {isConverting ? "Processing Image..." : t.dragDrop}
+          </p>
+          <p className="text-gray-500 text-sm mb-6">
+            {isConverting ? "Converting HEIC to JPEG for compatibility" : t.browse}
+          </p>
+          <Button variant="ghost" disabled={isConverting}>
+            {isConverting ? "Processing..." : t.selectFile}
+          </Button>
+
         </div>
       ) : (
         <div className="relative aspect-video w-full bg-[#111] rounded-sm overflow-hidden mb-8 group border border-white/5">

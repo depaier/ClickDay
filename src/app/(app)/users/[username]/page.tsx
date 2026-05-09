@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Grid, Bookmark, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { MasonryGrid } from "@/components/layout/MasonryGrid";
+
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import { FollowButton } from "@/components/user/FollowButton";
@@ -115,27 +117,22 @@ export default async function UserProfilePage({ params }: PageProps) {
       {/* Tabs */}
       <ProfileTabs isOwnProfile={isOwnProfile} />
 
-      {/* Grid */}
-      <div className="grid grid-cols-3 gap-1 md:gap-4">
-        {posts?.map((post) => (
-          <Link href={`/posts/${post.id}`} key={post.id} className="aspect-square bg-[#111] relative group border border-white/5 overflow-hidden">
+      <MasonryGrid>
+        {[1,2,3,4,5,6].map((i) => (
+          <Link href={`/posts/${i}`} key={i} className="block mb-6 bg-[#111] relative group border border-white/5 overflow-hidden rounded-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
-              src={post.image_url}
-              alt={post.location_name || "User post"}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              src={`https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80&sig=${i}`}
+              alt={`Post ${i}`}
+              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
               <span className="font-heading tracking-widest uppercase text-sm text-white drop-shadow-md">View</span>
             </div>
           </Link>
         ))}
-        {(!posts || posts.length === 0) && (
-          <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
-            <p className="text-gray-500 font-heading tracking-widest uppercase">No posts yet</p>
-          </div>
-        )}
-      </div>
+      </MasonryGrid>
+
     </div>
   );
 }

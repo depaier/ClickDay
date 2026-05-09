@@ -33,17 +33,17 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
 
   return (
     <div 
-      className="group relative"
+      className="group relative mb-6"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link href={`/posts/${post.id}`} className="block cursor-pointer">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#222] rounded-sm border border-white/5">
+        <div className="relative overflow-hidden bg-[#222] rounded-sm border border-white/5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={post.image_url} 
             alt={post.location_name || "Post"} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-auto group-hover:scale-105 transition-transform duration-500 block"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center">
             {/* Photographer Link */}
