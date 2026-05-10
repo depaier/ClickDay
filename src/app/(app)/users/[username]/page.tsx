@@ -30,12 +30,20 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   
   const supabase = await createClient();
 
-  // Fetch profile
-  const { data: profile, error: profileError } = await supabase
+  // Fetch profile by username or ID (as fallback)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username);
+  
+  const query = supabase
     .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .single();
+    .select("*");
+    
+  if (isUuid) {
+    query.eq("id", username);
+  } else {
+    query.eq("username", username);
+  }
+
+  const { data: profile, error: profileError } = await query.single();
 
   if (profileError || !profile) {
     console.error("Profile not found:", username, profileError);
@@ -70,8 +78,18 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
     if (bookmarks.data) bookmarkedPostIds = new Set(bookmarks.data.map(b => b.post_id));
   }
 
-  // Fetch posts based on active tab
-  let posts: any[] = [];
+  // Fetch all own posts (for the count and for the default tab)
+  const { data: ownPostsData, error: ownPostsError } = await supabase
+    .from("posts")
+    .select("*, profiles(username, avatar_url)")
+    .eq("user_id", profile.id)
+    .order("created_at", { ascending: false });
+
+  const ownPosts = ownPostsData || [];
+  const ownPostsCount = ownPosts.length;
+
+  // Determine which posts to display based on active tab
+  let displayPosts: any[] = [];
   if (tab === "saved" && isOwnProfile) {
     const { data: bookmarkedData } = await supabase
       .from("bookmarks")
@@ -79,14 +97,9 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       .eq("user_id", profile.id)
       .order("created_at", { ascending: false });
     
-    posts = bookmarkedData?.map(b => b.posts).filter(p => p !== null) || [];
+    displayPosts = bookmarkedData?.map(b => b.posts).filter(p => p !== null) || [];
   } else {
-    const { data: ownPosts } = await supabase
-      .from("posts")
-      .select("*, profiles(username, avatar_url)")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: false });
-    posts = ownPosts || [];
+    displayPosts = ownPosts;
   }
 
 
@@ -128,7 +141,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           </div>
           
           <ProfileStats 
-            postsCount={posts?.length || 0} 
+            postsCount={ownPostsCount} 
             followersCount={followersCount} 
             followingCount={followingCount} 
           />
@@ -156,7 +169,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
       <ProfileTabs isOwnProfile={isOwnProfile} />
 
       <MasonryGrid>
-        {posts?.map((post) => (
+        {displayPosts?.map((post) => (
           <PostCard 
             key={post.id} 
             post={post as any} 
@@ -164,7 +177,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
             isBookmarked={bookmarkedPostIds.has(post.id)}
           />
         ))}
-        {(!posts || posts.length === 0) && (
+        {(!displayPosts || displayPosts.length === 0) && (
           <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
             <p className="text-gray-500 font-heading tracking-widest uppercase">
               {tab === "saved" ? "No saved posts yet" : "No uploads yet"}
