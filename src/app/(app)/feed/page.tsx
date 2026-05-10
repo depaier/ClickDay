@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/post/PostCard";
 import { FilterChips } from "@/components/feed/FilterChips";
 import { FilterDrawer } from "@/components/feed/FilterDrawer";
+import { SearchBar } from "@/components/feed/SearchBar";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
 
@@ -35,6 +36,7 @@ function FeedContent() {
   const sortParam = searchParams.get("sort") || "latest";
   const regionParam = searchParams.get("region");
   const brandParam = searchParams.get("brand");
+  const qParam = searchParams.get("q");
   
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
@@ -55,6 +57,11 @@ function FeedContent() {
         const { data: { user } } = await supabase.auth.getUser();
         
         let query = supabase.from("posts").select("*, profiles(username, avatar_url)");
+
+        // 0. 검색 로직 (Search)
+        if (qParam) {
+          query = query.or(`location_name.ilike.%${qParam}%,description.ilike.%${qParam}%,tags.cs.{${qParam}}`);
+        }
 
         // 1. 기본 필터링 로직 (All / Clicking)
         if (filterParam === "clicking") {
@@ -119,7 +126,7 @@ function FeedContent() {
     }
 
     fetchFeed();
-  }, [filterParam, sortParam, regionParam, brandParam]);
+  }, [filterParam, sortParam, regionParam, brandParam, qParam]);
 
   return (
     <div>
@@ -151,6 +158,7 @@ function FeedContent() {
         </div>
       </div>
 
+      <SearchBar />
       <FilterChips />
 
       {isLoading ? (

@@ -67,6 +67,11 @@ export const translations = {
           gyeongsang: "Gyeongsang",
           jeju: "Jeju",
         }
+      },
+      search: {
+        placeholder: "Search title, tags, description...",
+        recommended: "Recommended Tags",
+        noResults: "No results found for",
       }
     },
     upload: {
@@ -193,6 +198,11 @@ export const translations = {
           gyeongsang: "경상",
           jeju: "제주",
         }
+      },
+      search: {
+        placeholder: "제목, 태그, 설명글 검색...",
+        recommended: "추천 검색어",
+        noResults: "검색 결과가 없습니다:",
       }
     },
     upload: {
