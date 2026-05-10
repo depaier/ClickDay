@@ -13,6 +13,7 @@ const buttonVariants = cva(
         ghostDark: "bg-transparent text-black border border-black hover:bg-black/5 rounded-none",
         accent: "bg-[var(--accent)] text-[var(--accent-text-on)] hover:bg-[var(--accent-dark)] border-none rounded-none tracking-[0.15em]",
         store: "bg-white text-black hover:bg-[var(--accent)] hover:text-[var(--accent-text-on)] border-none rounded-none tracking-[0.15em]",
+        danger: "bg-rose-600 text-white hover:bg-rose-700 border-none rounded-none tracking-[0.15em]",
       },
       size: {
         default: "h-9 px-4 py-2",

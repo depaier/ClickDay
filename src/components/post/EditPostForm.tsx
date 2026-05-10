@@ -9,6 +9,8 @@ import { UploadMap } from "@/components/map/UploadMap";
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
+import { useAlertStore } from "@/store/useAlertStore";
+
 
 interface EditPostFormProps {
   post: any;
@@ -24,6 +26,8 @@ export function EditPostForm({ post }: EditPostFormProps) {
   const [location, setLocation] = useState({ lat: post.latitude, lng: post.longitude });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { showAlert } = useAlertStore();
+
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,12 +49,20 @@ export function EditPostForm({ post }: EditPostFormProps) {
 
       if (error) throw error;
 
-      alert("Post updated successfully!");
+      showAlert({
+        title: translations[language].common.success,
+        message: language === 'ko' ? "포스트가 수정되었습니다." : "Post updated successfully!",
+        type: "success"
+      });
       router.push(`/posts/${post.id}`);
       router.refresh();
     } catch (error: any) {
-      console.error("Update error:", error);
-      alert(error.message || "Failed to update post.");
+      showAlert({
+        title: translations[language].common.error,
+        message: error.message || (language === 'ko' ? "수정에 실패했습니다." : "Failed to update post."),
+        type: "error"
+      });
+
     } finally {
       setIsUpdating(false);
     }

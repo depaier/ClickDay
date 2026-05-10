@@ -5,6 +5,11 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
+import { useAlertStore } from "@/store/useAlertStore";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
+
+
 
 interface DeletePostButtonProps {
   postId: string | number;
@@ -14,14 +19,31 @@ interface DeletePostButtonProps {
 export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language].common;
+
   
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const { showAlert, showConfirm } = useAlertStore();
+  
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+    const confirmed = await showConfirm({
+      title: language === 'ko' ? "게시물 삭제" : "Delete Post",
+      message: language === 'ko' 
+        ? "이 게시물을 정말 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다." 
+        : "Are you sure you want to delete this post?\nThis action cannot be undone.",
+      confirmLabel: t.delete,
+      cancelLabel: t.cancel,
+      confirmVariant: 'danger'
+    });
+
+
+    if (!confirmed) return;
+
 
     setIsDeleting(true);
     try {
@@ -46,13 +68,24 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
 
       if (dbError) throw dbError;
 
-      alert("Post deleted successfully.");
+      showAlert({
+        title: t.success,
+        message: language === 'ko' ? "게시물이 삭제되었습니다." : "Post deleted successfully.",
+        type: "success"
+      });
+
       router.push('/');
       router.refresh();
     } catch (error: any) {
       console.error("Delete error:", error);
-      alert(error.message || "Failed to delete post.");
+      showAlert({
+        title: t.error,
+        message: error.message || (language === 'ko' ? "삭제에 실패했습니다." : "Failed to delete post."),
+        type: "error"
+      });
+
     } finally {
+
       setIsDeleting(false);
     }
   };

@@ -3,6 +3,8 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { CustomAlert } from "@/components/ui/CustomAlert";
+
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -32,6 +34,8 @@ export default function RootLayout({
         <AuthProvider>
           <LanguageProvider>
             {children}
+            <CustomAlert />
+
           </LanguageProvider>
         </AuthProvider>
       </body>

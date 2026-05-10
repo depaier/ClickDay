@@ -9,6 +9,8 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Camera } from "lucide-react";
+import { useAlertStore } from "@/store/useAlertStore";
+
 
 const supabase = createClient();
 
@@ -17,6 +19,7 @@ export default function SettingsPage() {
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { language } = useLanguage();
   const t = translations[language].settings;
+  const { showAlert, showConfirm } = useAlertStore();
   
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -74,7 +77,11 @@ export default function SettingsPage() {
       
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      alert(t.error);
+       showAlert({
+         title: translations[language].common.error,
+         message: t.error,
+         type: "error"
+       });
     } finally {
       setUploading(false);
     }
@@ -97,11 +104,20 @@ export default function SettingsPage() {
 
       if (error) throw error;
       await refreshProfile();
-      alert(t.success);
+      showAlert({
+        title: translations[language].common.success,
+        message: t.success,
+        type: "success"
+      });
+
       router.push("/profile");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert(t.error);
+       showAlert({
+         title: translations[language].common.error,
+         message: t.error,
+         type: "error"
+       });
     } finally {
       setLoading(false);
     }
@@ -243,7 +259,17 @@ export default function SettingsPage() {
             <Button 
               variant="ghostDark" 
               className="border-red-500 text-red-500 hover:bg-red-500/10"
-              onClick={() => signOut()}
+              onClick={async () => {
+                const confirmed = await showConfirm({
+                  title: translations[language].nav.logout,
+                  message: language === 'ko' ? "정말 로그아웃 하시겠습니까?" : "Are you sure you want to sign out?",
+                  confirmLabel: translations[language].nav.logout,
+                  cancelLabel: translations[language].common.cancel,
+                  confirmVariant: 'danger'
+                });
+                if (confirmed) signOut();
+              }}
+
             >
               {t.signOut}
             </Button>

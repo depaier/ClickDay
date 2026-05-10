@@ -7,12 +7,15 @@ import { Input } from "@/components/ui/Input";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
+import { useAlertStore } from "@/store/useAlertStore";
+
 
 const supabase = createClient();
 
 export default function SignupPage() {
   const { language } = useLanguage();
   const t = translations[language].auth;
+  const { showAlert } = useAlertStore();
 
   const [formData, setFormData] = useState({
     username: "",
@@ -54,11 +57,16 @@ export default function SignupPage() {
       if (signupError) throw signupError;
 
       if (data.user) {
-        alert(language === "ko" 
-          ? "회원가입이 완료되었습니다. 이메일을 확인해주세요." 
-          : "Signup successful. Please check your email for verification.");
+        showAlert({
+          title: language === "ko" ? "가입 완료" : "Success",
+          message: language === "ko" 
+            ? "회원가입이 완료되었습니다. 이메일을 확인해주세요." 
+            : "Signup successful. Please check your email for verification.",
+          type: "success"
+        });
         window.location.href = "/login";
       }
+
     } catch (err: any) {
       setError(err.message);
     } finally {

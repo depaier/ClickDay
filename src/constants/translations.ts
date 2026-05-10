@@ -109,10 +109,22 @@ export const translations = {
       signOut: "Sign Out",
       email: "Email",
       success: "Profile updated successfully",
-      error: "Failed to update profile",
       uploading: "Uploading...",
+      error: "Failed to update profile",
+    },
+    common: {
+      confirm: "Confirm",
+      cancel: "Cancel",
+      delete: "Delete",
+      save: "Save",
+      success: "Success",
+      error: "Error",
+      warning: "Warning",
+      info: "Info",
+      close: "Close",
     }
   },
+
   ko: {
     nav: {
       feed: "피드",
@@ -225,8 +237,20 @@ export const translations = {
       success: "프로필이 성공적으로 업데이트되었습니다",
       error: "프로필 업데이트에 실패했습니다",
       uploading: "업로드 중...",
+    },
+    common: {
+      confirm: "확인",
+      cancel: "취소",
+      delete: "삭제",
+      save: "저장",
+      success: "성공",
+      error: "오류",
+      warning: "경고",
+      info: "안내",
+      close: "닫기",
     }
   }
+
 };
 
 export type TranslationKeys = typeof translations.en;

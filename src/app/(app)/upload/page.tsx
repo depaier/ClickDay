@@ -14,6 +14,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 // Use the full build of exifr to ensure all parsers (including HEIC) are included
 import exifr from "exifr/dist/full.esm.js";
+import { useAlertStore } from "@/store/useAlertStore";
+
 // heic-decode is dynamically imported to avoid SSR issues
 
 
@@ -48,6 +50,8 @@ export default function UploadPage() {
 
   const t = translations[language].upload;
   const { user } = useAuth();
+  const { showAlert } = useAlertStore();
+
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -112,9 +116,14 @@ export default function UploadPage() {
                    selectedFile.name.toLowerCase().endsWith(".heif");
 
     if (!selectedFile.type.startsWith("image/") && !isHeic) {
-      alert("Please select a valid image file.");
+      showAlert({
+        title: "Invalid File",
+        message: "Please select a valid image file (JPEG, PNG, or HEIC).",
+        type: "warning"
+      });
       return;
     }
+
 
     setIsConverting(true);
     let fileToProcess = selectedFile;
@@ -302,8 +311,13 @@ export default function UploadPage() {
 
     } catch (error: any) {
       if (error.message === "HEIC_CONVERSION_FAILED") {
-        alert("This specific HEIC file (possibly a Live Photo or Burst) is not supported by the browser converter. Please try a standard photo or a JPEG/PNG.");
+        showAlert({
+          title: "Conversion Failed",
+          message: "This specific HEIC file (possibly a Live Photo or Burst) is not supported by the browser converter. Please try a standard photo or a JPEG/PNG.",
+          type: "error"
+        });
       } else {
+
         console.error("File processing error:", error);
       }
       // If we have a file already (conversion failed but maybe it's partially okay?), 
@@ -340,9 +354,14 @@ export default function UploadPage() {
 
   const handleSubmit = async () => {
     if (!file || !location || !user) {
-      alert("Please select a photo, location, and ensure you are logged in.");
+      showAlert({
+        title: "Missing Information",
+        message: "Please select a photo, set a location, and ensure you are logged in to publish.",
+        type: "warning"
+      });
       return;
     }
+
 
     setIsUploading(true);
     try {
@@ -381,8 +400,13 @@ export default function UploadPage() {
 
       if (dbError) throw dbError;
 
-      alert("Post uploaded successfully!");
+      showAlert({
+        title: "Published!",
+        message: "Your photo has been uploaded successfully.",
+        type: "success"
+      });
       router.push("/");
+
 
     } catch (error: any) {
       console.error("Upload error details:", {
@@ -391,8 +415,13 @@ export default function UploadPage() {
         stack: error.stack,
         ...error
       });
-      alert(error.message || "Failed to upload post.");
+      showAlert({
+        title: "Upload Failed",
+        message: error.message || "Failed to upload post. Please try again.",
+        type: "error"
+      });
     } finally {
+
       setIsUploading(false);
     }
   };
