@@ -76,7 +76,6 @@ export const translations = {
         },
         advancedFilters: "Advanced Filters",
         clearAll: "Clear All Filters",
-        }
       },
       search: {
         placeholder: "Search title, tags, description...",
@@ -106,6 +105,7 @@ export const translations = {
       noneAuto: "None / Auto",
       processingImage: "Processing Image...",
       convertingHeic: "Converting HEIC to JPEG for compatibility",
+      processing: "Processing...",
       invalidFile: "Invalid File",
       invalidFileMsg: "Please select a valid image file (JPEG, PNG, or HEIC).",
       conversionFailed: "Conversion Failed",
@@ -265,7 +265,7 @@ export const translations = {
           sony: "소니",
           canon: "캐논",
           fujifilm: "후지필름",
-          nikon: "인기",
+          nikon: "니콘",
           leica: "라이카",
           hasselblad: "핫셀블라드",
         },
@@ -282,7 +282,6 @@ export const translations = {
         },
         advancedFilters: "고급 필터",
         clearAll: "모든 필터 초기화",
-        }
       },
       search: {
         placeholder: "제목, 태그, 설명글 검색...",
@@ -312,6 +311,7 @@ export const translations = {
       noneAuto: "없음 / 자동",
       processingImage: "이미지 처리 중...",
       convertingHeic: "호환성을 위해 HEIC를 JPEG로 변환 중",
+      processing: "처리 중...",
       invalidFile: "잘못된 파일",
       invalidFileMsg: "유효한 이미지 파일(JPEG, PNG 또는 HEIC)을 선택해 주세요.",
       conversionFailed: "변환 실패",
