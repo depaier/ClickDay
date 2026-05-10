@@ -12,6 +12,8 @@ export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialView, setInitialView] = useState<{ center: [number, number], zoom: number } | null>(null);
+
 
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
@@ -20,21 +22,37 @@ export default function Home() {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        // 1. Fetch posts first to show markers ASAP
-        const { data: postsData, error: postsError } = await supabase
-          .from('posts')
-          .select(`
+
+        // 1. Get Geolocation and Fetch posts in parallel
+        const [geoRes, postsRes] = await Promise.allSettled([
+          new Promise<{ lng: number, lat: number }>((resolve, reject) => {
+            if (!navigator.geolocation) return reject("No geolocation");
+            navigator.geolocation.getCurrentPosition(
+              (pos) => resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
+              (err) => reject(err),
+              { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+            );
+          }),
+          supabase.from('posts').select(`
             id, user_id, latitude, longitude, location_name,
             image_url, camera_model, focal_length, aperture,
             shutter_speed, iso, created_at, description, tags,
             recipe_name, recipe_type, like_count,
             profiles(username, avatar_url)
-          `);
-          
-        if (postsError) throw postsError;
+          `)
+        ]);
 
-        if (postsData) {
-          const formattedPosts = postsData.map((post: any) => ({
+        // Handle Geolocation
+        if (geoRes.status === 'fulfilled') {
+          setInitialView({ center: [geoRes.value.lng, geoRes.value.lat], zoom: 10 });
+        } else {
+          // Default to Seoul if geolocation fails
+          setInitialView({ center: [126.978, 37.5665], zoom: 2 });
+        }
+
+        // Handle Posts
+        if (postsRes.status === 'fulfilled' && postsRes.value.data) {
+          const formattedPosts = postsRes.value.data.map((post: any) => ({
             ...post,
             lat: post.latitude,
             lng: post.longitude,
@@ -43,7 +61,6 @@ export default function Home() {
           setPosts(formattedPosts);
         }
 
-        // posts가 로드되면 일단 로딩 해제 (마커 표시)
         setLoading(false);
 
         // 2. Fetch user interactions in background
@@ -56,12 +73,8 @@ export default function Home() {
             supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
           ]);
           
-          if (likesRes.data) {
-            setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
-          }
-          if (bookmarksRes.data) {
-            setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
-          }
+          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
+          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
         }
       } catch (err) {
         console.error("Error in Home data fetch:", err);
@@ -72,14 +85,23 @@ export default function Home() {
     fetchInitialData();
   }, []);
 
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#00000A] text-white">
       <Navbar variant="transparent" />
 
       {/* Main Map Container */}
       <div className="absolute inset-0">
-        <GlobeMap posts={posts} onMarkerClick={setSelectedPost} />
+        {initialView && (
+          <GlobeMap 
+            posts={posts} 
+            onMarkerClick={setSelectedPost} 
+            initialCenter={initialView.center}
+            initialZoom={initialView.zoom}
+          />
+        )}
       </div>
+
 
       {/* Side Panel Overlay */}
       {selectedPost && (

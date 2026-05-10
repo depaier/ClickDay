@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { UploadCloud, Camera, MapPin, X } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -42,7 +43,9 @@ const BRAND_MAPPING: Record<string, string> = {
 };
 
 export default function UploadPage() {
+  const router = useRouter();
   const { language } = useLanguage();
+
   const t = translations[language].upload;
   const { user } = useAuth();
 
@@ -379,7 +382,8 @@ export default function UploadPage() {
       if (dbError) throw dbError;
 
       alert("Post uploaded successfully!");
-      resetUpload();
+      router.push("/");
+
     } catch (error: any) {
       console.error("Upload error details:", {
         message: error.message,
