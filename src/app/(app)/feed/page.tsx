@@ -180,8 +180,8 @@ function FeedContent() {
           ))}
           {posts.length === 0 && (
             <div className="col-span-full py-32 text-center border border-dashed border-white/10 rounded-sm bg-white/5">
-              <p className="text-gray-500 font-heading tracking-widest uppercase mb-2">No posts found</p>
-              <p className="text-xs text-gray-600">Try selecting a different filter</p>
+              <p className="text-gray-500 font-heading tracking-widest uppercase mb-2">{t.noPostsFound}</p>
+              <p className="text-xs text-gray-600">{t.tryDifferentFilter}</p>
             </div>
           )}
         </MasonryGrid>

@@ -20,7 +20,7 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const { language } = useLanguage();
-  const t = translations[language].common;
+  const t = translations[language];
 
   
   const supabase = createBrowserClient(
@@ -32,12 +32,10 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
   
   const handleDelete = async () => {
     const confirmed = await showConfirm({
-      title: language === 'ko' ? "게시물 삭제" : "Delete Post",
-      message: language === 'ko' 
-        ? "이 게시물을 정말 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다." 
-        : "Are you sure you want to delete this post?\nThis action cannot be undone.",
-      confirmLabel: t.delete,
-      cancelLabel: t.cancel,
+      title: t.post.delete,
+      message: t.post.deleteConfirm,
+      confirmLabel: t.common.delete,
+      cancelLabel: t.common.cancel,
       confirmVariant: 'danger'
     });
 
@@ -69,8 +67,8 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
       if (dbError) throw dbError;
 
       showAlert({
-        title: t.success,
-        message: language === 'ko' ? "게시물이 삭제되었습니다." : "Post deleted successfully.",
+        title: t.common.success,
+        message: t.post.deleteSuccess,
         type: "success"
       });
 
@@ -79,8 +77,8 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
     } catch (error: any) {
       console.error("Delete error:", error);
       showAlert({
-        title: t.error,
-        message: error.message || (language === 'ko' ? "삭제에 실패했습니다." : "Failed to delete post."),
+        title: t.common.error,
+        message: error.message || t.common.error,
         type: "error"
       });
 
@@ -97,7 +95,7 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
       onClick={handleDelete}
       disabled={isDeleting}
     >
-      <Trash2 className="w-4 h-4" /> {isDeleting ? "Deleting..." : "Delete Post"}
+      <Trash2 className="w-4 h-4" /> {isDeleting ? translations[language].settings.saving : t.post.delete}
     </Button>
   );
 }

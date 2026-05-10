@@ -117,8 +117,8 @@ export default function UploadPage() {
 
     if (!selectedFile.type.startsWith("image/") && !isHeic) {
       showAlert({
-        title: "Invalid File",
-        message: "Please select a valid image file (JPEG, PNG, or HEIC).",
+        title: t.invalidFile,
+        message: t.invalidFileMsg,
         type: "warning"
       });
       return;
@@ -312,8 +312,8 @@ export default function UploadPage() {
     } catch (error: any) {
       if (error.message === "HEIC_CONVERSION_FAILED") {
         showAlert({
-          title: "Conversion Failed",
-          message: "This specific HEIC file (possibly a Live Photo or Burst) is not supported by the browser converter. Please try a standard photo or a JPEG/PNG.",
+          title: t.conversionFailed,
+          message: t.conversionFailedMsg,
           type: "error"
         });
       } else {
@@ -355,8 +355,8 @@ export default function UploadPage() {
   const handleSubmit = async () => {
     if (!file || !location || !user) {
       showAlert({
-        title: "Missing Information",
-        message: "Please select a photo, set a location, and ensure you are logged in to publish.",
+        title: t.missingInfo,
+        message: t.missingInfoMsg,
         type: "warning"
       });
       return;
@@ -401,8 +401,8 @@ export default function UploadPage() {
       if (dbError) throw dbError;
 
       showAlert({
-        title: "Published!",
-        message: "Your photo has been uploaded successfully.",
+        title: t.published,
+        message: t.publishedMsg,
         type: "success"
       });
       router.push("/");
@@ -416,8 +416,8 @@ export default function UploadPage() {
         ...error
       });
       showAlert({
-        title: "Upload Failed",
-        message: error.message || "Failed to upload post. Please try again.",
+        title: t.uploadFailed,
+        message: error.message || t.uploadFailedMsg,
         type: "error"
       });
     } finally {
@@ -451,13 +451,13 @@ export default function UploadPage() {
           />
           <UploadCloud className={`w-12 h-12 mb-4 ${isDragging || isConverting ? "text-[var(--accent)]" : "text-gray-400"}`} />
           <p className="font-heading tracking-widest uppercase mb-2">
-            {isConverting ? "Processing Image..." : t.dragDrop}
+            {isConverting ? t.processingImage : t.dragDrop}
           </p>
           <p className="text-gray-500 text-sm mb-6">
-            {isConverting ? "Converting HEIC to JPEG for compatibility" : t.browse}
+            {isConverting ? t.convertingHeic : t.browse}
           </p>
           <Button variant="ghost" disabled={isConverting}>
-            {isConverting ? "Processing..." : t.selectFile}
+            {isConverting ? t.processing : t.selectFile}
           </Button>
 
         </div>
@@ -481,7 +481,7 @@ export default function UploadPage() {
             type="text" 
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
-            placeholder="e.g. Sunset in Seoul"
+            placeholder={t.titlePlaceholder}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>
@@ -491,51 +491,46 @@ export default function UploadPage() {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Share your story..."
+            placeholder={t.descPlaceholder}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors resize-none"
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Tags (comma separated)</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.tags}</label>
           <input 
             type="text" 
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="e.g. landscape, night, seoul"
+            placeholder={t.tagsPlaceholder}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Camera Brand</label>
+            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.cameraBrand}</label>
             <select 
               value={cameraBrand || ""} 
               onChange={(e) => setCameraBrand(e.target.value || null)}
               className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
             >
-              <option value="">None / Auto</option>
+              <option value="">{t.noneAuto}</option>
               {Object.entries(BRAND_MAPPING).map(([key, value]) => (
                 <option key={value} value={value}>{value.charAt(0).toUpperCase() + value.slice(1)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Region (Korea)</label>
+            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.region}</label>
             <select 
               value={region || ""} 
               onChange={(e) => setRegion(e.target.value || null)}
               className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
             >
-              <option value="">None / Auto</option>
-              <option value="seoul">Seoul (서울)</option>
-              <option value="gyeonggi">Gyeonggi (경기)</option>
-              <option value="incheon">Incheon (인천)</option>
-              <option value="gangwon">Gangwon (강원)</option>
-              <option value="chungcheong">Chungcheong (충청)</option>
-              <option value="jeolla">Jeolla (전라)</option>
-              <option value="gyeongsang">Gyeongsang (경상)</option>
-              <option value="jeju">Jeju (제주)</option>
+              <option value="">{t.noneAuto}</option>
+              {Object.entries(translations[language].feed.filters.regions).filter(([k]) => k !== 'title').map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -583,7 +578,7 @@ export default function UploadPage() {
                     onClick={() => setIsModalOpen(true)}
                   >
                     <p className="text-white text-sm mb-2">{t.mapPreview}</p>
-                    <p className="text-[var(--accent)] text-xs uppercase tracking-tighter italic font-medium">Click to pick location</p>
+                    <p className="text-[var(--accent)] text-xs uppercase tracking-tighter italic font-medium">{t.clickToPick}</p>
                   </div>
                 )}
               </>
@@ -601,7 +596,7 @@ export default function UploadPage() {
             onClick={handleSubmit}
             disabled={isUploading || !location}
           >
-            {isUploading ? "Uploading..." : "Publish Post"}
+            {isUploading ? t.uploading : t.publish}
           </Button>
         </div>
       )}

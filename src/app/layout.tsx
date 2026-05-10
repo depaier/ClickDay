@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CustomAlert } from "@/components/ui/CustomAlert";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 
 const outfit = Outfit({
@@ -33,9 +34,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-black text-white">
         <AuthProvider>
           <LanguageProvider>
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
             <CustomAlert />
-
           </LanguageProvider>
         </AuthProvider>
       </body>

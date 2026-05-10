@@ -46,7 +46,7 @@ export function FollowButton({
       } catch (error: any) {
         // 에러 발생 시 원복
         setIsFollowing(prevStatus);
-        alert(error.message || "오류가 발생했습니다.");
+        alert(translations[language].common.error);
       }
     });
   };
@@ -61,8 +61,8 @@ export function FollowButton({
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "text-xs h-8 px-4 rounded-full transition-all duration-300 min-w-[100px]",
-        isFollowing 
-          ? "border-white/10 text-gray-400 hover:border-red-500/50 hover:text-red-500 hover:bg-red-500/5" 
+        isFollowing
+          ? "border-white/10 text-gray-400 hover:border-red-500/50 hover:text-red-500 hover:bg-red-500/5"
           : "bg-[var(--accent)] text-black font-bold hover:opacity-90 hover:scale-105",
         className
       )}
@@ -78,9 +78,9 @@ export function FollowButton({
       ) : (
         <UserPlus className="w-3 h-3 mr-1.5" />
       )}
-      
-      {isFollowing 
-        ? (isHovered ? t.unclick : t.following) 
+
+      {isFollowing
+        ? (isHovered ? t.unclick : t.following)
         : t.follow
       }
     </Button>

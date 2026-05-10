@@ -87,7 +87,7 @@ export default function LoginPage() {
         </div>
 
         <Button variant="accent" type="submit" className="w-full mt-4 h-12 text-sm" disabled={loading}>
-          {loading ? (language === "ko" ? "로그인 중..." : "Logging in...") : t.signIn}
+          {loading ? t.loggingIn : t.signIn}
         </Button>
       </form>
 

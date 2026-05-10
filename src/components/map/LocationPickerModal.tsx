@@ -5,6 +5,8 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
 
 interface LocationPickerModalProps {
   onClose: () => void;
@@ -12,6 +14,7 @@ interface LocationPickerModalProps {
 }
 
 export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClose, onSave }) => {
+  const { language } = useLanguage();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [currentCenter, setCurrentCenter] = useState({ lat: 37.5665, lng: 126.978 });
@@ -72,7 +75,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
       <div className="relative w-full max-w-4xl h-[80vh] bg-[#0A0A0A] border border-white/10 rounded-lg overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#111]">
-          <h3 className="font-heading tracking-widest uppercase text-sm">Select Location</h3>
+          <h3 className="font-heading tracking-widest uppercase text-sm">{translations[language].upload.selectLocation}</h3>
           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
             <X className="w-5 h-5 text-gray-400" />
           </button>
@@ -97,8 +100,8 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10 bg-[#111] flex justify-end gap-3">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>Confirm Location</Button>
+          <Button variant="ghost" onClick={onClose}>{translations[language].common.cancel}</Button>
+          <Button onClick={handleSave}>{translations[language].upload.confirmLocation}</Button>
         </div>
       </div>
     </div>
