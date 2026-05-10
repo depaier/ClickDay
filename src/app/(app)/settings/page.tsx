@@ -13,6 +13,7 @@ import { useAlertStore } from "@/store/useAlertStore";
 
 
 const supabase = createClient();
+import { motion } from "framer-motion";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -110,7 +111,7 @@ export default function SettingsPage() {
         type: "success"
       });
 
-      router.push("/profile");
+      router.push(`/users/@${formData.username || profile?.username}`);
     } catch (error) {
       console.error("Error updating profile:", error);
        showAlert({
@@ -127,7 +128,12 @@ export default function SettingsPage() {
   const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.username || 'Felix'}`;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="max-w-2xl mx-auto px-4 py-8"
+    >
       <h1 className="text-3xl font-heading tracking-[0.2em] uppercase mb-8 border-b border-white/10 pb-4">
         {t.title}
       </h1>
@@ -184,14 +190,14 @@ export default function SettingsPage() {
             
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">
-                Username (닉네임)
+                {t.usernameLabel}
               </label>
               <Input 
                 variant="onDark" 
                 type="text" 
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="Your username"
+                placeholder={t.usernamePlaceholder}
                 required
               />
             </div>
@@ -210,7 +216,7 @@ export default function SettingsPage() {
                     const val = e.target.value.replace(/^@/, '');
                     setFormData({ ...formData, instagram: val ? '@' + val : '' });
                   }}
-                  placeholder="username"
+                  placeholder={t.usernamePlaceholder}
                   className="border-none focus-visible:ring-0 px-1 py-1"
                 />
               </div>
@@ -225,7 +231,7 @@ export default function SettingsPage() {
                 rows={3}
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                placeholder="Tell us about yourself..."
+                placeholder={t.bioPlaceholder}
               />
             </div>
 
@@ -238,7 +244,7 @@ export default function SettingsPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
+                  {t.saving}
                 </>
               ) : t.saveProfile}
             </Button>
@@ -262,7 +268,7 @@ export default function SettingsPage() {
               onClick={async () => {
                 const confirmed = await showConfirm({
                   title: translations[language].nav.logout,
-                  message: language === 'ko' ? "정말 로그아웃 하시겠습니까?" : "Are you sure you want to sign out?",
+                  message: t.signOutConfirm,
                   confirmLabel: translations[language].nav.logout,
                   cancelLabel: translations[language].common.cancel,
                   confirmVariant: 'danger'
@@ -276,6 +282,6 @@ export default function SettingsPage() {
           </div>
         </section>
       </div>
-    </div>
+    </motion.div>
   );
 }

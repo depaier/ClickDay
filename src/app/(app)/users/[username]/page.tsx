@@ -1,27 +1,15 @@
-import Link from "next/link";
-import { Grid, Bookmark, Settings } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { MasonryGrid } from "@/components/layout/MasonryGrid";
-import { PostCard } from "@/components/post/PostCard";
-import Image from "next/image";
-
-
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
-import { FollowButton } from "@/components/user/FollowButton";
-import { ProfileStats } from "@/components/user/ProfileStats";
-import { ProfileTabs } from "@/components/user/ProfileTabs";
 import { getFollowCounts, getFollowStatus } from "@/lib/actions/follow-actions";
+import { ProfileClient } from "@/components/user/ProfileClient";
 
 interface PageProps {
   params: Promise<{ username: string }>;
   searchParams: Promise<{ tab?: string }>;
 }
 
-
 export default async function UserProfilePage({ params, searchParams }: PageProps) {
   const { username: rawUsername } = await params;
-  // @ 기호 처리 및 디코딩
   const username = decodeURIComponent(rawUsername).replace(/^@/, "");
   
   if (username === "undefined") {
@@ -79,7 +67,7 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   }
 
   // Fetch all own posts (for the count and for the default tab)
-  const { data: ownPostsData, error: ownPostsError } = await supabase
+  const { data: ownPostsData } = await supabase
     .from("posts")
     .select("*, profiles(username, avatar_url)")
     .eq("user_id", profile.id)
@@ -102,92 +90,18 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
     displayPosts = ownPosts;
   }
 
-
-
   return (
-    <div>
-      {/* Profile Header */}
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-16 pb-12 border-b border-white/10">
-        <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/5 shadow-xl bg-[#222]">
-          <img 
-            src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`} 
-            alt={profile.username} 
-            className="w-full h-full object-cover" 
-          />
-        </div>
-        
-        <div className="flex-1 text-center md:text-left">
-          <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
-            <h1 className="text-2xl font-heading tracking-widest uppercase">{profile.username}</h1>
-            <div className="flex gap-2">
-              {isOwnProfile ? (
-                <>
-                  <Link href="/settings">
-                    <Button variant="ghost" size="sm" className="h-8">Edit Profile</Button>
-                  </Link>
-                  <Link href="/settings">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <FollowButton 
-                  targetUserId={profile.id} 
-                  initialIsFollowing={isFollowing} 
-                />
-              )}
-            </div>
-          </div>
-          
-          <ProfileStats 
-            postsCount={ownPostsCount} 
-            followersCount={followersCount} 
-            followingCount={followingCount} 
-          />
-          
-          <div className="text-gray-300 text-sm max-w-md mx-auto md:mx-0">
-            <p className="mb-4 whitespace-pre-wrap">{profile.bio || "No bio yet."}</p>
-            {profile.instagram && (
-              <div className="flex items-center gap-2 text-zinc-300 justify-center md:justify-start">
-                <Image src="/logos/instagram.svg" alt="Instagram" width={16} height={16} className="opacity-80" />
-                <a 
-                  href={`https://instagram.com/${profile.instagram.replace(/^@/, '')}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-sm hover:text-white transition-colors"
-                >
-                  {profile.instagram}
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <ProfileTabs isOwnProfile={isOwnProfile} />
-
-      <MasonryGrid>
-        {displayPosts?.map((post) => (
-          <PostCard 
-            key={post.id} 
-            post={post as any} 
-            isLiked={likedPostIds.has(post.id)}
-            isBookmarked={bookmarkedPostIds.has(post.id)}
-          />
-        ))}
-        {(!displayPosts || displayPosts.length === 0) && (
-          <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-sm">
-            <p className="text-gray-500 font-heading tracking-widest uppercase">
-              {tab === "saved" ? "No saved posts yet" : "No uploads yet"}
-            </p>
-          </div>
-        )}
-
-      </MasonryGrid>
-
-
-    </div>
+    <ProfileClient 
+      profile={profile}
+      isOwnProfile={isOwnProfile}
+      isFollowing={isFollowing}
+      followersCount={followersCount}
+      followingCount={followingCount}
+      ownPostsCount={ownPostsCount}
+      displayPosts={displayPosts}
+      likedPostIds={likedPostIds}
+      bookmarkedPostIds={bookmarkedPostIds}
+      tab={tab}
+    />
   );
 }

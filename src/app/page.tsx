@@ -5,6 +5,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap } from "@/components/map/GlobeMap";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
+import { motion, AnimatePresence } from "framer-motion";
 
 const supabase = createClient();
 
@@ -115,6 +118,9 @@ export default function Home() {
   }, []);
 
 
+  const { language } = useLanguage();
+  const t = translations[language];
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#00000A] text-white">
       <Navbar variant="transparent" />
@@ -133,24 +139,29 @@ export default function Home() {
 
 
       {/* Side Panel Overlay */}
-      {selectedPost && (
-        <PostPreviewSheet
-          post={selectedPost}
-          isLiked={likedPostIds.has(selectedPost.id.toString())}
-          isBookmarked={bookmarkedPostIds.has(selectedPost.id.toString())}
-          onClose={() => setSelectedPost(null)}
-        />
-      )}
+      <PostPreviewSheet
+        post={selectedPost}
+        isLiked={selectedPost ? likedPostIds.has(selectedPost.id.toString()) : false}
+        isBookmarked={selectedPost ? bookmarkedPostIds.has(selectedPost.id.toString()) : false}
+        onClose={() => setSelectedPost(null)}
+      />
 
       {/* Loading Overlay */}
-      {loading && (
-        <div className="absolute inset-0 z-[60] bg-[#00000A] flex flex-col items-center justify-center">
-          <div className="w-12 h-12 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="font-heading tracking-[0.2em] uppercase text-xs text-gray-500 animate-pulse">
-            Initializing World
-          </p>
-        </div>
-      )}
+      <AnimatePresence>
+        {loading && (
+          <motion.div 
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="absolute inset-0 z-[60] bg-[#00000A] flex flex-col items-center justify-center"
+          >
+            <div className="w-12 h-12 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="font-heading tracking-[0.2em] uppercase text-xs text-gray-500 animate-pulse">
+              {t.map.initializing}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
