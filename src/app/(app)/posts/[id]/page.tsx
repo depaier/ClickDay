@@ -114,8 +114,8 @@ export default async function PostDetailPage({ params }: PageProps) {
                 <div className="w-10 h-10 rounded-full bg-gray-800 border border-white/10 group-hover:border-[var(--accent)] transition-colors" />
               )}
               <div>
-                <div className="font-heading tracking-wider uppercase text-sm group-hover:text-[var(--accent)] transition-colors">
-                  @{post.profiles?.username || "unknown"}
+                <div className="font-bold text-sm group-hover:text-[var(--accent)] transition-colors">
+                  {post.profiles?.username || "unknown"}
                 </div>
                 <div className="text-gray-500 text-xs">
                   {new Date(post.created_at).toLocaleDateString()}

@@ -7,8 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 const supabase = createClient();
 
 interface Profile {
+  id: string;
   username: string;
   avatar_url: string | null;
+  bio: string | null;
+  instagram: string | null;
 }
 
 interface AuthContextType {
@@ -17,6 +20,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -36,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, avatar_url")
+      .select("id, username, avatar_url, bio, instagram")
       .eq("id", userId)
       .single();
 
@@ -91,8 +96,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setProfile(null);
   };
 
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

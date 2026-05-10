@@ -63,12 +63,12 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
         <div className="p-6 space-y-8">
           {/* Photographer info */}
           <div className="flex items-center justify-between">
-            <Link href={`/users/@${post.profiles?.username}`} className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-100 group-hover:border-[var(--accent)] transition-colors">
-                <img src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles?.username || 'Felix'}`} alt="avatar" />
+            <Link href={`/users/@${post.profiles?.username}`} className="flex items-center gap-3 group" onClick={onClose}>
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-white/10 group-hover:border-[var(--accent)] transition-colors">
+                <img src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles?.username || "unknown"}`} alt={post.profiles?.username || "user"} className="w-full h-full object-cover" />
               </div>
               <div>
-                <p className="font-bold text-sm group-hover:text-[var(--accent)] transition-colors">@{post.profiles?.username || "photographer_kr"}</p>
+                <p className="font-bold text-sm group-hover:text-[var(--accent)] transition-colors">{post.profiles?.username || "photographer_kr"}</p>
                 <p className="text-xs text-gray-500">{post.created_at ? new Date(post.created_at).toLocaleDateString() : "Recently"}</p>
               </div>
             </Link>

@@ -3,6 +3,7 @@ import { Grid, Bookmark, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
 import { PostCard } from "@/components/post/PostCard";
+import Image from "next/image";
 
 
 import { createClient } from "@/utils/supabase/server";
@@ -22,6 +23,10 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
   const { username: rawUsername } = await params;
   // @ 기호 처리 및 디코딩
   const username = decodeURIComponent(rawUsername).replace(/^@/, "");
+  
+  if (username === "undefined") {
+    return notFound();
+  }
   
   const supabase = await createClient();
 
@@ -90,19 +95,17 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
     <div>
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-16 pb-12 border-b border-white/10">
-        {profile.avatar_url ? (
+        <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/5 shadow-xl bg-[#222]">
           <img 
-            src={profile.avatar_url} 
+            src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.username}`} 
             alt={profile.username} 
-            className="w-32 h-32 rounded-full object-cover border-2 border-white/5 shadow-xl" 
+            className="w-full h-full object-cover" 
           />
-        ) : (
-          <div className="w-32 h-32 rounded-full bg-[#222] flex-shrink-0 border border-white/10" />
-        )}
+        </div>
         
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
-            <h1 className="text-2xl font-heading tracking-widest uppercase">@{profile.username}</h1>
+            <h1 className="text-2xl font-heading tracking-widest uppercase">{profile.username}</h1>
             <div className="flex gap-2">
               {isOwnProfile ? (
                 <>
@@ -131,17 +134,19 @@ export default async function UserProfilePage({ params, searchParams }: PageProp
           />
           
           <div className="text-gray-300 text-sm max-w-md mx-auto md:mx-0">
-            <p className="font-bold text-white mb-1">{profile.full_name || profile.username}</p>
-            <p className="mb-2 whitespace-pre-wrap">{profile.bio || "No bio yet."}</p>
-            {profile.website && (
-              <a 
-                href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-[var(--accent)] hover:underline"
-              >
-                {profile.website.replace(/^https?:\/\//, "")}
-              </a>
+            <p className="mb-4 whitespace-pre-wrap">{profile.bio || "No bio yet."}</p>
+            {profile.instagram && (
+              <div className="flex items-center gap-2 text-zinc-300 justify-center md:justify-start">
+                <Image src="/logos/instagram.svg" alt="Instagram" width={16} height={16} className="opacity-80" />
+                <a 
+                  href={`https://instagram.com/${profile.instagram.replace(/^@/, '')}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-sm hover:text-white transition-colors"
+                >
+                  {profile.instagram}
+                </a>
+              </div>
             )}
           </div>
         </div>

@@ -43,10 +43,30 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
           <Link href="/upload" className="hover:text-[var(--accent)] transition-colors">{t.upload}</Link>
         </div>
 
-        {/* Right User Actions */}
-        <div className="flex items-center gap-6">
-          <div className="hidden md:block">
-            <LanguageSwitcher />
+      {/* Right User Actions */}
+      <div className="flex items-center gap-6">
+        <LanguageSwitcher />
+        <button className="hover:text-[var(--accent)] transition-colors">
+          <Search className="w-5 h-5" />
+        </button>
+        
+        {user ? (
+          <div className="flex items-center gap-6">
+            {profile?.username ? (
+              <Link href={`/users/@${profile.username}`} className="hover:text-[var(--accent)] transition-colors">
+                {profile.username}
+              </Link>
+            ) : (
+              <Link href="/profile" className="hover:text-[var(--accent)] transition-colors">
+                {t.profile}
+              </Link>
+            )}
+            <button 
+              onClick={() => signOut()}
+              className="hover:text-[var(--accent)] transition-colors uppercase"
+            >
+              {t.logout}
+            </button>
           </div>
           <button className="hover:text-[var(--accent)] transition-colors">
             <Search className="w-5 h-5" />

@@ -120,34 +120,32 @@ export default function ProfilePage() {
         <div className="flex flex-col md:flex-row items-center md:items-start gap-10 mb-16">
           <div className="relative group">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border border-white/10 bg-zinc-900">
-              {profile?.avatar_url ? (
-                <Image 
-                  src={profile.avatar_url} 
-                  alt={profile.username} 
-                  width={160} 
-                  height={160}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-700">
-                  <Camera size={48} />
-                </div>
-              )}
+              <Image 
+                src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.username || user?.email?.split('@')[0] || user?.id}`} 
+                alt={profile?.username || "avatar"} 
+                width={160} 
+                height={160}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
 
           <div className="flex-1 flex flex-col items-center md:items-start">
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 mb-6">
               <h1 className="text-3xl md:text-4xl font-heading font-light tracking-tight uppercase">
-                {profile?.username || "Photographer"}
+                {profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || "Photographer"}
               </h1>
               <div className="flex items-center gap-3">
-                <button className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-heading tracking-widest uppercase transition-colors border border-white/5">
-                  {t.editProfile}
-                </button>
-                <button className="p-2 bg-zinc-800 hover:bg-zinc-700 text-white transition-colors border border-white/5">
-                  <Settings size={16} />
-                </button>
+                <Link href="/settings">
+                  <button className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-heading tracking-widest uppercase transition-colors border border-white/5">
+                    {t.editProfile}
+                  </button>
+                </Link>
+                <Link href="/settings">
+                  <button className="p-2 bg-zinc-800 hover:bg-zinc-700 text-white transition-colors border border-white/5">
+                    <Settings size={16} />
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -159,9 +157,18 @@ export default function ProfilePage() {
               {/* Future stats like followers/following can go here */}
             </div>
 
-            <p className="text-zinc-400 text-sm max-w-md text-center md:text-left leading-relaxed">
+            <p className="text-zinc-400 text-sm max-w-md text-center md:text-left leading-relaxed mb-4">
               {t.bio}
             </p>
+
+            {profile?.instagram && (
+              <div className="flex items-center gap-2 text-zinc-300">
+                <Image src="/logos/instagram.svg" alt="Instagram" width={16} height={16} className="opacity-80" />
+                <a href={`https://instagram.com/${profile.instagram.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-white transition-colors">
+                  {profile.instagram}
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
