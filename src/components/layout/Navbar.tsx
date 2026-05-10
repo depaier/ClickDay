@@ -46,9 +46,6 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
       {/* Right User Actions */}
       <div className="flex items-center gap-6">
         <LanguageSwitcher />
-        <button className="hover:text-[var(--accent)] transition-colors">
-          <Search className="w-5 h-5" />
-        </button>
         
         {user ? (
           <div className="flex items-center gap-6">
