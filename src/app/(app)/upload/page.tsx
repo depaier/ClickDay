@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { UploadCloud, Camera, MapPin, X } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -12,7 +13,9 @@ import { LocationPickerModal } from "@/components/map/LocationPickerModal";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 // Use the full build of exifr to ensure all parsers (including HEIC) are included
-import exifr from "exifr/dist/full.esm.js";
+import * as exifr from "exifr/dist/full.esm.js";
+import { useAlertStore } from "@/store/useAlertStore";
+
 // heic-decode is dynamically imported to avoid SSR issues
 
 
@@ -42,9 +45,13 @@ const BRAND_MAPPING: Record<string, string> = {
 };
 
 export default function UploadPage() {
+  const router = useRouter();
   const { language } = useLanguage();
+
   const t = translations[language].upload;
   const { user } = useAuth();
+  const { showAlert } = useAlertStore();
+
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -109,9 +116,14 @@ export default function UploadPage() {
                    selectedFile.name.toLowerCase().endsWith(".heif");
 
     if (!selectedFile.type.startsWith("image/") && !isHeic) {
-      alert("Please select a valid image file.");
+      showAlert({
+        title: t.invalidFile,
+        message: t.invalidFileMsg,
+        type: "warning"
+      });
       return;
     }
+
 
     setIsConverting(true);
     let fileToProcess = selectedFile;
@@ -299,8 +311,13 @@ export default function UploadPage() {
 
     } catch (error: any) {
       if (error.message === "HEIC_CONVERSION_FAILED") {
-        alert("This specific HEIC file (possibly a Live Photo or Burst) is not supported by the browser converter. Please try a standard photo or a JPEG/PNG.");
+        showAlert({
+          title: t.conversionFailed,
+          message: t.conversionFailedMsg,
+          type: "error"
+        });
       } else {
+
         console.error("File processing error:", error);
       }
       // If we have a file already (conversion failed but maybe it's partially okay?), 
@@ -310,7 +327,7 @@ export default function UploadPage() {
     }
 
 
-  }, []);
+  }, [language, t, showAlert]);
 
 
   const onDrop = (e: React.DragEvent) => {
@@ -337,9 +354,14 @@ export default function UploadPage() {
 
   const handleSubmit = async () => {
     if (!file || !location || !user) {
-      alert("Please select a photo, location, and ensure you are logged in.");
+      showAlert({
+        title: t.missingInfo,
+        message: t.missingInfoMsg,
+        type: "warning"
+      });
       return;
     }
+
 
     setIsUploading(true);
     try {
@@ -378,8 +400,14 @@ export default function UploadPage() {
 
       if (dbError) throw dbError;
 
-      alert("Post uploaded successfully!");
-      resetUpload();
+      showAlert({
+        title: t.published,
+        message: t.publishedMsg,
+        type: "success"
+      });
+      router.push("/");
+
+
     } catch (error: any) {
       console.error("Upload error details:", {
         message: error.message,
@@ -387,8 +415,13 @@ export default function UploadPage() {
         stack: error.stack,
         ...error
       });
-      alert(error.message || "Failed to upload post.");
+      showAlert({
+        title: t.uploadFailed,
+        message: error.message || t.uploadFailedMsg,
+        type: "error"
+      });
     } finally {
+
       setIsUploading(false);
     }
   };
@@ -418,13 +451,13 @@ export default function UploadPage() {
           />
           <UploadCloud className={`w-12 h-12 mb-4 ${isDragging || isConverting ? "text-[var(--accent)]" : "text-gray-400"}`} />
           <p className="font-heading tracking-widest uppercase mb-2">
-            {isConverting ? "Processing Image..." : t.dragDrop}
+            {isConverting ? t.processingImage : t.dragDrop}
           </p>
           <p className="text-gray-500 text-sm mb-6">
-            {isConverting ? "Converting HEIC to JPEG for compatibility" : t.browse}
+            {isConverting ? t.convertingHeic : t.browse}
           </p>
           <Button variant="ghost" disabled={isConverting}>
-            {isConverting ? "Processing..." : t.selectFile}
+            {isConverting ? t.processing : t.selectFile}
           </Button>
 
         </div>
@@ -448,7 +481,7 @@ export default function UploadPage() {
             type="text" 
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
-            placeholder="e.g. Sunset in Seoul"
+            placeholder={t.titlePlaceholder}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>
@@ -458,51 +491,46 @@ export default function UploadPage() {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Share your story..."
+            placeholder={t.descPlaceholder}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors resize-none"
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Tags (comma separated)</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.tags}</label>
           <input 
             type="text" 
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="e.g. landscape, night, seoul"
+            placeholder={t.tagsPlaceholder}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Camera Brand</label>
+            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.cameraBrand}</label>
             <select 
               value={cameraBrand || ""} 
               onChange={(e) => setCameraBrand(e.target.value || null)}
               className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
             >
-              <option value="">None / Auto</option>
+              <option value="">{t.noneAuto}</option>
               {Object.entries(BRAND_MAPPING).map(([key, value]) => (
                 <option key={value} value={value}>{value.charAt(0).toUpperCase() + value.slice(1)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Region (Korea)</label>
+            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.region}</label>
             <select 
               value={region || ""} 
               onChange={(e) => setRegion(e.target.value || null)}
               className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
             >
-              <option value="">None / Auto</option>
-              <option value="seoul">Seoul (서울)</option>
-              <option value="gyeonggi">Gyeonggi (경기)</option>
-              <option value="incheon">Incheon (인천)</option>
-              <option value="gangwon">Gangwon (강원)</option>
-              <option value="chungcheong">Chungcheong (충청)</option>
-              <option value="jeolla">Jeolla (전라)</option>
-              <option value="gyeongsang">Gyeongsang (경상)</option>
-              <option value="jeju">Jeju (제주)</option>
+              <option value="">{t.noneAuto}</option>
+              {Object.entries(translations[language].feed.filters.regions).filter(([k]) => k !== 'title').map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -550,7 +578,7 @@ export default function UploadPage() {
                     onClick={() => setIsModalOpen(true)}
                   >
                     <p className="text-white text-sm mb-2">{t.mapPreview}</p>
-                    <p className="text-[var(--accent)] text-xs uppercase tracking-tighter italic font-medium">Click to pick location</p>
+                    <p className="text-[var(--accent)] text-xs uppercase tracking-tighter italic font-medium">{t.clickToPick}</p>
                   </div>
                 )}
               </>
@@ -568,7 +596,7 @@ export default function UploadPage() {
             onClick={handleSubmit}
             disabled={isUploading || !location}
           >
-            {isUploading ? "Uploading..." : "Publish Post"}
+            {isUploading ? t.uploading : t.publish}
           </Button>
         </div>
       )}

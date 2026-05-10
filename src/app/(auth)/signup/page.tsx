@@ -7,12 +7,15 @@ import { Input } from "@/components/ui/Input";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
+import { useAlertStore } from "@/store/useAlertStore";
+
 
 const supabase = createClient();
 
 export default function SignupPage() {
   const { language } = useLanguage();
   const t = translations[language].auth;
+  const { showAlert } = useAlertStore();
 
   const [formData, setFormData] = useState({
     username: "",
@@ -34,7 +37,7 @@ export default function SignupPage() {
     setError(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError(language === "ko" ? "비밀번호가 일치하지 않습니다." : "Passwords do not match.");
+      setError(t.passwordsDoNotMatch);
       return;
     }
 
@@ -54,11 +57,14 @@ export default function SignupPage() {
       if (signupError) throw signupError;
 
       if (data.user) {
-        alert(language === "ko" 
-          ? "회원가입이 완료되었습니다. 이메일을 확인해주세요." 
-          : "Signup successful. Please check your email for verification.");
+        showAlert({
+          title: translations[language].common.success,
+          message: t.signupSuccess,
+          type: "success"
+        });
         window.location.href = "/login";
       }
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -128,7 +134,7 @@ export default function SignupPage() {
         </div>
 
         <Button variant="accent" type="submit" className="w-full mt-4 h-12 text-sm" disabled={loading}>
-          {loading ? (language === "ko" ? "처리 중..." : "Processing...") : t.signup}
+          {loading ? t.processing : t.signup}
         </Button>
       </form>
 

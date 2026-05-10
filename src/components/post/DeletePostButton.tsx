@@ -5,6 +5,11 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
+import { useAlertStore } from "@/store/useAlertStore";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { translations } from "@/constants/translations";
+
+
 
 interface DeletePostButtonProps {
   postId: string | number;
@@ -14,14 +19,29 @@ interface DeletePostButtonProps {
 export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language];
+
   
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const { showAlert, showConfirm } = useAlertStore();
+  
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+    const confirmed = await showConfirm({
+      title: t.post.delete,
+      message: t.post.deleteConfirm,
+      confirmLabel: t.common.delete,
+      cancelLabel: t.common.cancel,
+      confirmVariant: 'danger'
+    });
+
+
+    if (!confirmed) return;
+
 
     setIsDeleting(true);
     try {
@@ -46,13 +66,24 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
 
       if (dbError) throw dbError;
 
-      alert("Post deleted successfully.");
+      showAlert({
+        title: t.common.success,
+        message: t.post.deleteSuccess,
+        type: "success"
+      });
+
       router.push('/');
       router.refresh();
     } catch (error: any) {
       console.error("Delete error:", error);
-      alert(error.message || "Failed to delete post.");
+      showAlert({
+        title: t.common.error,
+        message: error.message || t.common.error,
+        type: "error"
+      });
+
     } finally {
+
       setIsDeleting(false);
     }
   };
@@ -64,7 +95,7 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
       onClick={handleDelete}
       disabled={isDeleting}
     >
-      <Trash2 className="w-4 h-4" /> {isDeleting ? "Deleting..." : "Delete Post"}
+      <Trash2 className="w-4 h-4" /> {isDeleting ? translations[language].settings.saving : t.post.delete}
     </Button>
   );
 }

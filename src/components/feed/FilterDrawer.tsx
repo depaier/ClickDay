@@ -64,13 +64,13 @@ function FilterDrawerContent() {
           >
             <div className="flex justify-between items-start mb-10">
               <div>
-                <h2 className="text-xl font-heading tracking-widest uppercase mb-1">Advanced Filters</h2>
+                <h2 className="text-xl font-heading tracking-widest uppercase mb-1">{t.advancedFilters}</h2>
                 <div className="h-0.5 w-12 bg-[var(--accent)] mb-4" />
                 <button 
                   onClick={clearAll}
                   className="text-[10px] tracking-widest uppercase text-[var(--accent)] hover:text-white transition-colors bg-[var(--accent)]/10 px-3 py-1.5 rounded-full border border-[var(--accent)]/20"
                 >
-                  Clear All Filters
+                  {t.clearAll}
                 </button>
               </div>
               <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
