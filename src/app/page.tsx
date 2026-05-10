@@ -20,17 +20,39 @@ export default function Home() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      // Safety timeout to prevent infinite loading
+      const safetyTimeout = setTimeout(() => {
+        if (loading) {
+          console.warn("Home: Safety timeout reached, forcing loading state to false");
+          setLoading(false);
+          if (!initialView) {
+            setInitialView({ center: [126.978, 37.5665], zoom: 2 });
+          }
+        }
+      }, 8000); // 8 seconds safety window
+
       try {
+        console.log("Home: Starting initial data fetch...");
         setLoading(true);
 
         // 1. Get Geolocation and Fetch posts in parallel
         const [geoRes, postsRes] = await Promise.allSettled([
           new Promise<{ lng: number, lat: number }>((resolve, reject) => {
-            if (!navigator.geolocation) return reject("No geolocation");
+            if (!navigator.geolocation) return reject("No geolocation support");
+            
+            // Extra safety: reject if geolocation takes too long (already has timeout, but just in case)
+            const geoTimeout = setTimeout(() => reject("Geolocation custom timeout"), 5000);
+            
             navigator.geolocation.getCurrentPosition(
-              (pos) => resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
-              (err) => reject(err),
-              { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+              (pos) => {
+                clearTimeout(geoTimeout);
+                resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude });
+              },
+              (err) => {
+                clearTimeout(geoTimeout);
+                reject(err);
+              },
+              { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
             );
           }),
           supabase.from('posts').select(`
@@ -42,11 +64,13 @@ export default function Home() {
           `)
         ]);
 
+        console.log("Home: Initial fetch settled", { geoStatus: geoRes.status, postsStatus: postsRes.status });
+
         // Handle Geolocation
         if (geoRes.status === 'fulfilled') {
           setInitialView({ center: [geoRes.value.lng, geoRes.value.lat], zoom: 10 });
         } else {
-          // Default to Seoul if geolocation fails
+          console.log("Home: Using default view (Seoul)", geoRes.reason);
           setInitialView({ center: [126.978, 37.5665], zoom: 2 });
         }
 
@@ -59,9 +83,9 @@ export default function Home() {
             title: post.location_name
           }));
           setPosts(formattedPosts);
+        } else if (postsRes.status === 'fulfilled' && postsRes.value.error) {
+          console.error("Home: Error fetching posts:", postsRes.value.error);
         }
-
-        setLoading(false);
 
         // 2. Fetch user interactions in background
         const { data: { session } } = await supabase.auth.getSession();
@@ -77,8 +101,13 @@ export default function Home() {
           if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
         }
       } catch (err) {
-        console.error("Error in Home data fetch:", err);
+        console.error("Home: Unexpected error in fetchInitialData:", err);
+      } finally {
+        clearTimeout(safetyTimeout);
         setLoading(false);
+        // Ensure initialView is NEVER null after loading is false
+        setInitialView(prev => prev || { center: [126.978, 37.5665], zoom: 2 });
+        console.log("Home: Loading completed");
       }
     };
     

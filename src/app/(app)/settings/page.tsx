@@ -98,7 +98,7 @@ export default function SettingsPage() {
       if (error) throw error;
       await refreshProfile();
       alert(t.success);
-      router.push("/profile");
+      router.push(`/users/@${formData.username || profile?.username || user.id}`);
     } catch (error) {
       console.error("Error updating profile:", error);
       alert(t.error);
