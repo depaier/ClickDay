@@ -13,7 +13,7 @@ import { LocationPickerModal } from "@/components/map/LocationPickerModal";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 // Use the full build of exifr to ensure all parsers (including HEIC) are included
-import exifr from "exifr/dist/full.esm.js";
+import * as exifr from "exifr/dist/full.esm.js";
 import { useAlertStore } from "@/store/useAlertStore";
 
 // heic-decode is dynamically imported to avoid SSR issues
@@ -327,7 +327,7 @@ export default function UploadPage() {
     }
 
 
-  }, []);
+  }, [language, t, showAlert]);
 
 
   const onDrop = (e: React.DragEvent) => {
