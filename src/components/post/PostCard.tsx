@@ -57,10 +57,10 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
                 className="mb-4 flex flex-col items-center group/user"
               >
                 <div className="w-10 h-10 rounded-full border border-white/20 overflow-hidden mb-2 group-hover/user:border-[var(--accent)] transition-colors">
-                  <img src={post.profiles.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                  <img src={post.profiles.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles.username}`} alt="avatar" className="w-full h-full object-cover" />
                 </div>
                 <span className="text-[10px] font-heading tracking-widest uppercase group-hover/user:text-[var(--accent)] transition-colors">
-                  @{post.profiles.username}
+                  {post.profiles.username}
                 </span>
               </button>
             )}
