@@ -184,13 +184,20 @@ export default function SettingsPage() {
               <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">
                 {t.instagram}
               </label>
-              <Input 
-                variant="onDark" 
-                type="text" 
-                value={formData.instagram}
-                onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                placeholder="@username"
-              />
+              <div className="flex items-center border-b border-white/50 focus-within:border-[var(--accent)] transition-colors">
+                <span className="text-white pb-1 pl-1 text-sm font-sans tracking-[0.04em]">@</span>
+                <Input 
+                  variant="onDark" 
+                  type="text" 
+                  value={formData.instagram ? formData.instagram.replace(/^@/, '') : ''}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/^@/, '');
+                    setFormData({ ...formData, instagram: val ? '@' + val : '' });
+                  }}
+                  placeholder="username"
+                  className="border-none focus-visible:ring-0 px-1 py-1"
+                />
+              </div>
             </div>
             
             <div>
