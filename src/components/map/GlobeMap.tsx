@@ -16,9 +16,18 @@ interface Post {
 interface GlobeMapProps {
   posts: Post[];
   onMarkerClick: (post: Post) => void;
+  initialCenter?: [number, number];
+  initialZoom?: number;
 }
 
-export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
+
+export const GlobeMap: React.FC<GlobeMapProps> = ({ 
+  posts, 
+  onMarkerClick,
+  initialCenter = [126.978, 37.5665],
+  initialZoom = 2
+}) => {
+
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
 
@@ -197,17 +206,20 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({ posts, onMarkerClick }) => {
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: "https://tiles.openfreemap.org/styles/dark",
-      center: [126.978, 37.5665],
-      zoom: 2,
+      center: initialCenter,
+      zoom: initialZoom,
       attributionControl: false,
       fadeDuration: 0,
     });
+
 
     map.on("load", () => {
       map.setProjection({ type: "globe" });
       addCustomIcon(map);
 
       map.on("styleimagemissing", (e) => {
+
+
         const canvas = document.createElement("canvas");
         canvas.width = 1;
         canvas.height = 1;
