@@ -32,6 +32,7 @@ export const translations = {
       signupSuccess: "Signup successful. Please check your email for verification.",
       loggingIn: "Logging in...",
       processing: "Processing...",
+      continueWithGoogle: "Continue with Google",
     },
     home: {
       heroTitle: "ClickDay",
@@ -239,6 +240,7 @@ export const translations = {
       signupSuccess: "회원가입이 완료되었습니다. 이메일을 확인해주세요.",
       loggingIn: "로그인 중...",
       processing: "처리 중...",
+      continueWithGoogle: "Google로 계속하기",
     },
     home: {
       heroTitle: "클릭데이",
