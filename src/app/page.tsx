@@ -100,8 +100,8 @@ export default function Home() {
             supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
           ]);
           
-          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
-          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
+          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((like: { post_id: string }) => like.post_id)));
+          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((bookmark: { post_id: string }) => bookmark.post_id)));
         }
       } catch (err) {
         console.error("Home: Unexpected error in fetchInitialData:", err);
