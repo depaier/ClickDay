@@ -22,7 +22,7 @@ import { useAlertStore } from "@/store/useAlertStore";
 
 
 
-const supabase = createClient();
+// heic-decode is dynamically imported to avoid SSR issues
 
 interface ExifData {
   make?: string;
@@ -49,8 +49,9 @@ export default function UploadPage() {
   const { language } = useLanguage();
 
   const t = translations[language].upload;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { showAlert } = useAlertStore();
+  const supabase = createClient();
 
 
   const [file, setFile] = useState<File | null>(null);
@@ -431,6 +432,15 @@ export default function UploadPage() {
       <h1 className="text-3xl font-heading tracking-[0.2em] uppercase mb-2">{t.title}</h1>
       <p className="text-gray-400 mb-8 border-b border-white/10 pb-6">{t.subtitle}</p>
 
+      {authLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
+          <span className="ml-3 text-gray-400">{translations[language].common.loading}</span>
+        </div>
+      )}
+
+      <div className={authLoading ? "hidden" : "block"}>
+
       {/* Upload Area */}
       {!previewUrl ? (
         <div
@@ -594,12 +604,13 @@ export default function UploadPage() {
           <Button 
             className="px-12 py-6 text-lg font-heading tracking-[0.2em] uppercase"
             onClick={handleSubmit}
-            disabled={isUploading || !location}
+            disabled={isUploading || !location || !user}
           >
             {isUploading ? t.uploading : t.publish}
           </Button>
         </div>
       )}
+      </div>
 
       {isModalOpen && (
         <LocationPickerModal 
