@@ -5,6 +5,7 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface LikeButtonProps {
   postId: string;
@@ -29,6 +30,7 @@ export function LikeButton({
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsLiked(initialIsLiked);
@@ -41,9 +43,8 @@ export function LikeButton({
 
     if (isLoading) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      alert("Please log in to like posts.");
+      window.location.href = '/login';
       return;
     }
 

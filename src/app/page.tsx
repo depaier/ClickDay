@@ -1,122 +1,119 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap } from "@/components/map/GlobeMap";
-import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient();
+// Dedicated client for public data fetching, completely ignoring auth state.
+// This prevents the infinite lock on visibilitychange.
+const supabaseData = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  }
+);
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialView, setInitialView] = useState<{ center: [number, number], zoom: number } | null>(null);
-
-
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
+  const isFetchingRef = useRef(false);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      // Safety timeout to prevent infinite loading
-      const safetyTimeout = setTimeout(() => {
-        if (loading) {
-          console.warn("Home: Safety timeout reached, forcing loading state to false");
-          setLoading(false);
-          if (!initialView) {
-            setInitialView({ center: [126.978, 37.5665], zoom: 2 });
-          }
-        }
-      }, 8000); // 8 seconds safety window
+  const fetchPosts = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    try {
+      const { data, error } = await supabaseData.from('posts').select(`
+        id, user_id, latitude, longitude, location_name,
+        image_url, camera_model, focal_length, aperture,
+        shutter_speed, iso, created_at, description, tags,
+        recipe_name, recipe_type, like_count,
+        profiles(username, avatar_url)
+      `);
 
-      try {
-        console.log("Home: Starting initial data fetch...");
-        setLoading(true);
-
-        // 1. Get Geolocation and Fetch posts in parallel
-        const [geoRes, postsRes] = await Promise.allSettled([
-          new Promise<{ lng: number, lat: number }>((resolve, reject) => {
-            if (!navigator.geolocation) return reject("No geolocation support");
-            
-            // Extra safety: reject if geolocation takes too long (already has timeout, but just in case)
-            const geoTimeout = setTimeout(() => reject("Geolocation custom timeout"), 5000);
-            
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                clearTimeout(geoTimeout);
-                resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude });
-              },
-              (err) => {
-                clearTimeout(geoTimeout);
-                reject(err);
-              },
-              { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
-            );
-          }),
-          supabase.from('posts').select(`
-            id, user_id, latitude, longitude, location_name,
-            image_url, camera_model, focal_length, aperture,
-            shutter_speed, iso, created_at, description, tags,
-            recipe_name, recipe_type, like_count,
-            profiles(username, avatar_url)
-          `)
-        ]);
-
-        console.log("Home: Initial fetch settled", { geoStatus: geoRes.status, postsStatus: postsRes.status });
-
-        // Handle Geolocation
-        if (geoRes.status === 'fulfilled') {
-          setInitialView({ center: [geoRes.value.lng, geoRes.value.lat], zoom: 10 });
-        } else {
-          console.log("Home: Using default view (Seoul)", geoRes.reason);
-          setInitialView({ center: [126.978, 37.5665], zoom: 2 });
-        }
-
-        // Handle Posts
-        if (postsRes.status === 'fulfilled' && postsRes.value.data) {
-          const formattedPosts = postsRes.value.data.map((post: any) => ({
-            ...post,
-            lat: post.latitude,
-            lng: post.longitude,
-            title: post.location_name
-          }));
-          setPosts(formattedPosts);
-        } else if (postsRes.status === 'fulfilled' && postsRes.value.error) {
-          console.error("Home: Error fetching posts:", postsRes.value.error);
-        }
-
-        // 2. Fetch user interactions in background
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-        
-        if (user) {
-          const [likesRes, bookmarksRes] = await Promise.all([
-            supabase.from('likes').select('post_id').eq('user_id', user.id),
-            supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
-          ]);
-          
-          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
-          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
-        }
-      } catch (err) {
-        console.error("Home: Unexpected error in fetchInitialData:", err);
-      } finally {
-        clearTimeout(safetyTimeout);
-        setLoading(false);
-        // Ensure initialView is NEVER null after loading is false
-        setInitialView(prev => prev || { center: [126.978, 37.5665], zoom: 2 });
-        console.log("Home: Loading completed");
+      if (error) {
+        console.error("Home: Error fetching posts:", error);
+        return;
       }
-    };
-    
-    fetchInitialData();
+
+      if (data) {
+        const formattedPosts = data.map((post: any) => ({
+          ...post,
+          lat: post.latitude,
+          lng: post.longitude,
+          title: post.location_name
+        }));
+        setPosts(formattedPosts);
+      }
+    } catch (err) {
+      console.error("Home: Unexpected error fetching posts:", err);
+    } finally {
+      isFetchingRef.current = false;
+    }
   }, []);
 
+  const fetchUserInteractions = useCallback(async (userId: string) => {
+    try {
+      const [likesRes, bookmarksRes] = await Promise.all([
+        supabaseData.from('likes').select('post_id').eq('user_id', userId),
+        supabaseData.from('bookmarks').select('post_id').eq('user_id', userId),
+      ]);
+
+      if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((l: { post_id: string }) => l.post_id)));
+      if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((b: { post_id: string }) => b.post_id)));
+    } catch (err) {
+      console.error("Home: Error fetching interactions:", err);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    const initMap = async () => {
+      setLoading(true);
+      const loc = await new Promise<{ center: [number, number], zoom: number }>((resolve) => {
+        const fallback = { center: [126.978, 37.5665] as [number, number], zoom: 2 };
+        if (!navigator.geolocation) return resolve(fallback);
+        const timer = setTimeout(() => resolve(fallback), 1500);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => { clearTimeout(timer); resolve({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 10 }); },
+          () => { clearTimeout(timer); resolve(fallback); },
+          { enableHighAccuracy: false, timeout: 1500, maximumAge: 60000 }
+        );
+      });
+      setInitialView(loc);
+      setLoading(false);
+      fetchPosts();
+    };
+    initMap();
+  }, [fetchPosts]);
+
+  useEffect(() => {
+    if (user?.id) fetchUserInteractions(user.id);
+    else { setLikedPostIds(new Set()); setBookmarkedPostIds(new Set()); }
+  }, [user, fetchUserInteractions]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        isFetchingRef.current = false;
+        fetchPosts();
+        if (user?.id) fetchUserInteractions(user.id);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [fetchPosts, fetchUserInteractions, user]);
 
   const { language } = useLanguage();
   const t = translations[language];
@@ -125,7 +122,6 @@ export default function Home() {
     <div className="relative w-full h-screen overflow-hidden bg-[#00000A] text-white">
       <Navbar variant="transparent" />
 
-      {/* Main Map Container */}
       <div className="absolute inset-0">
         {initialView && (
           <GlobeMap 
@@ -137,8 +133,6 @@ export default function Home() {
         )}
       </div>
 
-
-      {/* Side Panel Overlay */}
       <PostPreviewSheet
         post={selectedPost}
         isLiked={selectedPost ? likedPostIds.has(selectedPost.id.toString()) : false}
@@ -146,7 +140,6 @@ export default function Home() {
         onClose={() => setSelectedPost(null)}
       />
 
-      {/* Loading Overlay */}
       <AnimatePresence>
         {loading && (
           <motion.div 

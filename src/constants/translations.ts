@@ -1,6 +1,7 @@
 export const translations = {
   en: {
     nav: {
+      home: "Home",
       feed: "Feed",
       upload: "Upload",
       login: "Login",
@@ -31,6 +32,7 @@ export const translations = {
       signupSuccess: "Signup successful. Please check your email for verification.",
       loggingIn: "Logging in...",
       processing: "Processing...",
+      continueWithGoogle: "Continue with Google",
     },
     home: {
       heroTitle: "ClickDay",
@@ -95,7 +97,7 @@ export const translations = {
       settings: "Exposure Settings",
       locationTitle: "Location",
       mapPreview: "Map Preview (Requires GPS)",
-      publish: "Publish Post",
+      publish: "Post",
       uploading: "Uploading...",
       photoTitle: "Photo Title",
       description: "Description",
@@ -146,7 +148,7 @@ export const translations = {
       noDescription: "No description provided.",
       cameraSettings: "Camera Settings",
       unknown: "Unknown",
-      viewFullDetails: "View Full Details",
+      viewPost: "View Post",
       edit: "Edit Post",
       delete: "Delete Post",
       save: "Save",
@@ -207,6 +209,7 @@ export const translations = {
 
   ko: {
     nav: {
+      home: "홈",
       feed: "피드",
       upload: "업로드",
       login: "로그인",
@@ -237,6 +240,7 @@ export const translations = {
       signupSuccess: "회원가입이 완료되었습니다. 이메일을 확인해주세요.",
       loggingIn: "로그인 중...",
       processing: "처리 중...",
+      continueWithGoogle: "Google로 계속하기",
     },
     home: {
       heroTitle: "클릭데이",
@@ -301,7 +305,7 @@ export const translations = {
       settings: "노출 설정",
       locationTitle: "위치",
       mapPreview: "지도 미리보기 (GPS 데이터 필요)",
-      publish: "게시물 발행",
+      publish: "게시",
       uploading: "업로드 중...",
       photoTitle: "사진 제목",
       description: "설명",
@@ -352,7 +356,7 @@ export const translations = {
       noDescription: "설명이 없습니다.",
       cameraSettings: "카메라 설정",
       unknown: "알 수 없음",
-      viewFullDetails: "전체 정보 보기",
+      viewPost: "게시물 보기",
       edit: "게시물 수정",
       delete: "게시물 삭제",
       save: "저장",
