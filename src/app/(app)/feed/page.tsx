@@ -37,7 +37,7 @@ function FeedContent() {
   const regionParam = searchParams.get("region");
   const brandParam = searchParams.get("brand");
   const qParam = searchParams.get("q");
-  
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
@@ -55,7 +55,7 @@ function FeedContent() {
       setIsLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         let query = supabase.from("posts").select("*, profiles(username, avatar_url)");
 
         // 0. 검색 로직 (Search)
@@ -74,9 +74,9 @@ function FeedContent() {
             .from("follows")
             .select("following_id")
             .eq("follower_id", user.id);
-          
-          const followingIds = followingData?.map(f => f.following_id) || [];
-          
+
+          const followingIds = followingData?.map((f: { following_id: string }) => f.following_id) || [];
+
           if (followingIds.length > 0) {
             query = query.in("user_id", followingIds);
           } else {
@@ -112,9 +112,9 @@ function FeedContent() {
             supabase.from('likes').select('post_id').eq('user_id', user.id),
             supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
           ]);
-          
-          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map(l => l.post_id)));
-          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map(b => b.post_id)));
+
+          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((l: { post_id: string }) => l.post_id)));
+          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((b: { post_id: string }) => b.post_id)));
         }
       } catch (error: any) {
         console.error("Error fetching feed details:", error.message || error);
@@ -137,19 +137,17 @@ function FeedContent() {
         </div>
         <div className="flex items-center gap-6 font-heading tracking-widest text-[10px] uppercase">
           <div className="flex gap-6 border-r border-white/10 pr-6 mr-2">
-            <button 
+            <button
               onClick={() => handleSortChange("latest")}
-              className={`transition-all duration-300 pb-1 border-b ${
-                sortParam === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
-              }`}
+              className={`transition-all duration-300 pb-1 border-b ${sortParam === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+                }`}
             >
               {t.latest}
             </button>
-            <button 
+            <button
               onClick={() => handleSortChange("popular")}
-              className={`transition-all duration-300 pb-1 border-b ${
-                sortParam === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
-              }`}
+              className={`transition-all duration-300 pb-1 border-b ${sortParam === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+                }`}
             >
               {t.popular}
             </button>
@@ -171,10 +169,10 @@ function FeedContent() {
         <MasonryGrid>
 
           {posts.map((post) => (
-            <PostCard 
-              key={post.id} 
-              post={post} 
-              isLiked={likedPostIds.has(post.id)} 
+            <PostCard
+              key={post.id}
+              post={post}
+              isLiked={likedPostIds.has(post.id)}
               isBookmarked={bookmarkedPostIds.has(post.id)}
             />
           ))}
