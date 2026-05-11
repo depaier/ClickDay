@@ -79,7 +79,7 @@ export function PostDetailClient({
                 <div className="font-bold text-sm group-hover:text-[var(--accent)] transition-colors">
                   {post.profiles?.username || "unknown"}
                 </div>
-                <div className="text-gray-500 text-xs">
+                <div className="text-gray-500 text-xs" suppressHydrationWarning>
                   {new Date(post.created_at).toLocaleDateString()}
                 </div>
               </div>
