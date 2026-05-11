@@ -44,7 +44,7 @@ export function LikeButton({
     if (isLoading) return;
 
     if (!user) {
-      alert("Please log in to like posts.");
+      window.location.href = '/login';
       return;
     }
 

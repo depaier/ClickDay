@@ -1,125 +1,119 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap } from "@/components/map/GlobeMap";
-import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient();
+// Dedicated client for public data fetching, completely ignoring auth state.
+// This prevents the infinite lock on visibilitychange.
+const supabaseData = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  }
+);
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialView, setInitialView] = useState<{ center: [number, number], zoom: number } | null>(null);
-
-
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
+  const isFetchingRef = useRef(false);
+  const { user } = useAuth();
 
+  const fetchPosts = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    try {
+      const { data, error } = await supabaseData.from('posts').select(`
+        id, user_id, latitude, longitude, location_name,
+        image_url, camera_model, focal_length, aperture,
+        shutter_speed, iso, created_at, description, tags,
+        recipe_name, recipe_type, like_count,
+        profiles(username, avatar_url)
+      `);
+
+      if (error) {
+        console.error("Home: Error fetching posts:", error);
+        return;
+      }
+
+      if (data) {
+        const formattedPosts = data.map((post: any) => ({
+          ...post,
+          lat: post.latitude,
+          lng: post.longitude,
+          title: post.location_name
+        }));
+        setPosts(formattedPosts);
+      }
+    } catch (err) {
+      console.error("Home: Unexpected error fetching posts:", err);
+    } finally {
+      isFetchingRef.current = false;
+    }
+  }, []);
+
+  const fetchUserInteractions = useCallback(async (userId: string) => {
+    try {
+      const [likesRes, bookmarksRes] = await Promise.all([
+        supabaseData.from('likes').select('post_id').eq('user_id', userId),
+        supabaseData.from('bookmarks').select('post_id').eq('user_id', userId),
+      ]);
+
+      if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((l: { post_id: string }) => l.post_id)));
+      if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((b: { post_id: string }) => b.post_id)));
+    } catch (err) {
+      console.error("Home: Error fetching interactions:", err);
+    }
+  }, []);
+
+  // Initial load
   useEffect(() => {
-    const fetchInitialData = async () => {
-      // 1. Fetch Geolocation (fast, non-blocking past 1.5s)
-      const locPromise = new Promise<{ center: [number, number], zoom: number }>((resolve) => {
+    const initMap = async () => {
+      setLoading(true);
+      const loc = await new Promise<{ center: [number, number], zoom: number }>((resolve) => {
         const fallback = { center: [126.978, 37.5665] as [number, number], zoom: 2 };
-        if (!navigator.geolocation) {
-          return resolve(fallback);
-        }
-        
-        const timeout = setTimeout(() => {
-          console.warn("Home: Geolocation timeout");
-          resolve(fallback);
-        }, 1500); // 1.5s max wait for GPS
-        
+        if (!navigator.geolocation) return resolve(fallback);
+        const timer = setTimeout(() => resolve(fallback), 1500);
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            clearTimeout(timeout);
-            resolve({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 10 });
-          },
-          (err) => {
-            clearTimeout(timeout);
-            console.warn("Home: Geolocation error", err);
-            resolve(fallback);
-          },
+          (pos) => { clearTimeout(timer); resolve({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 10 }); },
+          () => { clearTimeout(timer); resolve(fallback); },
           { enableHighAccuracy: false, timeout: 1500, maximumAge: 60000 }
         );
       });
+      setInitialView(loc);
+      setLoading(false);
+      fetchPosts();
+    };
+    initMap();
+  }, [fetchPosts]);
 
-      // 2. Fetch Posts (Async, independent of map mounting)
-      const fetchPostsAsync = async () => {
-        try {
-          const { data, error } = await supabase.from('posts').select(`
-            id, user_id, latitude, longitude, location_name,
-            image_url, camera_model, focal_length, aperture,
-            shutter_speed, iso, created_at, description, tags,
-            recipe_name, recipe_type, like_count,
-            profiles(username, avatar_url)
-          `);
+  useEffect(() => {
+    if (user?.id) fetchUserInteractions(user.id);
+    else { setLikedPostIds(new Set()); setBookmarkedPostIds(new Set()); }
+  }, [user, fetchUserInteractions]);
 
-          if (error) {
-            console.error("Home: Error fetching posts:", error);
-            return;
-          }
-
-          if (data) {
-            const formattedPosts = data.map((post: any) => ({
-              ...post,
-              lat: post.latitude,
-              lng: post.longitude,
-              title: post.location_name
-            }));
-            setPosts(formattedPosts);
-          }
-        } catch (err) {
-          console.error("Home: Unexpected error fetching posts:", err);
-        }
-      };
-
-      // 3. Fetch User Interactions (Async, non-blocking)
-      const fetchUserInteractions = async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          const user = session?.user;
-          
-          if (user) {
-            const [likesRes, bookmarksRes] = await Promise.all([
-              supabase.from('likes').select('post_id').eq('user_id', user.id),
-              supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
-            ]);
-            
-            if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((like: { post_id: string }) => like.post_id)));
-            if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((bookmark: { post_id: string }) => bookmark.post_id)));
-          }
-        } catch (err) {
-          console.error("Home: Error fetching interactions:", err);
-        }
-      };
-
-      try {
-        setLoading(true);
-        
-        // Start background fetches
-        fetchPostsAsync();
-        fetchUserInteractions();
-
-        // Wait ONLY for location to determine map center
-        const loc = await locPromise;
-        setInitialView(loc);
-      } catch (err) {
-        console.error("Home: Fatal error initializing map:", err);
-        setInitialView({ center: [126.978, 37.5665], zoom: 2 });
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        isFetchingRef.current = false;
+        fetchPosts();
+        if (user?.id) fetchUserInteractions(user.id);
       }
     };
-    
-    fetchInitialData();
-  }, []);
-
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [fetchPosts, fetchUserInteractions, user]);
 
   const { language } = useLanguage();
   const t = translations[language];
@@ -128,7 +122,6 @@ export default function Home() {
     <div className="relative w-full h-screen overflow-hidden bg-[#00000A] text-white">
       <Navbar variant="transparent" />
 
-      {/* Main Map Container */}
       <div className="absolute inset-0">
         {initialView && (
           <GlobeMap 
@@ -140,8 +133,6 @@ export default function Home() {
         )}
       </div>
 
-
-      {/* Side Panel Overlay */}
       <PostPreviewSheet
         post={selectedPost}
         isLiked={selectedPost ? likedPostIds.has(selectedPost.id.toString()) : false}
@@ -149,7 +140,6 @@ export default function Home() {
         onClose={() => setSelectedPost(null)}
       />
 
-      {/* Loading Overlay */}
       <AnimatePresence>
         {loading && (
           <motion.div 
