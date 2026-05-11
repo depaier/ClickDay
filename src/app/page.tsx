@@ -23,94 +23,97 @@ export default function Home() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      // Safety timeout to prevent infinite loading
-      const safetyTimeout = setTimeout(() => {
-        if (loading) {
-          console.warn("Home: Safety timeout reached, forcing loading state to false");
-          setLoading(false);
-          if (!initialView) {
-            setInitialView({ center: [126.978, 37.5665], zoom: 2 });
-          }
+      // 1. Fetch Geolocation (fast, non-blocking past 1.5s)
+      const locPromise = new Promise<{ center: [number, number], zoom: number }>((resolve) => {
+        const fallback = { center: [126.978, 37.5665] as [number, number], zoom: 2 };
+        if (!navigator.geolocation) {
+          return resolve(fallback);
         }
-      }, 8000); // 8 seconds safety window
+        
+        const timeout = setTimeout(() => {
+          console.warn("Home: Geolocation timeout");
+          resolve(fallback);
+        }, 1500); // 1.5s max wait for GPS
+        
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            clearTimeout(timeout);
+            resolve({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 10 });
+          },
+          (err) => {
+            clearTimeout(timeout);
+            console.warn("Home: Geolocation error", err);
+            resolve(fallback);
+          },
+          { enableHighAccuracy: false, timeout: 1500, maximumAge: 60000 }
+        );
+      });
 
-      try {
-        console.log("Home: Starting initial data fetch...");
-        setLoading(true);
-
-        // 1. Get Geolocation and Fetch posts in parallel
-        const [geoRes, postsRes] = await Promise.allSettled([
-          new Promise<{ lng: number, lat: number }>((resolve, reject) => {
-            if (!navigator.geolocation) return reject("No geolocation support");
-            
-            // Extra safety: reject if geolocation takes too long (already has timeout, but just in case)
-            const geoTimeout = setTimeout(() => reject("Geolocation custom timeout"), 5000);
-            
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                clearTimeout(geoTimeout);
-                resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude });
-              },
-              (err) => {
-                clearTimeout(geoTimeout);
-                reject(err);
-              },
-              { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 }
-            );
-          }),
-          supabase.from('posts').select(`
+      // 2. Fetch Posts (Async, independent of map mounting)
+      const fetchPostsAsync = async () => {
+        try {
+          const { data, error } = await supabase.from('posts').select(`
             id, user_id, latitude, longitude, location_name,
             image_url, camera_model, focal_length, aperture,
             shutter_speed, iso, created_at, description, tags,
             recipe_name, recipe_type, like_count,
             profiles(username, avatar_url)
-          `)
-        ]);
+          `);
 
-        console.log("Home: Initial fetch settled", { geoStatus: geoRes.status, postsStatus: postsRes.status });
+          if (error) {
+            console.error("Home: Error fetching posts:", error);
+            return;
+          }
 
-        // Handle Geolocation
-        if (geoRes.status === 'fulfilled') {
-          setInitialView({ center: [geoRes.value.lng, geoRes.value.lat], zoom: 10 });
-        } else {
-          console.log("Home: Using default view (Seoul)", geoRes.reason);
-          setInitialView({ center: [126.978, 37.5665], zoom: 2 });
+          if (data) {
+            const formattedPosts = data.map((post: any) => ({
+              ...post,
+              lat: post.latitude,
+              lng: post.longitude,
+              title: post.location_name
+            }));
+            setPosts(formattedPosts);
+          }
+        } catch (err) {
+          console.error("Home: Unexpected error fetching posts:", err);
         }
+      };
 
-        // Handle Posts
-        if (postsRes.status === 'fulfilled' && postsRes.value.data) {
-          const formattedPosts = postsRes.value.data.map((post: any) => ({
-            ...post,
-            lat: post.latitude,
-            lng: post.longitude,
-            title: post.location_name
-          }));
-          setPosts(formattedPosts);
-        } else if (postsRes.status === 'fulfilled' && postsRes.value.error) {
-          console.error("Home: Error fetching posts:", postsRes.value.error);
-        }
-
-        // 2. Fetch user interactions in background
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-        
-        if (user) {
-          const [likesRes, bookmarksRes] = await Promise.all([
-            supabase.from('likes').select('post_id').eq('user_id', user.id),
-            supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
-          ]);
+      // 3. Fetch User Interactions (Async, non-blocking)
+      const fetchUserInteractions = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user;
           
-          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((like: { post_id: string }) => like.post_id)));
-          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((bookmark: { post_id: string }) => bookmark.post_id)));
+          if (user) {
+            const [likesRes, bookmarksRes] = await Promise.all([
+              supabase.from('likes').select('post_id').eq('user_id', user.id),
+              supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
+            ]);
+            
+            if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((like: { post_id: string }) => like.post_id)));
+            if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((bookmark: { post_id: string }) => bookmark.post_id)));
+          }
+        } catch (err) {
+          console.error("Home: Error fetching interactions:", err);
         }
+      };
+
+      try {
+        setLoading(true);
+        
+        // Start background fetches
+        fetchPostsAsync();
+        fetchUserInteractions();
+
+        // Wait ONLY for location to determine map center
+        const loc = await locPromise;
+        setInitialView(loc);
       } catch (err) {
-        console.error("Home: Unexpected error in fetchInitialData:", err);
+        console.error("Home: Fatal error initializing map:", err);
+        setInitialView({ center: [126.978, 37.5665], zoom: 2 });
       } finally {
-        clearTimeout(safetyTimeout);
         setLoading(false);
-        // Ensure initialView is NEVER null after loading is false
-        setInitialView(prev => prev || { center: [126.978, 37.5665], zoom: 2 });
-        console.log("Home: Loading completed");
       }
     };
     

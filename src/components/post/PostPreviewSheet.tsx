@@ -56,29 +56,29 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
           className="absolute right-0 top-[60px] bottom-0 w-full md:w-[400px] bg-white text-black shadow-2xl z-50 border-l border-gray-200 overflow-y-auto"
         >
-          <div className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 flex justify-between items-center p-4 border-b border-gray-200">
-            <h2 className="font-heading text-lg font-bold tracking-[0.1em] uppercase">{t.details}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 transition-colors">
-              <X className="w-5 h-5" />
+          <div className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 flex justify-between items-center p-4 border-b border-gray-100">
+            <h2 className="font-heading text-lg font-bold tracking-[0.1em] uppercase text-gray-900">{t.details}</h2>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 transition-colors rounded-full">
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
 
-          <div className="p-0">
+          <div className="p-0 pb-20">
             {/* Photo Area */}
-            <div className="w-full h-[300px] bg-black flex items-center justify-center overflow-hidden">
+            <div className="w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden border-b border-gray-200">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={post.image_url} 
                 alt={post.location_name || "Photography"} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
               />
             </div>
 
             <div className="p-6 space-y-8">
-              {/* Photographer info */}
+              {/* Photographer info & Actions */}
               <div className="flex items-center justify-between">
                 <Link href={`/users/@${post.profiles?.username}`} className="flex items-center gap-3 group" onClick={onClose}>
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-white/10 group-hover:border-[var(--accent)] transition-colors">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-black/5 group-hover:border-[var(--accent)] transition-colors">
                     <img src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles?.username || "unknown"}`} alt={post.profiles?.username || "user"} className="w-full h-full object-cover" />
                   </div>
                   <div>
@@ -88,64 +88,76 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                     </p>
                   </div>
                 </Link>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <LikeButton 
                     postId={post.id.toString()} 
                     initialLikeCount={post.like_count || 0} 
                     initialIsLiked={isLiked}
                     variant="ghost"
-                    size="sm"
+                    size="default"
                     showCount
-                    className="text-gray-900"
+                    className="bg-black/5 border-black/5 px-4 py-1 h-10 rounded-full"
                   />
                   <BookmarkButton
                     postId={post.id.toString()}
                     initialIsBookmarked={isBookmarked}
                     variant="ghost"
-                    size="sm"
-                    className="text-gray-900"
+                    size="icon"
+                    className="bg-black/5 border-black/5 rounded-full w-10 h-10 text-black"
+                    iconClassName="text-black"
                   />
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {post.description || t.noDescription}
-              </p>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold tracking-tight uppercase text-gray-900">{post.location_name || t.untitled}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {post.description || t.noDescription}
+                </p>
+              </div>
 
               {/* EXIF Data */}
               <div className="space-y-4">
-                <h3 className="font-heading text-xs text-gray-400 tracking-[0.167em] uppercase border-b border-gray-200 pb-2">{t.cameraSettings}</h3>
+                <h3 className="font-heading text-xs text-[var(--accent-dark)] tracking-[0.167em] uppercase border-b border-gray-100 pb-2 flex items-center gap-2">
+                  <Camera className="w-3 h-3" />
+                  {t.cameraSettings}
+                </h3>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Camera className="w-4 h-4 text-[var(--accent-dark)]" />
-                    <span className="truncate">{post.camera_model || t.unknown}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.camera}</span>
+                    <span className="truncate text-gray-800">{post.camera_model || t.unknown}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Aperture className="w-4 h-4 text-[var(--accent-dark)]" />
-                    <span>{post.focal_length ? `${post.focal_length}mm` : t.unknown}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.aperture}</span>
+                    <span className="text-gray-800">{post.aperture ? `f/${post.aperture}` : t.unknown}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <div className="font-bold font-mono text-[10px] w-4 text-center text-[var(--accent-dark)]">F</div>
-                    <span>{post.aperture ? `f/${post.aperture}` : t.unknown}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.shutter}</span>
+                    <span className="text-gray-800">{post.shutter_speed || t.unknown}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Clock className="w-4 h-4 text-[var(--accent-dark)]" />
-                    <span>{post.shutter_speed || t.unknown}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest">ISO</span>
+                    <span className="text-gray-800">{post.iso ? `ISO ${post.iso}` : t.unknown}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <div className="font-bold font-mono text-[10px] w-4 text-center text-[var(--accent-dark)]">ISO</div>
-                    <span>{post.iso ? `ISO ${post.iso}` : t.unknown}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <MapPin className="w-4 h-4 text-[var(--accent-dark)]" />
-                    <GeocodedAddress 
-                      latitude={post.latitude} 
-                      longitude={post.longitude} 
-                      className="truncate max-w-[120px]"
-                      fallback={t.unknown}
-                    />
+                  {post.focal_length && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.focalLength}</span>
+                      <span className="text-gray-800">{post.focal_length}mm</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.location}</span>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-[var(--accent-dark)]" />
+                      <GeocodedAddress 
+                        latitude={post.latitude} 
+                        longitude={post.longitude} 
+                        className="truncate max-w-[120px] text-gray-800"
+                        fallback={t.unknown}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -154,8 +166,8 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {post.tags.map((tag, idx) => (
-                    <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1">
-                      <Hash className="w-3 h-3 mr-1"/>{tag}
+                    <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5">
+                      #{tag}
                     </span>
                   ))}
                 </div>
@@ -164,7 +176,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
             </div>
 
             {/* Action Buttons */}
-            <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100">
+            <div className="p-6 sticky bottom-0 bg-white/90 backdrop-blur-sm border-t border-gray-100">
               <Link href={`/posts/${post.id}`}>
                 <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
                   {t.viewPost}

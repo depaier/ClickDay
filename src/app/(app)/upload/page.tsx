@@ -406,7 +406,7 @@ export default function UploadPage() {
         message: t.publishedMsg,
         type: "success"
       });
-      router.push("/");
+      window.location.href = "/";
 
 
     } catch (error: any) {

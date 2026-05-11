@@ -5,6 +5,7 @@ import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface BookmarkButtonProps {
   postId: string;
@@ -26,6 +27,7 @@ export function BookmarkButton({
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsBookmarked(initialIsBookmarked);
@@ -37,7 +39,6 @@ export function BookmarkButton({
 
     if (isLoading) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       alert("Please log in to save posts.");
       return;
