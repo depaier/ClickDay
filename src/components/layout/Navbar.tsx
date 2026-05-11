@@ -43,6 +43,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
 
         {/* Center Nav Links - Hidden on Mobile */}
         <div className="hidden md:flex items-center gap-8">
+          <Link href="/" className="hover:text-[var(--accent)] transition-colors">{t.home}</Link>
           <Link href="/feed" className="hover:text-[var(--accent)] transition-colors">{t.feed}</Link>
           <Link href="/upload" className="hover:text-[var(--accent)] transition-colors">{t.upload}</Link>
         </div>
@@ -93,6 +94,20 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
+            >
+              <Link 
+                href="/" 
+                className="text-xl font-heading tracking-[0.2em] hover:text-[var(--accent)] transition-colors uppercase"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t.home}
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }}
             >
               <Link 
                 href="/feed" 

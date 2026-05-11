@@ -1,6 +1,7 @@
 export const translations = {
   en: {
     nav: {
+      home: "Home",
       feed: "Feed",
       upload: "Upload",
       login: "Login",
@@ -207,6 +208,7 @@ export const translations = {
 
   ko: {
     nav: {
+      home: "홈",
       feed: "피드",
       upload: "업로드",
       login: "로그인",
