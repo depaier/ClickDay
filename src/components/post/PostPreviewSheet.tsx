@@ -167,7 +167,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
             <div className="p-6 sticky bottom-0 bg-white border-t border-gray-100">
               <Link href={`/posts/${post.id}`}>
                 <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
-                  {t.viewFullDetails}
+                  {t.viewPost}
                 </Button>
               </Link>
             </div>
