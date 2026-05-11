@@ -1,16 +1,26 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
-import { createClient } from "@/lib/supabase/client";
 import { PostCard } from "@/components/post/PostCard";
 import { FilterChips } from "@/components/feed/FilterChips";
 import { FilterDrawer } from "@/components/feed/FilterDrawer";
 import { SearchBar } from "@/components/feed/SearchBar";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
+// Dedicated client for public data fetching, completely ignoring auth state.
+// This prevents the infinite lock on visibilitychange.
+const supabaseData = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  }
+);
 
 interface Post {
   id: string;
@@ -25,8 +35,6 @@ interface Post {
   };
 }
 
-const supabase = createClient();
-
 function FeedContent() {
   const { language } = useLanguage();
   const t = translations[language].feed;
@@ -37,11 +45,13 @@ function FeedContent() {
   const regionParam = searchParams.get("region");
   const brandParam = searchParams.get("brand");
   const qParam = searchParams.get("q");
+  const { user } = useAuth();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const isFetchingRef = useRef(false);
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -49,84 +59,95 @@ function FeedContent() {
     router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
   };
 
-  useEffect(() => {
-    console.log("FeedContent: Fetching with params:", { filterParam, sortParam, regionParam, brandParam });
-    async function fetchFeed() {
-      setIsLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
+  const fetchFeed = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    setIsLoading(true);
 
-        let query = supabase.from("posts").select("*, profiles(username, avatar_url)");
-
-        // 0. 검색 로직 (Search)
-        if (qParam) {
-          query = query.or(`location_name.ilike.%${qParam}%,description.ilike.%${qParam}%,tags.cs.{${qParam}}`);
+    try {
+      if (filterParam === "clicking") {
+        if (!user) {
+          setPosts([]);
+          setIsLoading(false);
+          isFetchingRef.current = false;
+          return;
         }
 
-        // 1. 기본 필터링 로직 (All / Clicking)
-        if (filterParam === "clicking") {
-          if (!user) {
-            setPosts([]);
-            setIsLoading(false);
-            return;
-          }
-          const { data: followingData } = await supabase
-            .from("follows")
-            .select("following_id")
-            .eq("follower_id", user.id);
+        const { data: followingData } = await supabaseData
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", user.id);
 
-          const followingIds = followingData?.map((f: { following_id: string }) => f.following_id) || [];
+        const followingIds = followingData?.map((f: { following_id: string }) => f.following_id) || [];
 
-          if (followingIds.length > 0) {
-            query = query.in("user_id", followingIds);
-          } else {
-            setPosts([]);
-            setIsLoading(false);
-            return;
-          }
+        if (followingIds.length === 0) {
+          setPosts([]);
+          setIsLoading(false);
+          isFetchingRef.current = false;
+          return;
         }
 
-        // 2. 고급 필터링 로직 (Region / Brand)
-        if (regionParam) {
-          query = query.eq("region", regionParam);
-        }
-        if (brandParam) {
-          query = query.eq("camera_brand", brandParam);
-        }
+        const { data: postsData } = await supabaseData
+          .from("posts")
+          .select("*, profiles(username, avatar_url)")
+          .in("user_id", followingIds)
+          .order(sortParam === "popular" ? "like_count" : "created_at", { ascending: false });
 
-        // 3. 정렬 로직 (Sort)
-        if (sortParam === "popular") {
-          query = query.order("like_count", { ascending: false });
-        } else {
-          query = query.order("created_at", { ascending: false });
-        }
-
-        const { data: postsData, error: postsError } = await query;
-
-        if (postsError) throw postsError;
         setPosts(postsData || []);
-
-        // 인터랙션 데이터 가져오기
-        if (user) {
-          const [likesRes, bookmarksRes] = await Promise.all([
-            supabase.from('likes').select('post_id').eq('user_id', user.id),
-            supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
-          ]);
-
-          if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((l: { post_id: string }) => l.post_id)));
-          if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((b: { post_id: string }) => b.post_id)));
-        }
-      } catch (error: any) {
-        console.error("Error fetching feed details:", error.message || error);
-        // DB 스키마(컬럼)가 없어서 발생하는 에러일 경우를 대비해 데이터를 비워줍니다.
-        setPosts([]);
-      } finally {
         setIsLoading(false);
+        isFetchingRef.current = false;
+        return;
       }
-    }
 
+      let query = supabaseData.from("posts").select("*, profiles(username, avatar_url)");
+
+      if (qParam) {
+        query = query.or(`location_name.ilike.%${qParam}%,description.ilike.%${qParam}%`);
+      }
+      if (regionParam) {
+        query = query.eq("region", regionParam);
+      }
+      if (brandParam) {
+        query = query.eq("camera_brand", brandParam);
+      }
+      query = query.order(sortParam === "popular" ? "like_count" : "created_at", { ascending: false });
+
+      const { data: postsData, error: postsError } = await query;
+
+      if (postsError) throw postsError;
+      setPosts(postsData || []);
+
+      if (user?.id) {
+        const [likesRes, bookmarksRes] = await Promise.all([
+          supabaseData.from('likes').select('post_id').eq('user_id', user.id),
+          supabaseData.from('bookmarks').select('post_id').eq('user_id', user.id),
+        ]);
+        if (likesRes.data) setLikedPostIds(new Set(likesRes.data.map((l: { post_id: string }) => l.post_id)));
+        if (bookmarksRes.data) setBookmarkedPostIds(new Set(bookmarksRes.data.map((b: { post_id: string }) => b.post_id)));
+      }
+    } catch (error: any) {
+      console.error("Error fetching feed:", error.message || error);
+      setPosts([]);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [filterParam, sortParam, regionParam, brandParam, qParam, user]);
+
+  useEffect(() => {
     fetchFeed();
-  }, [filterParam, sortParam, regionParam, brandParam, qParam]);
+  }, [fetchFeed]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        isFetchingRef.current = false;
+        fetchFeed();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [fetchFeed]);
 
   return (
     <div>
@@ -167,7 +188,6 @@ function FeedContent() {
         </MasonryGrid>
       ) : (
         <MasonryGrid>
-
           {posts.map((post) => (
             <PostCard
               key={post.id}
@@ -184,7 +204,6 @@ function FeedContent() {
           )}
         </MasonryGrid>
       )}
-
     </div>
   );
 }

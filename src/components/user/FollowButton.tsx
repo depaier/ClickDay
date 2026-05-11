@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { UserPlus, UserCheck, UserMinus, Loader2 } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface FollowButtonProps {
   targetUserId: string;
@@ -21,6 +22,7 @@ export function FollowButton({
 }: FollowButtonProps) {
   const { language } = useLanguage();
   const t = translations[language].profile;
+  const { user } = useAuth();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isHovered, setIsHovered] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -33,6 +35,11 @@ export function FollowButton({
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
 
     if (isPending) return;
 

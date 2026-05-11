@@ -40,7 +40,7 @@ export function BookmarkButton({
     if (isLoading) return;
 
     if (!user) {
-      alert("Please log in to save posts.");
+      window.location.href = '/login';
       return;
     }
 

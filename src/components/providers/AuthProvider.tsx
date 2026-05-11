@@ -54,7 +54,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check active sessions and sets the user
     const getSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        let session = null;
+        try {
+          const res = await Promise.race([
+            supabase.auth.getSession(),
+            new Promise<{data: {session: null}}>((resolve) => setTimeout(() => resolve({data: {session: null}}), 1000))
+          ]);
+          session = res.data.session;
+        } catch(e) {}
+        
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -92,8 +100,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      await Promise.race([
+        supabase.auth.signOut({ scope: 'local' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1000))
+      ]);
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Force clear local storage and cookies if timeout or error occurs
+      if (typeof window !== 'undefined') {
+        // Clear local storage
+        const keys = Object.keys(localStorage);
+        for (const key of keys) {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        }
+        // Clear cookies
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith('sb-')) {
+            const name = cookie.split('=')[0];
+            document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+          }
+        }
+      }
+    } finally {
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+      window.location.href = '/';
+    }
   };
 
   const refreshProfile = async () => {
