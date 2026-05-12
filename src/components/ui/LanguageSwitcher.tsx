@@ -7,7 +7,7 @@ export function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="flex items-center gap-2 text-xs font-heading tracking-widest uppercase">
+    <div className="flex items-center gap-2 text-sm font-heading tracking-widest uppercase">
       <button
         onClick={() => setLanguage("en")}
         className={`transition-colors hover:text-[var(--accent)] ${

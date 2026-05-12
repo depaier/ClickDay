@@ -13,6 +13,7 @@ import { PostDetailMap } from "@/components/map/PostDetailMap";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion } from "framer-motion";
+import { PostActions } from "@/components/post/PostActions";
 
 interface PostDetailClientProps {
   post: any;
@@ -92,6 +93,9 @@ export function PostDetailClient({
                 targetUserId={post.user_id} 
                 initialIsFollowing={isFollowing} 
               />
+            )}
+            {isOwner && (
+              <PostActions postId={post.id} imageUrl={post.image_url} />
             )}
           </div>
         </div>
@@ -178,19 +182,8 @@ export function PostDetailClient({
           </div>
         </div>
 
-        {/* Action Buttons for Owner */}
-        {isOwner && (
-          <div className="flex gap-4 p-4 bg-white/5 rounded-sm border border-white/10 mt-auto">
-            <Link href={`/posts/${post.id}/edit`} className="flex-1">
-              <Button variant="accent" className="w-full h-12 flex items-center justify-center gap-2">
-                <Edit className="w-4 h-4" /> {t.edit}
-              </Button>
-            </Link>
-            <div className="flex-1">
-              <DeletePostButton postId={post.id} imageUrl={post.image_url} />
-            </div>
-          </div>
-        )}
+        {/* Spacer for mobile bottom bar if needed */}
+        <div className="h-4" />
       </motion.div>
     </motion.div>
   );

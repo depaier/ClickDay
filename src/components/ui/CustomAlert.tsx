@@ -74,7 +74,7 @@ export const CustomAlert = () => {
             {type === 'confirm' && (
               <Button 
                 variant="ghostDark" 
-                className="flex-1 py-6 text-xs tracking-[0.2em] border-zinc-200 dark:border-zinc-700 dark:text-white"
+                className="flex-1 py-6 text-[13px] tracking-[0.1em] border-zinc-200 dark:border-zinc-700 dark:text-white"
                 onClick={() => closeAlert(false)}
               >
                 {cancelLabel}
@@ -82,7 +82,7 @@ export const CustomAlert = () => {
             )}
             <Button 
               variant={confirmVariant || 'primary'} 
-              className="flex-1 py-6 text-xs tracking-[0.2em]"
+              className="flex-1 py-6 text-[13px] tracking-[0.1em]"
               onClick={() => closeAlert(true)}
             >
               {confirmLabel}
