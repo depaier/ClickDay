@@ -428,7 +428,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-32 px-4">
+    <div className="max-w-[1920px] mx-auto pb-32 px-4">
       <div className={authLoading ? "block" : "hidden"}>
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
@@ -452,7 +452,8 @@ export default function UploadPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left Column: Upload Area / Preview */}
           <div className="space-y-6">
             {!previewUrl ? (
@@ -498,6 +499,10 @@ export default function UploadPage() {
                 <p className="text-center text-xs text-gray-500 mt-4 uppercase tracking-[0.2em]">{t.browse}</p>
               </div>
             )}
+            
+            <p className="text-[10px] text-gray-500/60 leading-relaxed px-1 mt-6">
+              {t.legalNotice}
+            </p>
           </div>
 
           {/* Right Column: Information & Details */}
@@ -616,6 +621,7 @@ export default function UploadPage() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

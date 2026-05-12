@@ -124,6 +124,7 @@ export const translations = {
       clickToPick: "Click to pick location",
       selectLocation: "Select Location",
       confirmLocation: "Confirm Location",
+      legalNotice: "If you post illegal filming content, ClickDay may delete or block access to the content in accordance with Article 22-5(1) of the Korean Telecommunications Business Act, and users may be punished in accordance with relevant laws and regulations.",
     },
     profile: {
       myPosts: "My Photos",
@@ -332,6 +333,7 @@ export const translations = {
       clickToPick: "지도를 클릭하여 위치 선택",
       selectLocation: "위치 선택",
       confirmLocation: "위치 확정",
+      legalNotice: "불법 촬영 콘텐츠 등을 게시하는 경우 ClickDay는 한국 전기통신사업법 제22-5(1)조에 따라 해당 콘텐츠의 액세스를 삭제하거나 차단할 수 있으며, 사용자는 관련 법률 및 규정에 따라 처벌을 받을 수 있습니다.",
     },
     profile: {
       myPosts: "내 사진",
