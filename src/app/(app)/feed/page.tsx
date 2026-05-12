@@ -182,7 +182,7 @@ function FeedContent() {
 
       {isLoading ? (
         <MasonryGrid>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
             <div key={i} className="aspect-[4/5] bg-white/5 animate-pulse rounded-sm border border-white/5" />
           ))}
         </MasonryGrid>
