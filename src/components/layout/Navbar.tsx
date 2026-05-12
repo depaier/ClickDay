@@ -10,6 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { translations } from "@/constants/translations";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { UserMenu } from "./UserMenu";
 
 export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "sticky" }) {
   const { language } = useLanguage();
@@ -53,17 +54,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
         <LanguageSwitcher />
         
         {user ? (
-          <div className="flex items-center gap-6">
-            <Link href={`/users/@${profile?.username || user?.id}`} className="hover:text-[var(--accent)] transition-colors">
-              {profile?.username || t.profile}
-            </Link>
-            <button 
-              onClick={() => signOut()}
-              className="hover:text-[var(--accent)] transition-colors uppercase"
-            >
-              {t.logout}
-            </button>
-          </div>
+          <UserMenu />
         ) : (
           <Link href="/login" className="hover:text-[var(--accent)] transition-colors">{t.login}</Link>
         )}
