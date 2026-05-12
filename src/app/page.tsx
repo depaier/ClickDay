@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
-import { GlobeMap } from "@/components/map/GlobeMap";
+import { GlobeMap, type GlobeMapRef } from "@/components/map/GlobeMap";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from "next/navigation";
 import { PostGroupSheet } from "@/components/post/PostGroupSheet";
+import { LocateFixed } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Dedicated client for public data fetching, completely ignoring auth state.
 // This prevents the infinite lock on visibilitychange.
@@ -32,6 +34,7 @@ export default function Home() {
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const isFetchingRef = useRef(false);
+  const mapRef = useRef<GlobeMapRef>(null);
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -169,6 +172,20 @@ export default function Home() {
     }
   }, [selectedGroup, selectedPost, searchParams]);
 
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) return;
+    
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        mapRef.current?.flyTo([pos.coords.longitude, pos.coords.latitude], 14);
+      },
+      (err) => {
+        console.error("Home: Error getting current location:", err);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
+
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -179,6 +196,7 @@ export default function Home() {
       <div className="absolute inset-0">
         {initialView && (
           <GlobeMap 
+            ref={mapRef}
             posts={posts} 
             onMarkerClick={(post) => {
               setSelectedGroup(null);
@@ -197,6 +215,22 @@ export default function Home() {
             initialZoom={initialView.zoom}
           />
         )}
+      </div>
+
+      {/* Location Button */}
+      <div className={cn(
+        "absolute bottom-10 transition-all duration-500 ease-in-out z-50",
+        (selectedPost || selectedGroup) ? "right-8 md:right-[420px]" : "right-8"
+      )}>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleMyLocation}
+          className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-2xl group"
+          title="My Location"
+        >
+          <LocateFixed size={20} className="group-hover:text-[var(--accent)] transition-colors" />
+        </motion.button>
       </div>
 
       {/* Group View */}
