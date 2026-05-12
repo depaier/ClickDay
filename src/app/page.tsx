@@ -9,6 +9,8 @@ import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { useRouter, useSearchParams } from "next/navigation";
+import { PostGroupSheet } from "@/components/post/PostGroupSheet";
 
 // Dedicated client for public data fetching, completely ignoring auth state.
 // This prevents the infinite lock on visibilitychange.
@@ -23,12 +25,16 @@ const supabaseData = createSupabaseClient(
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [hoveredPost, setHoveredPost] = useState<any | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialView, setInitialView] = useState<{ center: [number, number], zoom: number } | null>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
   const isFetchingRef = useRef(false);
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const fetchPosts = useCallback(async () => {
     if (isFetchingRef.current) return;
@@ -115,6 +121,54 @@ export default function Home() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [fetchPosts, fetchUserInteractions, user]);
 
+  // URL state recovery
+  useEffect(() => {
+    if (posts.length === 0) return;
+    
+    const groupParam = searchParams.get('group');
+    const selectedParam = searchParams.get('selected');
+    
+    if (groupParam) {
+      const ids = groupParam.split(',');
+      const foundGroup = posts.filter(p => ids.includes(p.id.toString()));
+      if (foundGroup.length > 0) {
+        setSelectedGroup(foundGroup);
+        if (selectedParam) {
+          const foundPost = foundGroup.find(p => p.id.toString() === selectedParam);
+          if (foundPost) setSelectedPost(foundPost);
+        }
+      }
+    } else if (selectedParam) {
+      const foundPost = posts.find(p => p.id.toString() === selectedParam);
+      if (foundPost) setSelectedPost(foundPost);
+    }
+  }, [posts, searchParams]);
+
+  // Sync state to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (selectedGroup) {
+      params.set('group', selectedGroup.map(p => p.id).join(','));
+      if (selectedPost) params.set('selected', selectedPost.id.toString());
+      else params.delete('selected');
+    } else if (selectedPost) {
+      params.delete('group');
+      params.set('selected', selectedPost.id.toString());
+    } else {
+      params.delete('group');
+      params.delete('selected');
+    }
+
+    const newQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    
+    if (newQuery !== currentQuery) {
+      const url = newQuery ? `/?${newQuery}` : '/';
+      window.history.replaceState(null, '', url);
+    }
+  }, [selectedGroup, selectedPost, searchParams]);
+
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -126,19 +180,46 @@ export default function Home() {
         {initialView && (
           <GlobeMap 
             posts={posts} 
-            onMarkerClick={setSelectedPost} 
+            onMarkerClick={(post) => {
+              setSelectedGroup(null);
+              setSelectedPost(post);
+            }} 
+            onGroupClick={(group) => {
+              setSelectedGroup(group);
+              setSelectedPost(null);
+            }}
+            onMapClick={() => {
+              setSelectedGroup(null);
+              setSelectedPost(null);
+            }}
+            highlightedPostId={hoveredPost?.id || selectedPost?.id}
             initialCenter={initialView.center}
             initialZoom={initialView.zoom}
           />
         )}
       </div>
 
-      <PostPreviewSheet
-        post={selectedPost}
-        isLiked={selectedPost ? likedPostIds.has(selectedPost.id.toString()) : false}
-        isBookmarked={selectedPost ? bookmarkedPostIds.has(selectedPost.id.toString()) : false}
-        onClose={() => setSelectedPost(null)}
+      {/* Group View */}
+      <PostGroupSheet
+        posts={selectedGroup}
+        selectedPostId={selectedPost?.id}
+        onSelectPost={setSelectedPost}
+        onHoverPost={setHoveredPost}
+        onClose={() => {
+          setSelectedGroup(null);
+          setSelectedPost(null);
+        }}
       />
+
+      {/* Single View (only if no group) */}
+      {!selectedGroup && (
+        <PostPreviewSheet
+          post={selectedPost}
+          isLiked={selectedPost ? likedPostIds.has(selectedPost.id.toString()) : false}
+          isBookmarked={selectedPost ? bookmarkedPostIds.has(selectedPost.id.toString()) : false}
+          onClose={() => setSelectedPost(null)}
+        />
+      )}
 
       <AnimatePresence>
         {loading && (
