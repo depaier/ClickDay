@@ -33,18 +33,18 @@ export function SearchBar() {
       const { data, error } = await supabase
         .from("posts")
         .select("tags");
-      
+
       if (!error && data) {
         const allTags = data.flatMap(post => post.tags || []);
         const tagCounts = allTags.reduce((acc: any, tag: string) => {
           acc[tag] = (acc[tag] || 0) + 1;
           return acc;
         }, {});
-        
+
         const sortedTags = Object.keys(tagCounts)
           .sort((a, b) => tagCounts[b] - tagCounts[a])
           .slice(0, 5);
-        
+
         setRecommendedTags(sortedTags);
       }
     }
@@ -78,7 +78,7 @@ export function SearchBar() {
 
   return (
     <div className="relative w-full mb-8 group">
-      <div 
+      <div
         className={cn(
           "relative flex items-center h-14 bg-white/5 border transition-all duration-500 rounded-sm overflow-hidden",
           isFocused ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/20 bg-white/10" : "border-white/10 hover:border-white/20"
@@ -88,7 +88,7 @@ export function SearchBar() {
           "w-5 h-5 ml-5 transition-colors duration-500",
           isFocused ? "text-[var(--accent)]" : "text-gray-500"
         )} />
-        
+
         <input
           ref={inputRef}
           type="text"
@@ -109,7 +109,7 @@ export function SearchBar() {
         />
 
         {query && (
-          <button 
+          <button
             onClick={clearSearch}
             className="p-2 mr-3 text-gray-500 hover:text-white transition-colors"
           >
