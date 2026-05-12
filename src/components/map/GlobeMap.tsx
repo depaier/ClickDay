@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -24,7 +24,11 @@ interface GlobeMapProps {
 }
 
 
-export const GlobeMap: React.FC<GlobeMapProps> = ({ 
+export interface GlobeMapRef {
+  flyTo: (center: [number, number], zoom?: number) => void;
+}
+
+export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({ 
   posts, 
   onMarkerClick,
   onGroupClick,
@@ -32,12 +36,24 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
   highlightedPostId,
   initialCenter = [126.978, 37.5665],
   initialZoom = 2
-}) => {
+}, ref) => {
 
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-
   const postsRef = useRef(posts);
+
+  useImperativeHandle(ref, () => ({
+    flyTo: (center: [number, number], zoom: number = 10) => {
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center,
+          zoom,
+          essential: true,
+          duration: 2000
+        });
+      }
+    }
+  }));
   
   // Update ref when posts change
   useEffect(() => {
@@ -354,4 +370,6 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
   return (
     <div ref={mapContainer} className="w-full h-full bg-[#00000A]" />
   );
-};
+});
+
+GlobeMap.displayName = "GlobeMap";
