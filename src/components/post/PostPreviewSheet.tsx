@@ -12,6 +12,7 @@ import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
+import { PostActions } from "./PostActions";
 
 interface Post {
   id: string | number;
@@ -44,7 +45,9 @@ interface PostPreviewSheetProps {
 
 export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, onClose }: PostPreviewSheetProps) {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const t = translations[language].post;
+  const isOwner = user?.id === post?.user_id;
 
   return (
     <AnimatePresence>
@@ -106,6 +109,13 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                     className="bg-black/5 border-black/5 rounded-full w-10 h-10 text-black"
                     iconClassName="text-black"
                   />
+                  {isOwner && (
+                    <PostActions 
+                      postId={post.id.toString()} 
+                      imageUrl={post.image_url}
+                      iconClassName="text-gray-600 hover:text-black"
+                    />
+                  )}
                 </div>
               </div>
 

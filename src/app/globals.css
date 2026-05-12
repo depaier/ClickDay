@@ -23,19 +23,19 @@
 
     /* Semantic Colors */
     --bg-primary: #000000;
-    --bg-secondary: #ffffff;
+    --bg-secondary: #111111;
     --bg-nav: #000000;
-    --bg-navbar: #262b2e;
-    --bg-overlay: rgba(0,0,0,0.5);
+    --bg-navbar: #111111;
+    --bg-overlay: rgba(0,0,0,0.6);
     
-    --text-primary: #000000;
+    --text-primary: #ffffff;
     --text-on-dark: #ffffff;
-    --text-muted: rgba(0,0,0,0.65);
-    --text-bold: rgba(0,0,0,0.85);
+    --text-muted: rgba(255,255,255,0.65);
+    --text-bold: rgba(255,255,255,0.85);
     --text-accent: #E8B800;
     
-    --border-default: rgba(0,0,0,0.15);
-    --border-divider: #d8d8d8;
+    --border-default: rgba(255,255,255,0.15);
+    --border-divider: #333333;
 
     /* Hasselblad specific Design System Vars */
     --accent: #E8B800;
@@ -100,9 +100,9 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-on-dark);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 2em;
-  letter-spacing: 0.04em;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
   -webkit-font-smoothing: antialiased;
 }
 

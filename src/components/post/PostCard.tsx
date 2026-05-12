@@ -8,6 +8,8 @@ import { LikeButton } from "./LikeButton";
 import { BookmarkButton } from "./BookmarkButton";
 import { GeocodedAddress } from "../map/GeocodedAddress";
 import { cn } from "@/lib/utils";
+import { useAuth } from "../providers/AuthProvider";
+import { PostActions } from "./PostActions";
 
 interface PostCardProps {
   post: {
@@ -30,6 +32,8 @@ interface PostCardProps {
 export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+  const isOwner = user?.id === post.user_id;
 
   return (
     <div 
@@ -109,6 +113,14 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
           initialIsBookmarked={isBookmarked}
           className="bg-black/50 backdrop-blur-md border-white/5"
         />
+        {isOwner && (
+          <PostActions 
+            postId={post.id} 
+            imageUrl={post.image_url} 
+            className="bg-black/50 backdrop-blur-md border-white/5 rounded-full"
+            iconClassName="text-white"
+          />
+        )}
       </div>
     </div>
   );

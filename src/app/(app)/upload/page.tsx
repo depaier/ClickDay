@@ -363,27 +363,48 @@ export default function UploadPage() {
       return;
     }
 
-
     setIsUploading(true);
     try {
+      // Get the latest session token to bypass main client locks
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Create a throwaway client just for this upload to prevent visibilitychange locks
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+      const uploadClient = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`
+            }
+          },
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
+
       // 1. 이미지 업로드
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await uploadClient.storage
         .from('clickday')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       // 2. 공개 URL 가져오기
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = uploadClient.storage
         .from('clickday')
         .getPublicUrl(uploadData.path);
 
       // 3. DB 데이터 삽입
       const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag !== "");
 
-      const { error: dbError } = await supabase.from('posts').insert({
+      const { error: dbError } = await uploadClient.from('posts').insert({
         user_id: user.id,
         latitude: location.lat,
         longitude: location.lng,
@@ -494,13 +515,10 @@ export default function UploadPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                
-                {/* Optional: Simple instruction under the image */}
-                <p className="text-center text-xs text-gray-500 mt-4 uppercase tracking-[0.2em]">{t.browse}</p>
               </div>
             )}
             
-            <p className="text-[10px] text-gray-500/60 leading-relaxed px-1 mt-6">
+            <p className="text-xs text-gray-400 leading-relaxed px-1 mt-6">
               {t.legalNotice}
             </p>
           </div>
@@ -510,43 +528,43 @@ export default function UploadPage() {
             {/* Input Fields */}
             <div className={`space-y-6 ${!file ? "opacity-50 pointer-events-none" : ""}`}>
               <div>
-                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.photoTitle}</label>
+                <label className="block text-[13px] uppercase tracking-widest text-gray-400 mb-2">{t.photoTitle}</label>
                 <input
                   type="text"
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
                   placeholder={t.titlePlaceholder}
-                  className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
+                  className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-[15px] focus:border-[var(--accent)] outline-none transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.description}</label>
+                <label className="block text-[13px] uppercase tracking-widest text-gray-400 mb-2">{t.description}</label>
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t.descPlaceholder}
-                  className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors resize-none"
+                  className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-[15px] focus:border-[var(--accent)] outline-none transition-colors resize-none"
                 />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.tags}</label>
+                <label className="block text-[13px] uppercase tracking-widest text-gray-400 mb-2">{t.tags}</label>
                 <input
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   placeholder={t.tagsPlaceholder}
-                  className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
+                  className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-[15px] focus:border-[var(--accent)] outline-none transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.cameraBrand}</label>
+                  <label className="block text-[13px] uppercase tracking-widest text-gray-400 mb-2">{t.cameraBrand}</label>
                   <select
                     value={cameraBrand || ""}
                     onChange={(e) => setCameraBrand(e.target.value || null)}
-                    className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
+                    className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-[15px] focus:border-[var(--accent)] outline-none transition-colors appearance-none"
                   >
                     <option value="">{t.noneAuto}</option>
                     {Object.entries(BRAND_MAPPING).map(([key, value]) => (
@@ -555,11 +573,11 @@ export default function UploadPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.region}</label>
+                  <label className="block text-[13px] uppercase tracking-widest text-gray-400 mb-2">{t.region}</label>
                   <select
                     value={region || ""}
                     onChange={(e) => setRegion(e.target.value || null)}
-                    className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors appearance-none"
+                    className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-[15px] focus:border-[var(--accent)] outline-none transition-colors appearance-none"
                   >
                     <option value="">{t.noneAuto}</option>
                     {Object.entries(translations[language].feed.filters.regions).filter(([k]) => k !== 'title').map(([key, label]) => (
@@ -574,22 +592,22 @@ export default function UploadPage() {
             <div className={`space-y-8 ${!file ? "opacity-50 pointer-events-none" : ""}`}>
               {/* EXIF Panel */}
               <div>
-                <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-xs text-gray-400">
-                  <Camera className="w-3.5 h-3.5 mr-2 text-[var(--accent)]" />
+                <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm text-gray-400">
+                  <Camera className="w-4 h-4 mr-2 text-[var(--accent)]" />
                   {t.exifTitle}
                 </h2>
-                <div className="bg-[#080808] p-5 space-y-3 text-sm border border-white/5 rounded-sm">
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-500 text-xs uppercase tracking-tighter">{t.camera}</span>
-                    <span className="text-right text-gray-300">{exif?.model ? `${exif.make} ${exif.model}` : "-"}</span>
+                <div className="bg-[#080808] p-5 space-y-4 text-[15px] border border-white/5 rounded-sm">
+                  <div className="flex justify-between border-b border-white/5 pb-3">
+                    <span className="text-gray-400 text-[13px] uppercase tracking-wide">{t.camera}</span>
+                    <span className="text-right text-white">{exif?.model ? `${exif.make} ${exif.model}` : "-"}</span>
                   </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-500 text-xs uppercase tracking-tighter">{t.lens}</span>
-                    <span className="text-right text-gray-300">{exif?.lens || "-"}</span>
+                  <div className="flex justify-between border-b border-white/5 pb-3">
+                    <span className="text-gray-400 text-[13px] uppercase tracking-wide">{t.lens}</span>
+                    <span className="text-right text-white">{exif?.lens || "-"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500 text-xs uppercase tracking-tighter">{t.settings}</span>
-                    <span className="text-right text-gray-300">
+                    <span className="text-gray-400 text-[13px] uppercase tracking-wide">{t.settings}</span>
+                    <span className="text-right text-white">
                       {exif ? `f/${exif.fNumber} • ${exif.exposureTime}s • ISO ${exif.iso}` : "-"}
                     </span>
                   </div>
@@ -598,8 +616,8 @@ export default function UploadPage() {
 
               {/* Location Panel */}
               <div>
-                <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-xs text-gray-400">
-                  <MapPin className="w-3.5 h-3.5 mr-2 text-[var(--accent)]" />
+                <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm text-gray-400">
+                  <MapPin className="w-4 h-4 mr-2 text-[var(--accent)]" />
                   {t.locationTitle}
                 </h2>
                 <div className="bg-[#080808] h-[200px] border border-white/5 relative overflow-hidden rounded-sm">
@@ -611,13 +629,13 @@ export default function UploadPage() {
                           className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-4 cursor-pointer hover:bg-black/40 transition-colors"
                           onClick={() => setIsModalOpen(true)}
                         >
-                          <p className="text-white text-sm mb-2">{t.mapPreview}</p>
-                          <p className="text-[var(--accent)] text-xs uppercase tracking-tighter italic font-medium">{t.clickToPick}</p>
+                          <p className="text-white text-[15px] mb-2">{t.mapPreview}</p>
+                          <p className="text-[var(--accent)] text-[13px] uppercase tracking-wide italic font-medium">{t.clickToPick}</p>
                         </div>
                       )}
                     </>
                   )}
-                  {!file && <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs uppercase tracking-widest">{t.mapPreview}</div>}
+                  {!file && <div className="w-full h-full flex items-center justify-center text-gray-400 text-[13px] uppercase tracking-widest">{t.mapPreview}</div>}
                 </div>
               </div>
             </div>
