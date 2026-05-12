@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Search, X, Hash } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { translations } from "@/constants/translations";
+import { TranslationKeys, translations } from "@/constants/translations";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,39 +12,46 @@ const supabase = createClient();
 
 export function SearchBar() {
   const { language } = useLanguage();
-  const t = (translations[language] as any).feed.search;
+  const t = (translations[language] as TranslationKeys).feed.search;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [prevQ, setPrevQ] = useState(searchParams.get("q") || "");
   const [isFocused, setIsFocused] = useState(false);
   const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // URL 파라미터와 동기화
-  useEffect(() => {
-    setQuery(searchParams.get("q") || "");
-  }, [searchParams]);
+  // URL 파라미터가 외부(뒤로가기 등)에서 변경되었을 때 로컬 상태 동기화
+  const currentQ = searchParams.get("q") || "";
+  if (currentQ !== prevQ) {
+    setPrevQ(currentQ);
+    setQuery(currentQ);
+  }
 
   // 추천 태그 가져오기 (가장 많이 사용된 태그 5개)
   useEffect(() => {
     async function fetchTags() {
       const { data, error } = await supabase
         .from("posts")
-        .select("tags");
+        .select("tags")
+        .not("tags", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(200); // 성능 최적화: 최근 200개 포스트에서 태그 추출
       
       if (!error && data) {
-        const allTags = data.flatMap(post => post.tags || []);
-        const tagCounts = allTags.reduce((acc: any, tag: string) => {
+        const allTags = data.flatMap((post: { tags: string[] | null }) => post.tags || []);
+        const tagCounts = allTags.reduce((acc: Record<string, number>, tag: string) => {
           acc[tag] = (acc[tag] || 0) + 1;
           return acc;
         }, {});
-        
+
         const sortedTags = Object.keys(tagCounts)
           .sort((a, b) => tagCounts[b] - tagCounts[a])
           .slice(0, 5);
-        
+
         setRecommendedTags(sortedTags);
       }
     }
@@ -58,7 +65,7 @@ export function SearchBar() {
     } else {
       params.delete("q");
     }
-    router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
     setShowDropdown(false);
     inputRef.current?.blur();
   };
@@ -66,7 +73,7 @@ export function SearchBar() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       // 한글 입력 중 Enter를 누를 때 중복 처리를 방지하기 위해 isComposing 체크
-      if (e.nativeEvent.isComposing) return;
+      if ((e.nativeEvent as KeyboardEvent).isComposing) return;
       handleSearch(query);
     }
   };
@@ -78,7 +85,7 @@ export function SearchBar() {
 
   return (
     <div className="relative w-full mb-8 group">
-      <div 
+      <div
         className={cn(
           "relative flex items-center h-14 bg-white/5 border transition-all duration-500 rounded-sm overflow-hidden",
           isFocused ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/20 bg-white/10" : "border-white/10 hover:border-white/20"
@@ -88,7 +95,7 @@ export function SearchBar() {
           "w-5 h-5 ml-5 transition-colors duration-500",
           isFocused ? "text-[var(--accent)]" : "text-gray-500"
         )} />
-        
+
         <input
           ref={inputRef}
           type="text"
@@ -109,7 +116,7 @@ export function SearchBar() {
         />
 
         {query && (
-          <button 
+          <button
             onClick={clearSearch}
             className="p-2 mr-3 text-gray-500 hover:text-white transition-colors"
           >
