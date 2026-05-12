@@ -16,6 +16,9 @@ interface Post {
 interface GlobeMapProps {
   posts: Post[];
   onMarkerClick: (post: Post) => void;
+  onGroupClick?: (posts: Post[]) => void;
+  onMapClick?: () => void;
+  highlightedPostId?: string | number | null;
   initialCenter?: [number, number];
   initialZoom?: number;
 }
@@ -24,6 +27,9 @@ interface GlobeMapProps {
 export const GlobeMap: React.FC<GlobeMapProps> = ({ 
   posts, 
   onMarkerClick,
+  onGroupClick,
+  onMapClick,
+  highlightedPostId,
   initialCenter = [126.978, 37.5665],
   initialZoom = 2
 }) => {
@@ -43,8 +49,8 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
     if (map.hasImage("custom-pin")) return;
     
     const svgString = `
-      <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518"/>
+      <svg width="34" height="42" viewBox="-1 -1 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518" stroke="#000000" stroke-width="1"/>
         <circle cx="16" cy="16" r="6" fill="#0A0A0A"/>
       </svg>
     `;
@@ -55,6 +61,29 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
     img.onload = () => {
       if (!map.hasImage("custom-pin")) {
         map.addImage("custom-pin", img);
+      }
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  };
+
+  const addHighlightedIcon = (map: maplibregl.Map) => {
+    if (map.hasImage("highlighted-pin")) return;
+    
+    // Brighter yellow with a white border
+    const svgString = `
+      <svg width="34" height="42" viewBox="-1 -1 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#FFD700" stroke="#FFFFFF" stroke-width="1.5"/>
+        <circle cx="16" cy="16" r="6" fill="#000000"/>
+      </svg>
+    `;
+    const img = new Image();
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = () => {
+      if (!map.hasImage("highlighted-pin")) {
+        map.addImage("highlighted-pin", img);
       }
       URL.revokeObjectURL(url);
     };
@@ -133,7 +162,11 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
       id: "unclustered-point",
       type: "symbol",
       source: "posts",
-      filter: ["!", ["has", "point_count"]],
+      filter: [
+        "all",
+        ["!", ["has", "point_count"]],
+        ["!=", ["get", "id"], highlightedPostId || ""]
+      ],
       layout: {
         "icon-image": "custom-pin",
         "icon-size": 0.8,
@@ -142,8 +175,29 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
       },
     });
 
+    // 4. 강조된 마커 레이어
+    map.addLayer({
+      id: "highlighted-point",
+      type: "symbol",
+      source: "posts",
+      filter: ["==", ["get", "id"], highlightedPostId || ""],
+      layout: {
+        "icon-image": "highlighted-pin",
+        "icon-size": 1.1,
+        "icon-anchor": "bottom",
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+      },
+      paint: {
+        "icon-opacity": 1,
+      }
+    });
+
     // 클릭 이벤트 처리
     map.on("click", "clusters", async (e) => {
+      // Prevent the click from bubbling to the map
+      (e as any)._defaultPrevented = true;
+      
       const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
       const clusterId = features[0].properties.cluster_id;
       const source = map.getSource("posts") as maplibregl.GeoJSONSource;
@@ -156,14 +210,49 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
     });
 
     map.on("click", "unclustered-point", (e) => {
+      // Prevent the click from bubbling to the map
+      (e as any)._defaultPrevented = true;
+      
+      const currentZoom = map.getZoom();
+      
+      // 주변 마커 검색 (20px 반경) - 줌 레벨이 14보다 클 때만 작동
+      if (currentZoom > 14 && onGroupClick) {
+        const bbox: [maplibregl.PointLike, maplibregl.PointLike] = [
+          [e.point.x - 20, e.point.y - 20],
+          [e.point.x + 20, e.point.y + 20],
+        ];
+        
+        const nearbyFeatures = map.queryRenderedFeatures(bbox, {
+          layers: ["unclustered-point"],
+        });
+
+        if (nearbyFeatures.length > 1) {
+          const groupPosts = nearbyFeatures.map(f => {
+            const props = f.properties as Post;
+            return postsRef.current.find(p => p.id.toString() === props.id.toString()) || props;
+          });
+          onGroupClick(groupPosts as Post[]);
+          return;
+        }
+      }
+
+      // 줌 레벨이 낮거나 주변에 마커가 없으면 단일 클릭으로 처리
       const props = e.features![0].properties as Post;
-      // MapLibre GeoJSON properties flatten objects, so find the original post object
-      // which contains the nested 'profiles' object.
       const originalPost = postsRef.current.find(p => p.id.toString() === props.id.toString());
-      if (originalPost) {
-        onMarkerClick(originalPost);
-      } else {
-        onMarkerClick(props);
+      onMarkerClick(originalPost || props);
+    });
+
+    // 지도 빈 곳 클릭 처리
+    map.on("click", (e) => {
+      if ((e as any)._defaultPrevented) return;
+      
+      // Check if we clicked on any interactive layer
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ["clusters", "unclustered-point"]
+      });
+      
+      if (features.length === 0 && onMapClick) {
+        onMapClick();
       }
     });
 
@@ -216,6 +305,7 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
     map.on("load", () => {
       map.setProjection({ type: "globe" });
       addCustomIcon(map);
+      addHighlightedIcon(map);
 
       map.on("styleimagemissing", (e) => {
 
@@ -243,6 +333,23 @@ export const GlobeMap: React.FC<GlobeMapProps> = ({
   useEffect(() => {
     updateData();
   }, [posts]);
+
+  // 강조된 마커 업데이트
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map) {
+      if (map.getLayer("highlighted-point")) {
+        map.setFilter("highlighted-point", ["==", ["get", "id"], highlightedPostId || ""]);
+      }
+      if (map.getLayer("unclustered-point")) {
+        map.setFilter("unclustered-point", [
+          "all",
+          ["!", ["has", "point_count"]],
+          ["!=", ["get", "id"], highlightedPostId || ""]
+        ]);
+      }
+    }
+  }, [highlightedPostId]);
 
   return (
     <div ref={mapContainer} className="w-full h-full bg-[#00000A]" />
