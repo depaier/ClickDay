@@ -10,13 +10,20 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { translations } from "@/constants/translations";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { UserMenu } from "./UserMenu";
 
 export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "sticky" }) {
   const { language } = useLanguage();
   const t = translations[language].nav;
   const { user, profile, signOut } = useAuth();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const isActive = (path: string) => {
+    if (path === "/" && pathname !== "/") return false;
+    return pathname.startsWith(path);
+  };
 
   return (
     <>
@@ -44,9 +51,29 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
 
         {/* Center Nav Links - Hidden on Mobile */}
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/" className="hover:text-[var(--accent)] transition-colors">{t.home}</Link>
-          <Link href="/feed" className="hover:text-[var(--accent)] transition-colors">{t.feed}</Link>
-          <Link href="/upload" className="hover:text-[var(--accent)] transition-colors">{t.upload}</Link>
+          {[
+            { href: "/", label: t.home },
+            { href: "/feed", label: t.feed },
+            { href: "/upload", label: t.upload },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "relative py-1 transition-colors duration-300 hover:text-[var(--accent)]",
+                isActive(link.href) ? "text-[var(--accent)]" : "text-white/70"
+              )}
+            >
+              {link.label}
+              {isActive(link.href) && (
+                <motion.div
+                  layoutId="nav-underline"
+                  className="absolute bottom-0 left-0 right-0 h-[1px] bg-[var(--accent)]"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </Link>
+          ))}
         </div>
 
       {/* Right User Actions */}
@@ -81,47 +108,29 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
               <X className="w-6 h-6" />
             </motion.button>
 
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Link 
-                href="/" 
-                className="text-xl font-heading tracking-[0.2em] hover:text-[var(--accent)] transition-colors uppercase"
-                onClick={() => setIsMenuOpen(false)}
+            {[
+              { href: "/", label: t.home },
+              { href: "/feed", label: t.feed },
+              { href: "/upload", label: t.upload },
+            ].map((link, idx) => (
+              <motion.div
+                key={link.href}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 + idx * 0.05 }}
               >
-                {t.home}
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Link 
-                href="/feed" 
-                className="text-xl font-heading tracking-[0.2em] hover:text-[var(--accent)] transition-colors uppercase"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {t.feed}
-              </Link>
-            </motion.div>
-            
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Link 
-                href="/upload" 
-                className="text-xl font-heading tracking-[0.2em] hover:text-[var(--accent)] transition-colors uppercase"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {t.upload}
-              </Link>
-            </motion.div>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "text-xl font-heading tracking-[0.2em] transition-colors uppercase",
+                    isActive(link.href) ? "text-[var(--accent)]" : "text-white hover:text-[var(--accent)]"
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              </motion.div>
+            ))}
             
             <motion.div 
               initial={{ y: 20, opacity: 0 }}

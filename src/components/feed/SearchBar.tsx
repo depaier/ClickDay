@@ -22,6 +22,7 @@ export function SearchBar() {
   const [prevQ, setPrevQ] = useState(searchParams.get("q") || "");
   const [isFocused, setIsFocused] = useState(false);
   const [recommendedTags, setRecommendedTags] = useState<string[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
   // URL 파라미터가 외부(뒤로가기 등)에서 변경되었을 때 로컬 상태 동기화
@@ -31,15 +32,20 @@ export function SearchBar() {
     setQuery(currentQ);
   }
 
-  // 추천 태그 가져오기 (가장 많이 사용된 태그 5개)
+  // 최근 검색어 불러오기
   useEffect(() => {
+    const saved = localStorage.getItem("recentSearches");
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
+
     async function fetchTags() {
       const { data, error } = await supabase
         .from("posts")
         .select("tags")
         .not("tags", "is", null)
         .order("created_at", { ascending: false })
-        .limit(200); // 성능 최적화: 최근 200개 포스트에서 태그 추출
+        .limit(200);
       
       if (!error && data) {
         const allTags = data.flatMap((post: { tags: string[] | null }) => post.tags || []);
@@ -58,10 +64,31 @@ export function SearchBar() {
     fetchTags();
   }, []);
 
+  const saveSearch = (term: string) => {
+    if (!term.trim()) return;
+    const updated = [term, ...recentSearches.filter(t => t !== term)].slice(0, 10);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
+
+  const removeRecentSearch = (e: React.MouseEvent, term: string) => {
+    e.stopPropagation();
+    const updated = recentSearches.filter(t => t !== term);
+    setRecentSearches(updated);
+    localStorage.setItem("recentSearches", JSON.stringify(updated));
+  };
+
+  const clearAllRecent = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecentSearches([]);
+    localStorage.removeItem("recentSearches");
+  };
+
   const handleSearch = (searchTerm: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (searchTerm) {
       params.set("q", searchTerm);
+      saveSearch(searchTerm);
     } else {
       params.delete("q");
     }
@@ -125,28 +152,73 @@ export function SearchBar() {
         )}
       </div>
 
-      {/* 추천 검색어 드롭다운 */}
-      {showDropdown && recommendedTags.length > 0 && (
-        <div className="absolute top-full left-0 w-full mt-2 bg-[#0a0a0a] border border-white/10 rounded-sm z-[60] shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="p-4">
-            <p className="text-[10px] font-heading tracking-[0.2em] uppercase text-gray-500 mb-3 px-2">
-              {t.recommended}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {recommendedTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    setQuery(tag);
-                    handleSearch(tag);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-[var(--accent)] hover:text-black border border-white/5 hover:border-[var(--accent)] rounded-full text-xs transition-all duration-300 group/tag"
-                >
-                  <Hash className="w-3 h-3 text-gray-500 group-hover/tag:text-black/50" />
-                  <span className="font-medium">{tag}</span>
-                </button>
-              ))}
-            </div>
+      {/* 추천 및 최근 검색어 드롭다운 */}
+      {showDropdown && (recommendedTags.length > 0 || recentSearches.length > 0) && (
+        <div className="absolute top-full left-0 w-full mt-2 bg-[#0a0a0a] border border-white/10 rounded-sm z-[60] shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden">
+          <div className="flex flex-col md:flex-row">
+            {/* 최근 검색어 */}
+            {recentSearches.length > 0 && (
+              <div className="flex-1 p-4 border-b md:border-b-0 md:border-r border-white/5">
+                <div className="flex justify-between items-center mb-3 px-2">
+                  <p className="text-[10px] font-heading tracking-[0.2em] uppercase text-gray-500">
+                    {language === 'ko' ? '최근 검색어' : 'Recent Searches'}
+                  </p>
+                  <button 
+                    onClick={clearAllRecent}
+                    className="text-[9px] text-gray-600 hover:text-white transition-colors uppercase tracking-widest"
+                  >
+                    {language === 'ko' ? '모두 삭제' : 'Clear All'}
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  {recentSearches.map((term) => (
+                    <div
+                      key={term}
+                      onClick={() => {
+                        setQuery(term);
+                        handleSearch(term);
+                      }}
+                      className="group/item flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-sm cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Search className="w-3 h-3 text-gray-600" />
+                        <span className="text-xs text-gray-300">{term}</span>
+                      </div>
+                      <button
+                        onClick={(e) => removeRecentSearch(e, term)}
+                        className="p-1 opacity-0 group-hover/item:opacity-100 hover:text-[var(--accent)] transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 추천 태그 */}
+            {recommendedTags.length > 0 && (
+              <div className="flex-1 p-4">
+                <p className="text-[10px] font-heading tracking-[0.2em] uppercase text-gray-500 mb-3 px-2">
+                  {t.recommended}
+                </p>
+                <div className="flex flex-wrap gap-2 px-2">
+                  {recommendedTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        setQuery(tag);
+                        handleSearch(tag);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-[var(--accent)] hover:text-black border border-white/5 hover:border-[var(--accent)] rounded-full text-xs transition-all duration-300 group/tag"
+                    >
+                      <Hash className="w-3 h-3 text-gray-500 group-hover/tag:text-black/50" />
+                      <span className="font-medium">{tag}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
