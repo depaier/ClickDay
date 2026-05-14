@@ -33,6 +33,7 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const isOwner = user?.id === post.user_id;
 
   return (
@@ -42,14 +43,27 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link href={`/posts/${post.id}`} className="block cursor-pointer">
-        <div className="relative overflow-hidden bg-[#222] rounded-sm border border-white/5">
+        <div className={cn(
+          "relative overflow-hidden bg-[#222] rounded-sm border border-white/5 transition-all duration-300",
+          !isImageLoaded && "aspect-[4/5] bg-white/5 animate-pulse"
+        )}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={post.image_url} 
             alt={post.location_name || "Post"} 
-            className="w-full h-auto transition-transform duration-500 block"
+            onLoad={() => setIsImageLoaded(true)}
+            onError={() => setIsImageLoaded(true)}
+            className={cn(
+              "w-full h-auto transition-all duration-700 block",
+              isImageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105 absolute inset-0"
+            )}
           />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center">
+          
+          {/* Overlay with user info and stats - only show when loaded */}
+          <div className={cn(
+            "absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center",
+            !isImageLoaded && "hidden"
+          )}>
             {/* Photographer Link */}
             {post.profiles && (
               <button 
