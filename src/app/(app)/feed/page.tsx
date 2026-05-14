@@ -11,6 +11,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { Button } from "@/components/ui/Button";
+import { Lock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Dedicated client for public data fetching, completely ignoring auth state.
 // This prevents the infinite lock on visibilitychange.
@@ -35,9 +38,12 @@ interface Post {
   };
 }
 
+const GUEST_LIMIT = 15;
+
 function FeedContent() {
   const { language } = useLanguage();
   const t = translations[language].feed;
+  const gateT = translations[language].authGate;
   const router = useRouter();
   const searchParams = useSearchParams();
   const filterParam = searchParams.get("filter") || "all";
@@ -56,7 +62,10 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(true);
   const isFetchingRef = useRef(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [gateTriggered, setGateTriggered] = useState(false);
   const PAGE_SIZE = 12;
+
+  const showFeedGate = !user && posts.length >= GUEST_LIMIT;
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -66,12 +75,20 @@ function FeedContent() {
 
   const fetchFeed = useCallback(async (isInitial = false) => {
     if (isFetchingRef.current) return;
+    
+    // Guest limit check
+    if (!isInitial && !user && posts.length >= GUEST_LIMIT) {
+      setHasMore(false);
+      return;
+    }
+
     isFetchingRef.current = true;
     
     if (isInitial) {
       setIsLoading(true);
       setPage(0);
       setHasMore(true);
+      setGateTriggered(false);
     } else {
       setIsFetchingMore(true);
     }
@@ -114,7 +131,7 @@ function FeedContent() {
           setPosts(prev => [...prev, ...(postsData || [])]);
         }
         
-        setHasMore((postsData?.length || 0) === PAGE_SIZE);
+        setHasMore((postsData?.length || 0) === PAGE_SIZE && (!user ? posts.length + (postsData?.length || 0) < GUEST_LIMIT : true));
         setPage(currentPage + 1);
         setIsLoading(false);
         isFetchingRef.current = false;
@@ -147,7 +164,8 @@ function FeedContent() {
         setPosts(prev => [...prev, ...(postsData || [])]);
       }
       
-      setHasMore((postsData?.length || 0) === PAGE_SIZE);
+      const newTotal = isInitial ? (postsData?.length || 0) : posts.length + (postsData?.length || 0);
+      setHasMore((postsData?.length || 0) === PAGE_SIZE && (!user ? newTotal < GUEST_LIMIT : true));
       setPage(currentPage + 1);
 
       if (isInitial && user?.id) {
@@ -166,7 +184,7 @@ function FeedContent() {
       setIsFetchingMore(false);
       isFetchingRef.current = false;
     }
-  }, [filterParam, sortParam, regionParam, brandParam, qParam, user, page]);
+  }, [filterParam, sortParam, regionParam, brandParam, qParam, user, page, posts.length]);
 
   useEffect(() => {
     fetchFeed(true);
@@ -176,8 +194,12 @@ function FeedContent() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading && !isFetchingMore) {
-          fetchFeed(false);
+        if (entries[0].isIntersecting) {
+          if (showFeedGate) {
+            setGateTriggered(true);
+          } else if (hasMore && !isLoading && !isFetchingMore) {
+            fetchFeed(false);
+          }
         }
       },
       { threshold: 0.1 }
@@ -188,7 +210,7 @@ function FeedContent() {
     }
 
     return () => observer.disconnect();
-  }, [fetchFeed, hasMore, isLoading, isFetchingMore]);
+  }, [fetchFeed, hasMore, isLoading, isFetchingMore, showFeedGate]);
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -265,12 +287,45 @@ function FeedContent() {
             )}
           </MasonryGrid>
           
+          <AnimatePresence>
+            {gateTriggered && (
+              <motion.div 
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 100 }}
+                className="fixed inset-x-0 bottom-0 top-[60px] z-40 bg-black/60 backdrop-blur-md flex items-center justify-center p-8"
+              >
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="max-w-md w-full bg-[#111] border border-white/10 p-10 rounded-lg shadow-2xl"
+                >
+                  <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Lock className="text-[var(--accent)] w-8 h-8" />
+                  </div>
+                  <h2 className="text-xl font-heading tracking-[0.2em] uppercase mb-4 text-center">{gateT.feedTitle}</h2>
+                  <p className="text-gray-400 text-sm mb-8 leading-relaxed text-center">
+                    {gateT.feedSubtitle}
+                  </p>
+                  <Button 
+                    className="w-full bg-[var(--accent)] text-black font-bold uppercase tracking-widest py-6 rounded-full"
+                    onClick={() => router.push('/login')}
+                  >
+                    {gateT.loginButton}
+                  </Button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Infinite Scroll Trigger */}
           <div ref={observerTarget} className="h-20 flex items-center justify-center mt-8">
-            {isFetchingMore && (
+            {isFetchingMore && !showFeedGate && (
               <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin opacity-50"></div>
             )}
-            {!hasMore && posts.length > 0 && (
+            {!hasMore && posts.length > 0 && !showFeedGate && (
               <p className="text-[10px] text-gray-600 font-heading tracking-[0.2em] uppercase">
                 {language === 'ko' ? '모든 게시물을 확인했습니다' : 'End of feed'}
               </p>

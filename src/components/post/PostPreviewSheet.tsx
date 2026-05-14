@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, MapPin, Camera, Aperture, Clock, Hash } from "lucide-react";
+import { X, MapPin, Camera, Aperture, Clock, Hash, Lock } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useAuth } from "../providers/AuthProvider";
 import { DeletePostButton } from "./DeletePostButton";
@@ -13,6 +13,7 @@ import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostActions } from "./PostActions";
+import { cn } from "@/lib/utils";
 
 interface Post {
   id: string | number;
@@ -47,6 +48,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
   const { language } = useLanguage();
   const { user } = useAuth();
   const t = translations[language].post;
+  const gateT = translations[language].authGate;
   const isOwner = user?.id === post?.user_id;
 
   return (
@@ -127,14 +129,26 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                 </p>
               </div>
 
-              {/* EXIF Data */}
-              <div className="space-y-4">
+              {/* Tags */}
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {post.tags.map((tag, idx) => (
+                    <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+
+              {/* EXIF Data & Location */}
+              <div className="space-y-4 relative overflow-hidden group/gate">
                 <h3 className="font-heading text-xs text-[var(--accent-dark)] tracking-[0.167em] uppercase border-b border-gray-100 pb-2 flex items-center gap-2">
                   <Camera className="w-3 h-3" />
                   {t.cameraSettings}
                 </h3>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className={cn("grid grid-cols-2 gap-4 text-sm", !user && "blur-[6px] select-none opacity-40")}>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.camera}</span>
                     <span className="truncate text-gray-800">{post.camera_model || t.unknown}</span>
@@ -170,29 +184,40 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                     </div>
                   </div>
                 </div>
+
+                {!user && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[1px] p-4 text-center rounded-lg">
+                    <div className="bg-white/90 p-4 rounded-xl border border-gray-100 shadow-xl scale-95 group-hover/gate:scale-100 transition-transform">
+                      <Lock className="w-5 h-5 text-[var(--accent-dark)] mx-auto mb-2" />
+                      <h4 className="font-heading text-[10px] tracking-[0.2em] uppercase text-gray-900 mb-1">
+                        {gateT.metadataTitle}
+                      </h4>
+                      <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-3 leading-relaxed">
+                        {gateT.metadataSubtitle}
+                      </p>
+                      <Link 
+                        href="/login" 
+                        className="inline-block bg-black text-white px-4 py-1.5 text-[9px] font-bold uppercase tracking-widest rounded-full hover:bg-gray-800 transition-colors shadow-lg"
+                      >
+                        {gateT.loginButton}
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {post.tags.map((tag, idx) => (
-                    <span key={idx} className="flex items-center text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
             </div>
 
-            {/* Action Buttons */}
-            <div className="p-6 sticky bottom-0 bg-white/90 backdrop-blur-sm border-t border-gray-100">
-              <Link href={`/posts/${post.id}`}>
-                <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
-                  {t.viewPost}
-                </Button>
-              </Link>
-            </div>
+            {/* Action Buttons — only shown to logged-in users */}
+            {user && (
+              <div className="p-6 sticky bottom-0 bg-white/90 backdrop-blur-sm border-t border-gray-100">
+                <Link href={`/posts/${post.id}`}>
+                  <Button variant="accent" className="w-full h-12 text-sm font-heading tracking-widest uppercase">
+                    {t.viewPost}
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

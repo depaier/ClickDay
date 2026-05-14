@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MapPin, Heart, Bookmark, Camera, Edit, Clock, Aperture, Maximize2, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { MapPin, Camera, Maximize2, X } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import { DeletePostButton } from "@/components/post/DeletePostButton";
 import { LikeButton } from "@/components/post/LikeButton";
@@ -205,7 +205,7 @@ export function PostDetailClient({
             <MapPin className="w-4 h-4 mr-2" />
             {t.location}
           </h3>
-          <div className="h-[250px] overflow-hidden">
+          <div className="h-[180px] overflow-hidden">
              <PostDetailMap latitude={post.latitude} longitude={post.longitude} />
           </div>
         </div>

@@ -39,6 +39,15 @@ export const translations = {
       heroSubtitle: "Camera Photos + Map Based Shooting Info Sharing",
       description: "Where you shot, how you shot - meet on the map",
     },
+    authGate: {
+      feedTitle: "Sign up to explore more",
+      feedSubtitle: "Join our community to discover more hidden spots.",
+      mapTitle: "Explore more on the map",
+      mapSubtitle: "Login to view all locations and settings.",
+      metadataTitle: "Login for metadata",
+      metadataSubtitle: "Detailed camera settings are available for members.",
+      loginButton: "Login / Sign Up",
+    },
     feed: {
       title: "Feed",
       subtitle: "Discover latest photos around the world",
@@ -248,6 +257,15 @@ export const translations = {
       heroTitle: "클릭데이",
       heroSubtitle: "카메라 사진 + 지도 기반 촬영 정보 공유",
       description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다",
+    },
+    authGate: {
+      feedTitle: "로그인하고 더 많은 사진을 확인하세요",
+      feedSubtitle: "회원이 되어 더 많은 숨겨진 스팟을 찾아보세요.",
+      mapTitle: "지도에서 더 많은 스팟 찾기",
+      mapSubtitle: "로그인하면 모든 위치와 설정을 볼 수 있습니다.",
+      metadataTitle: "로그인하여 메타데이터 확인",
+      metadataSubtitle: "카메라 상세 설정은 회원에게만 공개됩니다.",
+      loginButton: "로그인 / 회원가입",
     },
     feed: {
       title: "피드",
