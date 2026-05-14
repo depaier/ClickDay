@@ -14,6 +14,7 @@ import { PostGroupSheet } from "@/components/post/PostGroupSheet";
 import { LocateFixed } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+
 // Dedicated client for public data fetching, completely ignoring auth state.
 // This prevents the infinite lock on visibilitychange.
 const supabaseData = createSupabaseClient(

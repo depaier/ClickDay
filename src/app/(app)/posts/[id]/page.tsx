@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PostDetailClient } from "@/components/post/PostDetailClient";
 
 interface PageProps {
@@ -17,6 +17,12 @@ export default async function PostDetailPage({ params }: PageProps) {
   if (!isUuid) {
     console.warn("Invalid UUID format:", id);
     return notFound();
+  }
+
+  // 비로그인 사용자는 상세 페이지에 접근 불가 → 로그인 페이지로 리다이렉트
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect(`/login?returnTo=/posts/${id}`);
   }
 
   const { data: postData, error } = await supabase
@@ -38,39 +44,36 @@ export default async function PostDetailPage({ params }: PageProps) {
     .single();
   
   const post = { ...postData, profiles: profile };
-
-  const { data: { user } } = await supabase.auth.getUser();
-  const isOwner = user?.id === post.user_id;
+  const isOwner = user.id === post.user_id;
 
   let isLiked = false;
   let isBookmarked = false;
   let isFollowing = false;
-  if (user) {
-    const { data: likeData } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('post_id', id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    isLiked = !!likeData;
 
-    const { data: bookmarkData } = await supabase
-      .from('bookmarks')
-      .select('id')
-      .eq('post_id', id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    isBookmarked = !!bookmarkData;
+  const { data: likeData } = await supabase
+    .from('likes')
+    .select('id')
+    .eq('post_id', id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  isLiked = !!likeData;
 
-    if (post.user_id && post.user_id !== user.id) {
-      const { data: followData } = await supabase
-        .from('follows')
-        .select('follower_id')
-        .eq('follower_id', user.id)
-        .eq('following_id', post.user_id)
-        .maybeSingle();
-      isFollowing = !!followData;
-    }
+  const { data: bookmarkData } = await supabase
+    .from('bookmarks')
+    .select('id')
+    .eq('post_id', id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  isBookmarked = !!bookmarkData;
+
+  if (post.user_id && post.user_id !== user.id) {
+    const { data: followData } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('follower_id', user.id)
+      .eq('following_id', post.user_id)
+      .maybeSingle();
+    isFollowing = !!followData;
   }
 
   return (

@@ -9,6 +9,8 @@ import { translations } from "@/constants/translations";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 import Link from "next/link";
 
+import { useAuth } from "../providers/AuthProvider";
+
 interface Post {
   id: string | number;
   latitude: number;
@@ -39,6 +41,7 @@ export function PostGroupSheet({
   onClose 
 }: PostGroupSheetProps) {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const t = translations[language].post;
   const mt = translations[language].map;
 
@@ -110,7 +113,7 @@ export function PostGroupSheet({
                       <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-[var(--accent-dark)] transition-colors">
                         {post.location_name || t.untitled}
                       </h3>
-                      <div className="flex items-center gap-1 mt-1 text-gray-500">
+                      <div className={`flex items-center gap-1 mt-1 text-gray-500 ${!user && 'blur-[4px] select-none opacity-50'}`}>
                         <MapPin className="w-3 h-3 flex-shrink-0" />
                         <GeocodedAddress 
                           latitude={post.latitude} 
@@ -139,22 +142,18 @@ export function PostGroupSheet({
                         </span>
                       </Link>
                       
-                      <Link href={`/posts/${post.id}`} onClick={(e) => e.stopPropagation()}>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="
-                            h-7 px-3 text-[10px] font-bold uppercase tracking-tighter transition-all duration-300
-                            bg-gray-200 text-gray-500
-                            group-hover:bg-[var(--accent)] group-hover:text-black
-                            hover:!bg-[var(--accent-dark)] hover:!text-white
-                            active:scale-95 active:!bg-black active:!text-white
-                          "
-                        >
-                          {t.viewPost}
-                          <ChevronRight className="w-3 h-3 ml-1" />
-                        </Button>
-                      </Link>
+                      {user ? (
+                        <Link href={`/posts/${post.id}`} onClick={(e) => e.stopPropagation()}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-3 text-[10px] font-bold uppercase tracking-tighter transition-all duration-300 bg-gray-200 text-gray-500 group-hover:bg-[var(--accent)] group-hover:text-black hover:!bg-[var(--accent-dark)] hover:!text-white active:scale-95 active:!bg-black active:!text-white"
+                          >
+                            {t.viewPost}
+                            <ChevronRight className="w-3 h-3 ml-1" />
+                          </Button>
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
 
