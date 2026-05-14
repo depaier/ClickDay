@@ -29,9 +29,25 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
       center: [currentCenter.lng, currentCenter.lat],
       zoom: 15,
       attributionControl: false,
+      localIdeographFontFamily: "'Noto Sans KR', sans-serif",
+    });
+
+    // 스타일 이미지 오류 방지 (load 전 미리 등록)
+    map.on("styleimagemissing", (e) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
     });
 
     map.on("load", () => {
+      // 폰트 에러 방지
+      const style = map.getStyle();
+      if (style) {
+        style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
+        map.setStyle(style);
+      }
+
       map.setProjection({ type: "globe" });
       map.resize();
 
@@ -52,14 +68,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
     map.on("move", () => {
       const center = map.getCenter();
       setCurrentCenter({ lat: center.lat, lng: center.lng });
-    });
-
-    // 스타일 이미지 오류 방지
-    map.on("styleimagemissing", (e) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1;
-      canvas.height = 1;
-      map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
     });
 
     mapRef.current = map;
