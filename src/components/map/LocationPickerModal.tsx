@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/Button";
-import { X } from "lucide-react";
+import { LocateFixed, X } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
+import { motion } from "framer-motion";
 
 interface LocationPickerModalProps {
   onClose: () => void;
@@ -65,6 +66,24 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
     return () => map.remove();
   }, []);
 
+  const handleMyLocation = () => {
+    if (!navigator.geolocation || !mapRef.current) return;
+    
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        mapRef.current?.flyTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 15,
+          essential: true
+        });
+      },
+      (err) => {
+        console.error("LocationPicker: Error getting current location:", err);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
+
   const handleSave = () => {
     onSave(currentCenter);
     onClose();
@@ -95,6 +114,19 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
               {/* 그림자 효과 */}
               <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[2px] w-2 h-1 bg-black/40 rounded-full blur-[1px]" />
             </div>
+          </div>
+
+          {/* My Location Button */}
+          <div className="absolute bottom-6 right-6 z-10">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleMyLocation}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-2xl group"
+              title="My Location"
+            >
+              <LocateFixed size={18} className="group-hover:text-[var(--accent)] transition-colors" />
+            </motion.button>
           </div>
         </div>
 

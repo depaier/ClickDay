@@ -9,6 +9,7 @@ import { translations } from "@/constants/translations";
 // import exifr from "exifr"; // Removed in favor of full build import below
 
 import { UploadMap } from "@/components/map/UploadMap";
+import imageCompression from 'browser-image-compression';
 import { LocationPickerModal } from "@/components/map/LocationPickerModal";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -49,11 +50,15 @@ export default function UploadPage() {
   const { language } = useLanguage();
 
   const t = translations[language].upload;
-  const { user, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const { showAlert } = useAlertStore();
   const supabase = createClient();
 
-
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [exif, setExif] = useState<ExifData | null>(null);
@@ -248,6 +253,7 @@ export default function UploadPage() {
 
 
       // 2. Convert HEIC to JPEG if necessary using heic-decode + Canvas
+      let heicFallbackUsed = false;
       if (isHeic) {
         try {
           console.log("Attempting HEIC conversion with heic-decode (Uint8Array)...");
@@ -269,9 +275,9 @@ export default function UploadPage() {
           const imageData = new ImageData(new Uint8ClampedArray(data), width, height);
           ctx.putImageData(imageData, 0, 0);
 
-          // Convert to Blob
+          // Convert to Blob (use quality 1.0 here because we compress later)
           const blob = await new Promise<Blob | null>((resolve) => {
-            canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9);
+            canvas.toBlob((b) => resolve(b), "image/jpeg", 1.0);
           });
 
           if (!blob) throw new Error("Canvas toBlob failed");
@@ -280,10 +286,6 @@ export default function UploadPage() {
             type: "image/jpeg",
           });
           console.log("HEIC conversion successful via heic-decode");
-
-          setFile(fileToProcess);
-          const url = URL.createObjectURL(fileToProcess);
-          setPreviewUrl(url);
         } catch (convError) {
           console.error("HEIC full conversion failed, trying thumbnail fallback:", convError);
 
@@ -293,6 +295,7 @@ export default function UploadPage() {
             if (thumbnailUrl) {
               setPreviewUrl(thumbnailUrl);
               setFile(selectedFile); // Upload original HEIC if preview failed but thumbnail worked
+              heicFallbackUsed = true;
               console.log("Showing embedded thumbnail as fallback");
             } else {
               throw new Error("No thumbnail found");
@@ -302,13 +305,35 @@ export default function UploadPage() {
             throw new Error("HEIC_CONVERSION_FAILED");
           }
         }
-      } else {
-        // For non-HEIC images
-        setFile(fileToProcess);
-        const url = URL.createObjectURL(fileToProcess);
-        setPreviewUrl(url);
       }
 
+      // 3. Compress Image (unless HEIC thumbnail fallback was used)
+      if (!heicFallbackUsed) {
+        try {
+          console.log("Starting image compression...");
+          const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            initialQuality: 0.85,
+            fileType: "image/jpeg",
+          };
+          
+          const compressedBlob = await imageCompression(fileToProcess, options);
+          const finalFile = new File([compressedBlob], fileToProcess.name, { type: compressedBlob.type });
+          
+          console.log(`Compression complete. Original: ${(fileToProcess.size / 1024 / 1024).toFixed(2)}MB, Compressed: ${(finalFile.size / 1024 / 1024).toFixed(2)}MB`);
+          
+          setFile(finalFile);
+          const url = URL.createObjectURL(finalFile);
+          setPreviewUrl(url);
+        } catch (compError) {
+          console.error("Compression failed, using uncompressed file:", compError);
+          setFile(fileToProcess);
+          const url = URL.createObjectURL(fileToProcess);
+          setPreviewUrl(url);
+        }
+      }
 
     } catch (error: any) {
       if (error.message === "HEIC_CONVERSION_FAILED") {
@@ -365,10 +390,18 @@ export default function UploadPage() {
 
     setIsUploading(true);
     try {
-      // Get the latest session token to bypass main client locks
-      const { data: { session } } = await supabase.auth.getSession();
+      // Use the session already cached in useAuth() context.
+      // Calling supabase.auth.getSession() directly can deadlock after
+      // alt-tab because the Supabase client holds an internal async lock
+      // while refreshing the token upon visibility restore.
+      const accessToken = session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("인증 세션이 없습니다. 다시 로그인해 주세요.");
+      }
       
-      // Create a throwaway client just for this upload to prevent visibilitychange locks
+      // Create a throwaway client just for this upload with a static token.
+      // This client never tries to refresh tokens, so it can never deadlock.
       const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
       const uploadClient = createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -376,7 +409,7 @@ export default function UploadPage() {
         {
           global: {
             headers: {
-              Authorization: `Bearer ${session?.access_token}`
+              Authorization: `Bearer ${accessToken}`
             }
           },
           auth: {
@@ -465,7 +498,7 @@ export default function UploadPage() {
             <p className="text-gray-400 text-sm">{t.subtitle}</p>
           </div>
           <Button
-            className="px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-black font-bold uppercase tracking-widest text-sm rounded-full transition-all shadow-lg shadow-[var(--accent)]/20"
+            className="px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-black font-bold uppercase tracking-widest text-sm rounded-full transition-all shadow-lg shadow-[var(--accent)]/20 border-none"
             onClick={handleSubmit}
             disabled={isUploading || !location || !user || !file}
           >
@@ -490,7 +523,7 @@ export default function UploadPage() {
                   type="file"
                   ref={fileInputRef}
                   onChange={onFileChange}
-                  accept="image/jpeg,image/heic,image/png"
+                  accept="image/jpeg,image/heic,image/png,.jpg,.jpeg,.png,.heic,.HEIC"
                   className="hidden"
                 />
                 <UploadCloud className={`w-12 h-12 mb-4 ${isDragging || isConverting ? "text-[var(--accent)]" : "text-gray-400"}`} />
