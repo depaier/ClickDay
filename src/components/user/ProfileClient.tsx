@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MasonryGrid } from "@/components/layout/MasonryGrid";
 import { PostCard } from "@/components/post/PostCard";
@@ -68,16 +67,9 @@ export function ProfileClient({
             <h1 className="text-2xl font-heading tracking-widest uppercase">{profile.username}</h1>
             <div className="flex gap-2">
               {isOwnProfile ? (
-                <>
-                  <Link href="/settings">
-                    <Button variant="ghost" size="sm" className="h-8">{t.editProfile}</Button>
-                  </Link>
-                  <Link href="/settings">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </>
+                <Link href="/settings">
+                  <Button variant="ghost" size="sm" className="h-8">{t.editProfile}</Button>
+                </Link>
               ) : (
                 <FollowButton 
                   targetUserId={profile.id} 

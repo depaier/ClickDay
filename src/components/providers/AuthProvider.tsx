@@ -3,8 +3,17 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 const supabase = createClient();
+
+// Dedicated read-only client that never acquires the auth refresh lock.
+// Used for profile reads so refreshProfile() works even after alt-tab.
+const readClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+);
 
 interface Profile {
   id: string;
@@ -39,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await readClient
       .from("profiles")
       .select("id, username, avatar_url, bio, instagram")
       .eq("id", userId)
