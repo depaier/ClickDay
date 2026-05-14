@@ -75,6 +75,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({
     const url = URL.createObjectURL(svgBlob);
     
     img.onload = () => {
+      if (!map || !mapRef.current) return;
       if (!map.hasImage("custom-pin")) {
         map.addImage("custom-pin", img);
       }
@@ -98,6 +99,7 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({
     const url = URL.createObjectURL(svgBlob);
     
     img.onload = () => {
+      if (!map || !mapRef.current) return;
       if (!map.hasImage("highlighted-pin")) {
         map.addImage("highlighted-pin", img);
       }
@@ -315,22 +317,28 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({
       zoom: initialZoom,
       attributionControl: false,
       fadeDuration: 0,
+      localIdeographFontFamily: "'Noto Sans KR', sans-serif",
     });
 
+    // 스타일 이미지 오류 방지 (load 전 미리 등록)
+    map.on("styleimagemissing", (e) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
+    });
 
     map.on("load", () => {
+      // 폰트 에러 방지를 위해 기본 폰트 주소 변경
+      const style = map.getStyle();
+      if (style) {
+        style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
+        map.setStyle(style);
+      }
+
       map.setProjection({ type: "globe" });
       addCustomIcon(map);
       addHighlightedIcon(map);
-
-      map.on("styleimagemissing", (e) => {
-
-
-        const canvas = document.createElement("canvas");
-        canvas.width = 1;
-        canvas.height = 1;
-        map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
-      });
 
       setupSourceAndLayers(map);
     });
