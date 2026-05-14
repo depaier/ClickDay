@@ -80,7 +80,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
             <div className="p-6 space-y-8">
               {/* Photographer info & Actions */}
               <div className="flex items-center justify-between">
-                <Link href={`/users/@${post.profiles?.username}`} className="flex items-center gap-3 group" onClick={onClose}>
+                <Link href={`/users/@${post.profiles?.username}`} className="flex items-center gap-3 group">
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-800 border border-black/5 group-hover:border-[var(--accent)] transition-colors">
                     <img src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles?.username || "unknown"}`} alt={post.profiles?.username || "user"} className="w-full h-full object-cover" />
                   </div>

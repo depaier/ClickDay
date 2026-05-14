@@ -122,18 +122,22 @@ export function PostGroupSheet({
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 border border-white">
+                      <Link 
+                        href={`/users/@${post.profiles?.username}`} 
+                        className="flex items-center gap-2 group/profile"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 border border-white group-hover/profile:border-[var(--accent)] transition-colors">
                           <img 
                             src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles?.username || "user"}`} 
                             alt={post.profiles?.username} 
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="text-[11px] font-medium text-gray-600 truncate max-w-[80px]">
+                        <span className="text-[11px] font-medium text-gray-600 truncate max-w-[80px] group-hover/profile:text-[var(--accent-dark)] transition-colors">
                           {post.profiles?.username}
                         </span>
-                      </div>
+                      </Link>
                       
                       <Link href={`/posts/${post.id}`} onClick={(e) => e.stopPropagation()}>
                         <Button 
