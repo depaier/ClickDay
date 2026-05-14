@@ -206,7 +206,9 @@ function FeedContent() {
       <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
         <div>
           <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">{t.title}</h1>
-          <p className="text-gray-400 mt-2">{t.subtitle}</p>
+          <p className="text-gray-400 mt-2">
+            {sortParam === "popular" ? t.popularSubtitle : t.subtitle}
+          </p>
         </div>
         <div className="flex items-center gap-6 font-heading tracking-widest text-[10px] uppercase">
           <div className="flex gap-6 border-r border-white/10 pr-6 mr-2">

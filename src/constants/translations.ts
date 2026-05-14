@@ -42,6 +42,7 @@ export const translations = {
     feed: {
       title: "Feed",
       subtitle: "Discover latest photos around the world",
+      popularSubtitle: "Discover popular photos around the world",
       latest: "Latest",
       popular: "Popular",
       noPostsFound: "No posts found",
@@ -251,6 +252,7 @@ export const translations = {
     feed: {
       title: "피드",
       subtitle: "전 세계의 최신 사진을 찾아보세요",
+      popularSubtitle: "전 세계의 인기 사진을 찾아보세요",
       latest: "최신순",
       popular: "인기순",
       noPostsFound: "게시물이 없습니다",
