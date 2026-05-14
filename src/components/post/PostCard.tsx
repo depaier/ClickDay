@@ -47,7 +47,7 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
           <img 
             src={post.image_url} 
             alt={post.location_name || "Post"} 
-            className="w-full h-auto group-hover:scale-105 transition-transform duration-500 block"
+            className="w-full h-auto transition-transform duration-500 block"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center">
             {/* Photographer Link */}

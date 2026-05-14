@@ -73,7 +73,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
               <img 
                 src={post.image_url} 
                 alt={post.location_name || "Photography"} 
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-500"
               />
             </div>
 
