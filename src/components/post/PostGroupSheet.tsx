@@ -95,7 +95,7 @@ export function PostGroupSheet({
                       <img 
                         src={post.image_url} 
                         alt={post.location_name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
