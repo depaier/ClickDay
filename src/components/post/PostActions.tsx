@@ -7,16 +7,18 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { DeletePostButton } from "./DeletePostButton";
+import { ReportButton } from "./ReportButton";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PostActionsProps {
   postId: string | number;
+  isOwner: boolean;
   imageUrl?: string;
   className?: string;
   iconClassName?: string;
 }
 
-export function PostActions({ postId, imageUrl, className, iconClassName }: PostActionsProps) {
+export function PostActions({ postId, isOwner, imageUrl, className, iconClassName }: PostActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
@@ -60,22 +62,34 @@ export function PostActions({ postId, imageUrl, className, iconClassName }: Post
             className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-md shadow-2xl z-[100] overflow-hidden"
           >
             <div className="flex flex-col py-1">
-              <Link 
-                href={`/posts/${postId}/edit`}
-                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                <Edit className="w-4 h-4" />
-                {t.edit}
-              </Link>
-              <div className="border-t border-white/5 mx-2" />
-              <div onClick={() => setIsOpen(false)}>
-                <DeletePostButton 
-                  postId={postId} 
-                  imageUrl={imageUrl} 
-                  variant="menu"
-                />
-              </div>
+              {isOwner ? (
+                <>
+                  <Link 
+                    href={`/posts/${postId}/edit`}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Edit className="w-4 h-4" />
+                    {t.edit}
+                  </Link>
+                  <div className="border-t border-white/5 mx-2" />
+                  <div onClick={() => setIsOpen(false)}>
+                    <DeletePostButton 
+                      postId={postId} 
+                      imageUrl={imageUrl} 
+                      variant="menu"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div onClick={() => setIsOpen(false)}>
+                  <ReportButton 
+                    targetType="post" 
+                    targetId={postId.toString()} 
+                    variant="menu" 
+                  />
+                </div>
+              )}
             </div>
           </motion.div>
         )}
