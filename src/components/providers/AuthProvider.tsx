@@ -18,9 +18,12 @@ const readClient = createSupabaseClient(
 interface Profile {
   id: string;
   username: string;
+  display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
   instagram: string | null;
+  onboarded: boolean;
+  interests: string[];
   role: 'user' | 'admin';
   is_blocked: boolean;
 }
@@ -52,7 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await readClient
       .from("profiles")
-      .select("id, username, avatar_url, bio, instagram, role, is_blocked")
+      .select("id, username, display_name, avatar_url, bio, instagram, onboarded, interests, role, is_blocked")
       .eq("id", userId)
       .single();
 
