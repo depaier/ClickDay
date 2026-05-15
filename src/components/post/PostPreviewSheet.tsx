@@ -13,6 +13,7 @@ import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostActions } from "./PostActions";
+import { ReportButton } from "./ReportButton";
 import { cn } from "@/lib/utils";
 
 interface Post {
@@ -110,6 +111,13 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                     size="icon"
                     className="bg-black/5 border-black/5 rounded-full w-10 h-10 text-black"
                     iconClassName="text-black"
+                  />
+                  <ReportButton 
+                    targetType="post" 
+                    targetId={post.id.toString()}
+                    variant="ghost"
+                    size="icon"
+                    className="bg-black/5 border-black/5 rounded-full w-10 h-10 text-black hover:text-rose-500"
                   />
                   {isOwner && (
                     <PostActions 

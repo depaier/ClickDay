@@ -14,6 +14,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostActions } from "@/components/post/PostActions";
+import { ReportButton } from "@/components/post/ReportButton";
 
 interface PostDetailClientProps {
   post: any;
@@ -152,6 +153,13 @@ export function PostDetailClient({
                 size="icon"
                 className="bg-white/5 border-white/10 rounded-full w-10 h-10"
                 iconClassName="text-white"
+              />
+              <ReportButton 
+                targetType="post" 
+                targetId={post.id}
+                variant="ghost"
+                size="icon"
+                className="bg-white/5 border-white/10 rounded-full w-10 h-10 hover:text-rose-500 hover:border-rose-500"
               />
             </div>
           </div>

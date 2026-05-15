@@ -215,7 +215,25 @@ export const translations = {
       close: "Close",
       loading: "Loading...",
       back: "Back",
-    }
+    },
+    report: {
+      title: "Report",
+      reason: "Reason",
+      details: "Details (Optional)",
+      submit: "Submit Report",
+      success: "Report submitted successfully.",
+      error: "Failed to submit report.",
+      alreadyReported: "You have already reported this content.",
+      limitReached: "Daily report limit (3 times) reached. Please try again tomorrow.",
+      reasons: {
+        inappropriate: "Inappropriate Content",
+        spam: "Spam",
+        sexual: "Sexual Content",
+        copyright: "Copyright Infringement",
+        other: "Other",
+      },
+      placeholder: "Please provide more details...",
+    },
   },
 
   ko: {
@@ -434,7 +452,25 @@ export const translations = {
       close: "닫기",
       loading: "로딩 중...",
       back: "뒤로",
-    }
+    },
+    report: {
+      title: "신고하기",
+      reason: "신고 사유",
+      details: "상세 내용 (선택 사항)",
+      submit: "신고 제출",
+      success: "신고가 성공적으로 접수되었습니다.",
+      error: "신고 제출에 실패했습니다.",
+      alreadyReported: "이미 신고한 콘텐츠입니다.",
+      limitReached: "일일 신고 제한(3회)을 초과했습니다. 내일 다시 시도해 주세요.",
+      reasons: {
+        inappropriate: "부적절한 콘텐츠",
+        spam: "스팸",
+        sexual: "성적인 콘텐츠",
+        copyright: "저작권 침해",
+        other: "기타",
+      },
+      placeholder: "상세 내용을 입력해주세요...",
+    },
   }
 
 };
