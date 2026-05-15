@@ -8,6 +8,7 @@ import { DeletePostButton } from "./DeletePostButton";
 import { LikeButton } from "./LikeButton";
 import { BookmarkButton } from "./BookmarkButton";
 import Link from "next/link";
+import Image from "next/image";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
@@ -70,12 +71,14 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
 
           <div className="p-0 pb-20">
             {/* Photo Area */}
-            <div className="w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden border-b border-gray-200">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={post.image_url} 
+            <div className="w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden border-b border-gray-200 relative">
+              <Image 
+                src={post.image_url || ""} 
                 alt={post.location_name || "Photography"} 
-                className="w-full h-full object-cover transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 100vw, 400px"
+                className="object-cover"
+                priority
               />
             </div>
 

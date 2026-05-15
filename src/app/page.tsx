@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { PostGroupSheet } from "@/components/post/PostGroupSheet";
 import { LocateFixed } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 
 // Dedicated client for public data fetching, completely ignoring auth state.
@@ -173,7 +174,7 @@ export default function Home() {
     }
   }, [selectedGroup, selectedPost, searchParams]);
 
-  const handleMyLocation = () => {
+  const handleMyLocation = useCallback(() => {
     if (!navigator.geolocation) return;
     
     navigator.geolocation.getCurrentPosition(
@@ -185,7 +186,22 @@ export default function Home() {
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
-  };
+  }, []);
+
+  const handleMarkerClick = useCallback((post: any) => {
+    setSelectedGroup(null);
+    setSelectedPost(post);
+  }, []);
+
+  const handleGroupClick = useCallback((group: any[]) => {
+    setSelectedGroup(group);
+    setSelectedPost(null);
+  }, []);
+
+  const handleMapClick = useCallback(() => {
+    setSelectedGroup(null);
+    setSelectedPost(null);
+  }, []);
 
   const { language } = useLanguage();
   const t = translations[language];
@@ -199,19 +215,11 @@ export default function Home() {
           <GlobeMap 
             ref={mapRef}
             posts={posts} 
-            onMarkerClick={(post) => {
-              setSelectedGroup(null);
-              setSelectedPost(post);
-            }} 
-            onGroupClick={(group) => {
-              setSelectedGroup(group);
-              setSelectedPost(null);
-            }}
-            onMapClick={() => {
-              setSelectedGroup(null);
-              setSelectedPost(null);
-            }}
-            highlightedPostId={hoveredPost?.id || selectedPost?.id}
+            onMarkerClick={handleMarkerClick} 
+            onMarkerHover={setHoveredPost}
+            onGroupClick={handleGroupClick}
+            onMapClick={handleMapClick}
+            highlightedPostId={selectedPost?.id}
             initialCenter={initialView.center}
             initialZoom={initialView.zoom}
           />
@@ -254,6 +262,19 @@ export default function Home() {
           isBookmarked={selectedPost ? bookmarkedPostIds.has(selectedPost.id.toString()) : false}
           onClose={() => setSelectedPost(null)}
         />
+      )}
+
+      {/* Pre-fetch hovered image */}
+      {hoveredPost?.image_url && (
+        <div className="hidden">
+          <Image 
+            src={hoveredPost.image_url} 
+            alt="preload" 
+            width={1} 
+            height={1} 
+            priority
+          />
+        </div>
       )}
 
       <AnimatePresence>

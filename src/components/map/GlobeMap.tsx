@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef, memo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -16,6 +16,7 @@ interface Post {
 interface GlobeMapProps {
   posts: Post[];
   onMarkerClick: (post: Post) => void;
+  onMarkerHover?: (post: Post | null) => void;
   onGroupClick?: (posts: Post[]) => void;
   onMapClick?: () => void;
   highlightedPostId?: string | number | null;
@@ -28,9 +29,10 @@ export interface GlobeMapRef {
   flyTo: (center: [number, number], zoom?: number) => void;
 }
 
-export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({ 
+const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({ 
   posts, 
   onMarkerClick,
+  onMarkerHover,
   onGroupClick,
   onMapClick,
   highlightedPostId,
@@ -275,11 +277,25 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({
     });
 
 
-    // 마우스 커서 변경
+    // 마우스 커서 및 호버 이벤트 처리
+    map.on("mouseenter", "unclustered-point", (e) => {
+      map.getCanvas().style.cursor = "pointer";
+      if (onMarkerHover) {
+        const props = e.features![0].properties as Post;
+        const originalPost = postsRef.current.find(p => p.id.toString() === props.id.toString());
+        onMarkerHover(originalPost || props);
+      }
+    });
+    
+    map.on("mouseleave", "unclustered-point", () => {
+      map.getCanvas().style.cursor = "";
+      if (onMarkerHover) {
+        onMarkerHover(null);
+      }
+    });
+
     map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
     map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-    map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
-    map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
   };
 
   const updateData = () => {
@@ -379,5 +395,9 @@ export const GlobeMap = forwardRef<GlobeMapRef, GlobeMapProps>(({
     <div ref={mapContainer} className="w-full h-full bg-[#00000A]" />
   );
 });
+
+GlobeMapComponent.displayName = "GlobeMap";
+
+export const GlobeMap = memo(GlobeMapComponent);
 
 GlobeMap.displayName = "GlobeMap";

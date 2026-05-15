@@ -8,6 +8,7 @@ import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 import Link from "next/link";
+import Image from "next/image";
 
 import { useAuth } from "../providers/AuthProvider";
 
@@ -95,10 +96,12 @@ export function PostGroupSheet({
                   {/* Thumbnail */}
                   <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 shadow-inner">
                     {post.image_url ? (
-                      <img 
+                      <Image 
                         src={post.image_url} 
                         alt={post.location_name} 
-                        className="w-full h-full object-cover transition-transform duration-500"
+                        fill
+                        sizes="96px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
