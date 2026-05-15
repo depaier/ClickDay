@@ -31,12 +31,13 @@ export function AdminSidebar() {
           <span className="text-sm font-medium">메인으로 돌아가기</span>
         </Link>
         
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-            <span className="text-[#0a0a0a] font-bold">C</span>
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-white">ClickDay Admin</h1>
-        </div>
+        <Link href="/admin" className="block mb-10 px-2 transition-opacity hover:opacity-80">
+          <img 
+            src="/Adminlogo.svg" 
+            alt="ClickDay Admin" 
+            className="h-10 w-auto object-contain"
+          />
+        </Link>
 
         <nav className="space-y-1">
           {menuItems.map((item) => {
