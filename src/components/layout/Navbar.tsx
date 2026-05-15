@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "../ui/LanguageSwitcher";
@@ -44,8 +45,15 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link href="/" className="font-heading font-bold tracking-[0.2em] text-lg hover:text-[var(--accent)] transition-colors">
-            CLICKDAY
+          <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+            <Image 
+              src="/logo.svg" 
+              alt="ClickDay" 
+              width={140} 
+              height={18} 
+              className="h-5 w-auto" 
+              priority
+            />
           </Link>
         </div>
 
@@ -68,7 +76,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
               {isActive(link.href) && (
                 <motion.div
                   layoutId="nav-underline"
-                  className="absolute bottom-0 left-0 right-0 h-[1px] bg-[var(--accent)]"
+                  className="absolute bottom-0 left-0 right-[0.167em] h-[1px] bg-[var(--accent)]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
