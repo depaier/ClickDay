@@ -201,17 +201,31 @@ export async function getUsers() {
 export async function updateUserRole(userId: string, role: 'user' | 'admin') {
   const supabase = await createClient();
   
-  // 관리자 권한 확인 (생략 가능하지만 보안상 유지)
-  // ... 생략 (필요시 추가)
+  // 관리자 권한 확인
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+    
+  if (profile?.role !== 'admin') throw new Error("Forbidden");
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .update({ role })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select();
 
-  if (error) throw new Error("Failed to update role");
+  if (error || !data || data.length === 0) {
+    console.error("Update role error:", error);
+    throw new Error("Failed to update role");
+  }
   
   revalidatePath("/admin/users");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
@@ -221,14 +235,31 @@ export async function updateUserRole(userId: string, role: 'user' | 'admin') {
 export async function toggleUserBlock(userId: string, isBlocked: boolean) {
   const supabase = await createClient();
 
-  const { error } = await supabase
+  // 관리자 권한 확인
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+    
+  if (profile?.role !== 'admin') throw new Error("Forbidden");
+
+  const { data, error } = await supabase
     .from("profiles")
     .update({ is_blocked: isBlocked })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select();
 
-  if (error) throw new Error("Failed to update block status");
+  if (error || !data || data.length === 0) {
+    console.error("Update block status error:", error);
+    throw new Error("Failed to update block status");
+  }
   
   revalidatePath("/admin/users");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
