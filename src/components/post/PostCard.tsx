@@ -144,14 +144,13 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
             initialIsBookmarked={isBookmarked}
             className="bg-black/50 backdrop-blur-md border-white/5"
           />
-          {isOwner && (
-            <PostActions 
-              postId={post.id} 
-              imageUrl={post.image_url} 
-              className="bg-black/50 backdrop-blur-md border-white/5 rounded-full"
-              iconClassName="text-white"
-            />
-          )}
+          <PostActions 
+            postId={post.id} 
+            isOwner={isOwner}
+            imageUrl={post.image_url} 
+            className="bg-black/50 backdrop-blur-md border-white/5 rounded-full"
+            iconClassName="text-white"
+          />
         </div>
       )}
     </div>

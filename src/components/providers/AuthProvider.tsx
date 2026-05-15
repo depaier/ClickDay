@@ -21,6 +21,8 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   instagram: string | null;
+  role: 'user' | 'admin';
+  is_blocked: boolean;
 }
 
 interface AuthContextType {
@@ -50,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await readClient
       .from("profiles")
-      .select("id, username, avatar_url, bio, instagram")
+      .select("id, username, avatar_url, bio, instagram, role, is_blocked")
       .eq("id", userId)
       .single();
 

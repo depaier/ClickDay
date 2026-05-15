@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, User, LogOut, Settings } from "lucide-react";
+import { ChevronDown, User, LogOut, Settings, Shield } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../providers/AuthProvider";
@@ -96,6 +96,17 @@ export function UserMenu() {
                   <Settings className="w-4 h-4 text-gray-500 group-hover/item:text-[var(--accent)] transition-colors" />
                   {t.settings}
                 </Link>
+
+                {profile?.role === 'admin' && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-3 px-4 py-3 text-[11px] uppercase tracking-widest text-[var(--accent)]/80 hover:bg-[var(--accent)]/5 hover:text-[var(--accent)] transition-all group/item"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Shield className="w-4 h-4 text-[var(--accent)]/50 group-hover/item:text-[var(--accent)] transition-colors" />
+                    Admin Dashboard
+                  </Link>
+                )}
                 
                 <div className="border-t border-white/5 my-2 mx-2" />
                 
