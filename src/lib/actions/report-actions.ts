@@ -99,3 +99,77 @@ export async function getReportStatus(targetType: ReportTargetType, targetId: st
 
   return !!existingReport;
 }
+
+/**
+ * [Admin] 모든 신고 내역 가져오기
+ */
+export async function getReports(status?: string) {
+  const supabase = await createClient();
+  
+  // 관리자 권한 확인
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+    
+  if (profile?.role !== 'admin') throw new Error("Forbidden");
+
+  let query = supabase
+    .from("reports")
+    .select(`
+      *,
+      reporter:profiles(username, avatar_url)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (status && status !== 'all') {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Fetch reports error:", error);
+    throw new Error("Failed to fetch reports");
+  }
+
+  return data;
+}
+
+/**
+ * [Admin] 신고 상태 업데이트
+ */
+export async function updateReportStatus(reportId: string, status: 'resolved' | 'rejected') {
+  const supabase = await createClient();
+  
+  // 관리자 권한 확인
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+    
+  if (profile?.role !== 'admin') throw new Error("Forbidden");
+
+  const { error } = await supabase
+    .from("reports")
+    .update({ 
+      status
+    })
+    .eq("id", reportId);
+
+  if (error) {
+    console.error("Update report error:", error);
+    throw new Error("Failed to update report");
+  }
+
+  revalidatePath("/admin/reports");
+  return { success: true };
+}
