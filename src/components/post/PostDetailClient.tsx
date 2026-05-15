@@ -123,9 +123,11 @@ export function PostDetailClient({
                 initialIsFollowing={isFollowing} 
               />
             )}
-            {isOwner && (
-              <PostActions postId={post.id} imageUrl={post.image_url} />
-            )}
+            <PostActions 
+              postId={post.id} 
+              isOwner={isOwner} 
+              imageUrl={post.image_url} 
+            />
           </div>
         </div>
 
@@ -151,15 +153,7 @@ export function PostDetailClient({
                 initialIsBookmarked={isBookmarked}
                 variant="ghost"
                 size="icon"
-                className="bg-white/5 border-white/10 rounded-full w-10 h-10"
                 iconClassName="text-white"
-              />
-              <ReportButton 
-                targetType="post" 
-                targetId={post.id}
-                variant="ghost"
-                size="icon"
-                className="bg-white/5 border-white/10 rounded-full w-10 h-10 hover:text-rose-500 hover:border-rose-500"
               />
             </div>
           </div>
