@@ -115,7 +115,7 @@ export function ReportButton({
 
   if (!user) return null;
 
-  const ModalContent = () => (
+  const modal = (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
@@ -131,6 +131,7 @@ export function ReportButton({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-[440px] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden rounded-xl"
           >
             {isSuccess ? (
@@ -251,7 +252,7 @@ export function ReportButton({
           )}
           <span>{t.title}</span>
         </button>
-        <ModalContent />
+        {modal}
       </>
     );
   }
@@ -273,7 +274,7 @@ export function ReportButton({
         )}
         {showLabel && <span>{t.title}</span>}
       </Button>
-      <ModalContent />
+      {modal}
     </>
   );
 }
