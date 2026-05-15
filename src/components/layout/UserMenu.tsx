@@ -74,7 +74,10 @@ export function UserMenu() {
             >
               <div className="p-4 border-b border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent">
                 <p className="text-[9px] text-gray-500 uppercase tracking-[0.2em] mb-1 font-heading">Signed in as</p>
-                <p className="text-sm font-bold truncate text-white font-heading tracking-wide">
+                <p 
+                  className="text-sm font-bold truncate text-white font-heading tracking-wide"
+                  style={{ textTransform: 'none' }}
+                >
                   {profile?.username || user.email?.split('@')[0]}
                 </p>
               </div>

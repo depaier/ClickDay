@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CustomAlert } from "@/components/ui/CustomAlert";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 
 
 const outfit = Outfit({
@@ -35,7 +36,9 @@ export default function RootLayout({
         <AuthProvider>
           <LanguageProvider>
             <PageTransition>
-              {children}
+              <OnboardingGuard>
+                {children}
+              </OnboardingGuard>
             </PageTransition>
             <CustomAlert />
           </LanguageProvider>

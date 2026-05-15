@@ -63,9 +63,17 @@ export function ProfileClient({
         </motion.div>
         
         <div className="flex-1 text-center md:text-left">
-          <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
-            <h1 className="text-2xl font-heading tracking-widest uppercase">{profile.username}</h1>
-            <div className="flex gap-2">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4">
+            <div className="flex flex-col items-center md:items-start gap-1">
+              <h1 
+                className="text-2xl font-heading tracking-widest"
+                style={{ textTransform: 'none' }}
+              >
+                {profile.display_name || profile.username}
+              </h1>
+              <p className="text-sm text-white/40 tracking-wide">@{profile.username}</p>
+            </div>
+            <div className="flex gap-2 md:ml-4">
               {isOwnProfile ? (
                 <Link href="/settings">
                   <Button variant="ghost" size="sm" className="h-8">{t.editProfile}</Button>

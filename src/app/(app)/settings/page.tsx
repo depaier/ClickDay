@@ -8,7 +8,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { Loader2, Camera } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { Loader2, Camera, Check, X } from "lucide-react";
 import { useAlertStore } from "@/store/useAlertStore";
 import { motion } from "framer-motion";
 
@@ -37,22 +38,77 @@ export default function SettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
+    display_name: "",
     bio: "",
     instagram: "",
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
+
+  const [isUsernameValid, setIsUsernameValid] = useState<boolean | null>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
   useEffect(() => {
     if (user) {
       setFormData({
         username: profile?.username || user.user_metadata?.username || user.email?.split('@')[0] || "",
+        display_name: profile?.display_name || "",
         bio: profile?.bio || "",
         instagram: profile?.instagram || "",
       });
       setAvatarUrl(profile?.avatar_url || null);
+      setIsUsernameValid(true); // Initial state is valid since it's their current username
     }
   }, [profile, user]);
+
+  // Username uniqueness check logic
+  useEffect(() => {
+    const checkUsername = async () => {
+      const cleanUsername = formData.username.trim();
+      
+      // If it's the current username, it's valid
+      if (cleanUsername === profile?.username) {
+        setIsUsernameValid(true);
+        setIsCheckingUsername(false);
+        return;
+      }
+
+      if (cleanUsername.length < 2) {
+        setIsUsernameValid(false);
+        setIsCheckingUsername(false);
+        return;
+      }
+
+      setIsCheckingUsername(true);
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("username", cleanUsername)
+          .neq("id", user?.id ?? "")
+          .maybeSingle();
+
+        if (!data && !error) {
+          setIsUsernameValid(true);
+        } else {
+          setIsUsernameValid(false);
+        }
+      } catch (err) {
+        console.error("Error checking username:", err);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (formData.username.trim() !== profile?.username) {
+        checkUsername();
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.username, profile?.username, user?.id, supabase]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,6 +154,10 @@ export default function SettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!isUsernameValid) {
+      showAlert({ title: translations[language].common.error, message: translations[language].onboarding.nicknameTaken, type: "error" });
+      return;
+    }
 
     const accessToken = session?.access_token;
     if (!accessToken) {
@@ -108,12 +168,12 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const db = createMutationClient(accessToken);
-      const { error } = await db.from("profiles").upsert({
-        id: user.id,
+      const { error } = await db.from("profiles").update({
         username: formData.username || user.user_metadata?.username || user.email?.split('@')[0] || `user_${Date.now()}`,
+        display_name: formData.display_name || null,
         bio: formData.bio,
         instagram: formData.instagram,
-      }, { onConflict: 'id' });
+      }).eq("id", user.id);
 
       if (error) throw error;
       await refreshProfile();
@@ -193,16 +253,47 @@ export default function SettingsPage() {
             
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">
-                {t.usernameLabel}
+                {t.displayNameLabel}
               </label>
               <Input 
                 variant="onDark" 
                 type="text" 
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder={t.usernamePlaceholder}
-                required
+                value={formData.display_name}
+                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                placeholder={t.displayNamePlaceholder}
               />
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">
+                {t.usernameLabel}
+              </label>
+              <div className="flex items-center border-b border-white/50 focus-within:border-[var(--accent)] transition-colors relative group">
+                <span className="text-white/40 pb-1 pl-1 text-sm font-sans tracking-[0.04em]">@</span>
+                <Input 
+                  variant="onDark" 
+                  type="text" 
+                  value={formData.username}
+                  onChange={(e) => {
+                    const filtered = e.target.value.replace(/[^a-zA-Z0-9_.]/g, '');
+                    setFormData({ ...formData, username: filtered });
+                  }}
+                  placeholder={t.usernamePlaceholder}
+                  className="border-none focus-visible:ring-0 px-1 py-1"
+                />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center pr-2">
+                  {isCheckingUsername ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white/20" />
+                  ) : isUsernameValid === true && formData.username !== profile?.username ? (
+                    <Check className="w-4 h-4 text-[var(--accent)]" strokeWidth={3} />
+                  ) : isUsernameValid === false ? (
+                    <X className="w-4 h-4 text-red-500" strokeWidth={3} />
+                  ) : null}
+                </div>
+              </div>
+              <p className={`text-[11px] mt-2 tracking-wider ${isUsernameValid === false ? 'text-red-500' : 'text-white/20'}`}>
+                {isUsernameValid === false ? translations[language].onboarding.nicknameTaken : t.usernameHint}
+              </p>
             </div>
 
             <div>
