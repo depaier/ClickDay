@@ -117,15 +117,18 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Only link to detail if logged in */}
-      {user ? (
-        <Link href={`/posts/${post.id}`} className="block cursor-pointer">
-          {imageContent}
-        </Link>
-      ) : (
-        <div className="block cursor-default">
-          {imageContent}
-        </div>
-      )}
+      <div 
+        className="block cursor-pointer"
+        onClick={() => {
+          if (user) {
+            router.push(`/posts/${post.id}`);
+          } else {
+            router.push('/login');
+          }
+        }}
+      >
+        {imageContent}
+      </div>
       
       {/* Overlay Actions (Visible on hover or mobile) - only for logged-in users */}
       {user && (

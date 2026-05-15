@@ -290,11 +290,11 @@ function FeedContent() {
           <AnimatePresence>
             {gateTriggered && (
               <motion.div 
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 100 }}
-                className="fixed inset-x-0 bottom-0 top-[60px] z-40 bg-black/60 backdrop-blur-md flex items-center justify-center p-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md flex items-center justify-center p-8"
               >
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -310,7 +310,8 @@ function FeedContent() {
                     {gateT.feedSubtitle}
                   </p>
                   <Button 
-                    className="w-full bg-[var(--accent)] text-black font-bold uppercase tracking-widest py-6 rounded-full"
+                    variant="accent"
+                    className="w-full py-6 rounded-full"
                     onClick={() => router.push('/login')}
                   >
                     {gateT.loginButton}
