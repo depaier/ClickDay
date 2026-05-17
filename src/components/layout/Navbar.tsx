@@ -28,10 +28,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+      <nav
         className={cn(
           "h-[60px] w-full flex items-center justify-between px-5 font-heading text-[12px] font-normal tracking-[0.167em] uppercase z-50 transition-colors duration-300",
           variant === "transparent" ? "absolute top-0 text-white bg-black" : "bg-black text-white sticky top-0"
@@ -96,7 +93,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
           <Link href="/login" className="hover:text-[var(--accent)] transition-colors">{t.login}</Link>
         )}
       </div>
-    </motion.nav>
+    </nav>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>

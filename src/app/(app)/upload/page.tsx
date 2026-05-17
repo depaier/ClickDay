@@ -539,17 +539,18 @@ export default function UploadPage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="max-w-[1920px] mx-auto pb-32 px-4 flex items-center justify-center py-24">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
+        <span className="ml-3 text-gray-400">{translations[language].common.loading}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[1920px] mx-auto pb-32 px-4">
-      <div className={authLoading ? "block" : "hidden"}>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
-          <span className="ml-3 text-gray-400">{translations[language].common.loading}</span>
-        </div>
-      </div>
-
-      <div className={authLoading ? "hidden" : "block"}>
-        {/* Header with Title and Publish Button */}
+      {/* Header with Title and Publish Button */}
         <div className="flex justify-between items-start mb-12 border-b border-white/10 pb-8">
           <div>
             <h1 className="text-3xl font-heading tracking-[0.2em] uppercase mb-2">{t.title}</h1>
@@ -733,7 +734,6 @@ export default function UploadPage() {
           </div>
           </div>
         </div>
-      </div>
 
       {isModalOpen && (
         <LocationPickerModal

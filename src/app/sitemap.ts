@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clickday.kr";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clickday.me";
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;

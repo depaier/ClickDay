@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title,
       description,
-      url: `https://clickday.kr/users/${profile.username}`,
+      url: `https://clickday.me/users/${profile.username}`,
       images: [
         {
           url: image,
