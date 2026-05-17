@@ -139,12 +139,6 @@ export function PostDetailClient({
               <h1 className="text-xl font-heading tracking-wider uppercase">
                 {post.title || post.location_name || t.untitled}
               </h1>
-              {post.location_name && post.title && (
-                <div className="flex items-center text-xs text-gray-500 mt-1">
-                  <MapPin className="w-3.5 h-3.5 mr-1 text-[var(--accent)] flex-shrink-0" />
-                  <span>{post.location_name}</span>
-                </div>
-              )}
             </div>
             <div className="flex gap-2">
               <LikeButton 
@@ -215,7 +209,12 @@ export function PostDetailClient({
             <MapPin className="w-4 h-4 mr-2" />
             {t.location}
           </h3>
-          <div className="h-[180px] overflow-hidden">
+          {post.location_name && (
+            <div className="text-gray-300 text-sm mb-4 flex items-center gap-1.5">
+              <span>{post.location_name}</span>
+            </div>
+          )}
+          <div className="h-[180px] overflow-hidden rounded-sm border border-white/5">
              <PostDetailMap latitude={post.latitude} longitude={post.longitude} />
           </div>
         </div>

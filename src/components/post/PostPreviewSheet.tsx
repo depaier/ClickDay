@@ -202,7 +202,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                         latitude={post.latitude} 
                         longitude={post.longitude} 
                         className="text-gray-800 break-words"
-                        fallback={t.unknown}
+                        fallback={post.location_name || t.unknown}
                       />
                     </div>
                   </div>
