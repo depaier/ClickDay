@@ -135,9 +135,17 @@ export function PostDetailClient({
         {/* Description */}
         <div>
           <div className="flex justify-between items-start mb-2">
-            <h1 className="text-xl font-heading tracking-wider uppercase">
-              {post.location_name || t.untitled}
-            </h1>
+            <div>
+              <h1 className="text-xl font-heading tracking-wider uppercase">
+                {post.title || post.location_name || t.untitled}
+              </h1>
+              {post.location_name && post.title && (
+                <div className="flex items-center text-xs text-gray-500 mt-1">
+                  <MapPin className="w-3.5 h-3.5 mr-1 text-[var(--accent)] flex-shrink-0" />
+                  <span>{post.location_name}</span>
+                </div>
+              )}
+            </div>
             <div className="flex gap-2">
               <LikeButton 
                 postId={post.id} 

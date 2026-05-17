@@ -17,6 +17,7 @@ import Link from "next/link";
 interface Post {
   id: string;
   image_url: string;
+  title: string | null;
   location_name: string | null;
   created_at: string;
   author: {
@@ -43,6 +44,7 @@ export function AdminPostList({ initialPosts }: { initialPosts: Post[] }) {
   };
 
   const filteredPosts = posts.filter(p => 
+    (p.title?.toLowerCase() || "").includes(search.toLowerCase()) ||
     (p.location_name?.toLowerCase() || "").includes(search.toLowerCase()) ||
     p.author.username.toLowerCase().includes(search.toLowerCase()) ||
     p.id.toLowerCase().includes(search.toLowerCase())
@@ -85,7 +87,7 @@ export function AdminPostList({ initialPosts }: { initialPosts: Post[] }) {
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-1.5">
                     <div className="font-bold text-sm text-white/90">
-                      {post.location_name || '제목 없음'}
+                      {post.title || post.location_name || '제목 없음'}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-white/60">
                       <MapPin className="w-3 h-3 text-[var(--accent)]" />

@@ -146,7 +146,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
 
               {/* Description */}
               <div className="space-y-2">
-                <h3 className="text-lg font-bold tracking-tight uppercase text-gray-900">{post.location_name || t.untitled}</h3>
+                <h3 className="text-lg font-bold tracking-tight uppercase text-gray-900">{post.title || post.location_name || t.untitled}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   {post.description || t.noDescription}
                 </p>
@@ -194,14 +194,14 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                       <span className="text-gray-800">{post.focal_length}mm</span>
                     </div>
                   )}
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1 col-span-2">
                     <span className="text-[10px] text-gray-400 uppercase tracking-widest">{t.location}</span>
                     <div className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-[var(--accent-dark)]" />
+                      <MapPin className="w-3 h-3 text-[var(--accent-dark)] flex-shrink-0" />
                       <GeocodedAddress 
                         latitude={post.latitude} 
                         longitude={post.longitude} 
-                        className="truncate max-w-[120px] text-gray-800"
+                        className="text-gray-800 break-words"
                         fallback={t.unknown}
                       />
                     </div>
