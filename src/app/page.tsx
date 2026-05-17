@@ -30,6 +30,7 @@ export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [hoveredPost, setHoveredPost] = useState<any | null>(null);
+  const [listHoveredPost, setListHoveredPost] = useState<any | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialView, setInitialView] = useState<{ center: [number, number], zoom: number } | null>(null);
@@ -219,7 +220,7 @@ export default function Home() {
             onMarkerHover={setHoveredPost}
             onGroupClick={handleGroupClick}
             onMapClick={handleMapClick}
-            highlightedPostId={selectedPost?.id}
+            highlightedPostId={listHoveredPost?.id || selectedPost?.id}
             initialCenter={initialView.center}
             initialZoom={initialView.zoom}
           />
@@ -247,7 +248,7 @@ export default function Home() {
         posts={selectedGroup}
         selectedPostId={selectedPost?.id}
         onSelectPost={setSelectedPost}
-        onHoverPost={setHoveredPost}
+        onHoverPost={setListHoveredPost}
         onClose={() => {
           setSelectedGroup(null);
           setSelectedPost(null);
@@ -265,10 +266,10 @@ export default function Home() {
       )}
 
       {/* Pre-fetch hovered image */}
-      {hoveredPost?.image_url && (
+      {(hoveredPost?.image_url || listHoveredPost?.image_url) && (
         <div className="hidden">
           <Image 
-            src={hoveredPost.image_url} 
+            src={hoveredPost?.image_url || listHoveredPost?.image_url} 
             alt="preload" 
             width={1} 
             height={1} 
