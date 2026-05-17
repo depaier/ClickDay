@@ -8,9 +8,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
 import { useAlertStore } from "@/store/useAlertStore";
-import { Loader2, Check, X } from "lucide-react";
-import { useEffect } from "react";
-
+import { Mail, ArrowRight } from "lucide-react";
 
 const supabase = createClient();
 
@@ -20,7 +18,6 @@ export default function SignupPage() {
   const { showAlert } = useAlertStore();
 
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -28,61 +25,16 @@ export default function SignupPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const [isUsernameValid, setIsUsernameValid] = useState<boolean | null>(null);
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-
-  // Username uniqueness check logic
-  useEffect(() => {
-    const checkUsername = async () => {
-      const cleanUsername = formData.username.trim();
-      if (cleanUsername.length < 2) {
-        setIsUsernameValid(null);
-        return;
-      }
-
-      setIsCheckingUsername(true);
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("username", cleanUsername)
-          .maybeSingle();
-
-        if (!data && !error) {
-          setIsUsernameValid(true);
-        } else {
-          setIsUsernameValid(false);
-        }
-      } catch (err) {
-        console.error("Error checking username:", err);
-      } finally {
-        setIsCheckingUsername(false);
-      }
-    };
-
-    const timeoutId = setTimeout(checkUsername, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.username]);
+  const [isSignedUp, setIsSignedUp] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name === "username") {
-      const filtered = value.replace(/[^a-zA-Z0-9_.]/g, '');
-      setFormData((prev) => ({ ...prev, [name]: filtered }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (isUsernameValid === false) {
-      setError(translations[language].onboarding.nicknameTaken);
-      return;
-    }
 
     if (formData.password !== formData.confirmPassword) {
       setError(t.passwordsDoNotMatch);
@@ -96,21 +48,19 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         options: {
-          data: {
-            username: formData.username,
-          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (signupError) throw signupError;
 
       if (data.user) {
+        setIsSignedUp(true);
         showAlert({
           title: translations[language].common.success,
           message: t.signupSuccess,
           type: "success"
         });
-        window.location.href = "/login";
       }
 
     } catch (err: any) {
@@ -134,6 +84,26 @@ export default function SignupPage() {
     }
   };
 
+  if (isSignedUp) {
+    return (
+      <div className="w-full max-w-md p-10 bg-[#111] border border-white/10 rounded-sm text-center">
+        <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Mail className="w-8 h-8 text-[var(--accent)]" />
+        </div>
+        <h1 className="text-2xl font-heading tracking-[0.2em] mb-4 uppercase">{translations[language].common.success}</h1>
+        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+          {t.signupSuccess}
+        </p>
+        <Link href="/login" className="block">
+          <Button variant="accent" className="w-full h-12 text-sm flex items-center justify-center gap-2">
+            로그인 페이지로 이동
+            <ArrowRight size={16} />
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-md p-8 bg-[#111] border border-white/10 rounded-sm">
       <h1 className="text-2xl font-heading tracking-[0.2em] mb-2 text-center uppercase">{t.createAccount}</h1>
@@ -146,32 +116,6 @@ export default function SignupPage() {
       )}
 
       <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-        <div>
-          <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">{t.username}</label>
-          <div className="relative">
-            <Input 
-              variant="onDark" 
-              type="text" 
-              name="username"
-              placeholder={t.usernamePlaceholder} 
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-              {isCheckingUsername ? (
-                <Loader2 className="w-4 h-4 animate-spin text-white/20" />
-              ) : isUsernameValid === true ? (
-                <Check className="w-4 h-4 text-[var(--accent)]" strokeWidth={3} />
-              ) : isUsernameValid === false ? (
-                <X className="w-4 h-4 text-red-500" strokeWidth={3} />
-              ) : null}
-            </div>
-          </div>
-          <p className="text-[10px] text-white/20 mt-1.5 tracking-wider">
-            {translations[language].settings.usernameHint}
-          </p>
-        </div>
         <div>
           <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">{t.email}</label>
           <Input 
@@ -209,7 +153,7 @@ export default function SignupPage() {
           />
         </div>
 
-        <Button variant="accent" type="submit" className="w-full mt-4 h-12 text-sm" disabled={loading || isUsernameValid === false}>
+        <Button variant="accent" type="submit" className="w-full mt-4 h-12 text-sm" disabled={loading}>
           {loading ? t.processing : t.signup}
         </Button>
       </form>

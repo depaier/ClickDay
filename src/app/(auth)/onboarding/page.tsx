@@ -15,7 +15,6 @@ export default function OnboardingPage() {
   
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [isUsernameValid, setIsUsernameValid] = useState<boolean | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -81,7 +80,6 @@ export default function OnboardingPage() {
         .from("profiles")
         .update({
           username: username.trim(),
-          display_name: displayName.trim() || null,
           interests: selectedInterests,
           onboarded: true,
         })
@@ -194,28 +192,29 @@ export default function OnboardingPage() {
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-[11px] font-heading tracking-[0.2em] text-white/30 uppercase block ml-1">
-                    {translations[language].settings.displayNameLabel}
-                  </label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder={translations[language].settings.displayNamePlaceholder}
-                    className="w-full bg-transparent border-b border-white/10 py-3 px-1 text-lg focus:outline-none focus:border-[var(--accent)] transition-all placeholder:text-white/10"
-                  />
-                </div>
-
-                <div className="space-y-3">
                   <label className="text-[11px] font-heading tracking-[0.2em] text-white/30 uppercase block ml-1">{t.nicknameLabel}</label>
                   <div className="relative group">
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => {
-                        const filtered = e.target.value.replace(/[^a-zA-Z0-9_.]/g, '');
+                        const val = e.target.value;
+                        // 한글 자모를 영문 쿼티로 매핑
+                        const koToEnMap: { [key: string]: string } = {
+                          'ㄱ': 'r', 'ㄴ': 's', 'ㄷ': 'e', 'ㄹ': 'f', 'ㅁ': 'a', 'ㅂ': 'q', 'ㅅ': 't', 'ㅇ': 'd', 'ㅈ': 'w', 'ㅊ': 'c',
+                          'ㅋ': 'z', 'ㅌ': 'x', 'ㅍ': 'v', 'ㅎ': 'g', 'ㅏ': 'k', 'ㅑ': 'i', 'ㅓ': 'j', 'ㅕ': 'u', 'ㅗ': 'h', 'ㅛ': 'y',
+                          'ㅜ': 'n', 'ㅠ': 'b', 'ㅡ': 'm', 'ㅣ': 'l', 'ㅐ': 'o', 'ㅒ': 'O', 'ㅔ': 'p', 'ㅖ': 'P', 'ㅃ': 'Q', 'ㅉ': 'W',
+                          'ㄸ': 'E', 'ㄲ': 'R', 'ㅆ': 'T'
+                        };
+                        const converted = val.split('').map(char => koToEnMap[char] || char).join('');
+                        const filtered = converted.replace(/[^a-zA-Z0-9_.]/g, '').toLowerCase();
                         setUsername(filtered);
                       }}
+                      inputMode="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      style={{ imeMode: 'disabled' } as any}
                       placeholder={t.nicknamePlaceholder}
                       className="w-full bg-transparent border-b border-white/10 py-3 px-1 text-lg focus:outline-none focus:border-[var(--accent)] transition-all placeholder:text-white/10"
                     />
