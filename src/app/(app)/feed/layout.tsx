@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ClickDay",
     description: "ClickDay에서 다양한 카메라와 렌즈로 촬영된 멋진 사진들과 지도 위치, 촬영 레시피를 실시간으로 탐색해보세요.",
-    url: "https://clickday.kr/feed",
+    url: "https://clickday.me/feed",
   },
 };
 

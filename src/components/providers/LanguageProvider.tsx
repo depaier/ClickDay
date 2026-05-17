@@ -15,12 +15,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>("en");
 
   useEffect(() => {
-    // Check local storage or default to English
+    // 1. 로컬 스토리지에 저장된 언어 확인
     const savedLang = localStorage.getItem("app-language") as Language;
     if (savedLang) {
       setLanguage(savedLang);
     } else {
-      setLanguage("en");
+      // 2. 저장된 언어가 없다면 사용자의 기기/브라우저 언어 자동 감지
+      const browserLang = window.navigator.language || (window.navigator.languages && window.navigator.languages[0]) || "en";
+      if (browserLang.toLowerCase().startsWith("ko")) {
+        setLanguage("ko");
+      } else {
+        setLanguage("en");
+      }
     }
   }, []);
 
