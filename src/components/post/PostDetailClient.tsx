@@ -27,7 +27,7 @@ interface PostDetailClientProps {
 export function PostDetailClient({ initialPost }: PostDetailClientProps) {
   const { language } = useLanguage();
   const t = translations[language].post;
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
 
@@ -39,12 +39,12 @@ export function PostDetailClient({ initialPost }: PostDetailClientProps) {
 
   const isOwner = user?.id === post.user_id;
 
-  // 비로그인 사용자는 로그인 페이지로 리다이렉트
+  // 비로그인 사용자는 로그인 페이지로 리다이렉트 (세션 복원 중인 loading 상태일 때는 튕겨내지 않음)
   useEffect(() => {
-    if (user === null) {
+    if (!loading && user === null) {
       router.replace(`/login?returnTo=/posts/${post.id}`);
     }
-  }, [user, router, post.id]);
+  }, [user, loading, router, post.id]);
 
   // 클라이언트에서 좋아요, 북마크, 팔로우 상태 비동기 초고속 조회
   useEffect(() => {
