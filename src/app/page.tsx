@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap, type GlobeMapRef } from "@/components/map/GlobeMap";
@@ -14,6 +14,7 @@ import { PostGroupSheet } from "@/components/post/PostGroupSheet";
 import { LocateFixed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { IntroScreen } from "@/components/layout/IntroScreen";
 
 
 // Dedicated client for public data fetching, completely ignoring auth state.
@@ -33,6 +34,8 @@ export default function Home() {
   const [listHoveredPost, setListHoveredPost] = useState<any | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [introCompleted, setIntroCompleted] = useState(false);
   const [initialView, setInitialView] = useState<{ center: [number, number], zoom: number } | null>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set());
@@ -41,6 +44,20 @@ export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setMounted(true);
+    if (sessionStorage.getItem('intro_seen') === 'true') {
+      setIntroCompleted(true);
+    }
+  }, []);
+
+  const handleIntroComplete = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('intro_seen', 'true');
+    }
+    setIntroCompleted(true);
+  }, []);
 
   const fetchPosts = useCallback(async () => {
     if (isFetchingRef.current) return;
@@ -89,20 +106,32 @@ export default function Home() {
     }
   }, []);
 
-  // Initial load
+  // Initial load - Geolocation and posts are fetched immediately in the background during intro play
   useEffect(() => {
     const initMap = async () => {
       setLoading(true);
+      
       const loc = await new Promise<{ center: [number, number], zoom: number }>((resolve) => {
-        const fallback = { center: [126.978, 37.5665] as [number, number], zoom: 2 };
+        // Fallback to Seoul with a proper zoom, completely removing the zoom 2 globe view
+        const fallback = { center: [126.978, 37.5665] as [number, number], zoom: 10 };
         if (!navigator.geolocation) return resolve(fallback);
-        const timer = setTimeout(() => resolve(fallback), 1500);
+        
+        // Generous 5-second timeout ensures GPS is firmly locked before rendering
+        const timer = setTimeout(() => resolve(fallback), 5000);
+        
         navigator.geolocation.getCurrentPosition(
-          (pos) => { clearTimeout(timer); resolve({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 10 }); },
-          () => { clearTimeout(timer); resolve(fallback); },
-          { enableHighAccuracy: false, timeout: 1500, maximumAge: 60000 }
+          (pos) => { 
+            clearTimeout(timer); 
+            resolve({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14 }); 
+          },
+          () => { 
+            clearTimeout(timer); 
+            resolve(fallback); 
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
       });
+      
       setInitialView(loc);
       setLoading(false);
       fetchPosts();
@@ -279,17 +308,14 @@ export default function Home() {
       )}
 
       <AnimatePresence>
-        {loading && (
+        {mounted && !introCompleted && (
           <motion.div 
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="absolute inset-0 z-[60] bg-[#00000A] flex flex-col items-center justify-center"
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0 z-[60]"
           >
-            <div className="w-12 h-12 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="font-heading tracking-[0.2em] uppercase text-xs text-gray-500 animate-pulse">
-              {t.map.initializing}
-            </p>
+            <IntroScreen onComplete={handleIntroComplete} />
           </motion.div>
         )}
       </AnimatePresence>

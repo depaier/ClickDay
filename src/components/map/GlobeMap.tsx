@@ -43,6 +43,7 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const postsRef = useRef(posts);
+  const isSettingUpRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     flyTo: (center: [number, number], zoom: number = 10) => {
@@ -63,57 +64,75 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
   }, [posts]);
 
   // SVG 핀을 이미지로 변환하여 지도에 등록하는 함수
-  const addCustomIcon = (map: maplibregl.Map) => {
-    if (map.hasImage("custom-pin")) return;
-    
-    const svgString = `
-      <svg width="34" height="42" viewBox="-1 -1 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518" stroke="#000000" stroke-width="1"/>
-        <circle cx="16" cy="16" r="6" fill="#0A0A0A"/>
-      </svg>
-    `;
-    const img = new Image();
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
-    
-    img.onload = () => {
-      if (!map || !mapRef.current) return;
-      if (!map.hasImage("custom-pin")) {
+  const addCustomIcon = (map: maplibregl.Map): Promise<void> => {
+    return new Promise((resolve) => {
+      if (map.hasImage("custom-pin")) return resolve();
+      
+      const svgString = `
+        <svg width="34" height="42" viewBox="-1 -1 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#F5C518" stroke="#000000" stroke-width="1"/>
+          <circle cx="16" cy="16" r="6" fill="#0A0A0A"/>
+        </svg>
+      `;
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = () => {
+        if (!map || !mapRef.current) return resolve();
+        if (map.hasImage("custom-pin")) map.removeImage("custom-pin");
         map.addImage("custom-pin", img);
-      }
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = url;
+    });
   };
 
-  const addHighlightedIcon = (map: maplibregl.Map) => {
-    if (map.hasImage("highlighted-pin")) return;
-    
-    // Brighter yellow with a white border
-    const svgString = `
-      <svg width="34" height="42" viewBox="-1 -1 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#FFD700" stroke="#FFFFFF" stroke-width="1.5"/>
-        <circle cx="16" cy="16" r="6" fill="#000000"/>
-      </svg>
-    `;
-    const img = new Image();
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
-    
-    img.onload = () => {
-      if (!map || !mapRef.current) return;
-      if (!map.hasImage("highlighted-pin")) {
+  const addHighlightedIcon = (map: maplibregl.Map): Promise<void> => {
+    return new Promise((resolve) => {
+      if (map.hasImage("highlighted-pin")) return resolve();
+      
+      // Brighter yellow with a white border
+      const svgString = `
+        <svg width="34" height="42" viewBox="-1 -1 34 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24s16-14 16-24C32 7.163 24.837 0 16 0z" fill="#FFD700" stroke="#FFFFFF" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="6" fill="#000000"/>
+        </svg>
+      `;
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = () => {
+        if (!map || !mapRef.current) return resolve();
+        if (map.hasImage("highlighted-pin")) map.removeImage("highlighted-pin");
         map.addImage("highlighted-pin", img);
-      }
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = url;
+    });
   };
 
-  const setupSourceAndLayers = (map: maplibregl.Map) => {
-    if (!map || map.getSource("posts")) return;
+  const setupSourceAndLayers = async (map: maplibregl.Map) => {
+    if (!map || map.getSource("posts") || isSettingUpRef.current) return;
+    isSettingUpRef.current = true;
 
-    // GeoJSON 소스 추가 (클러스터링 활성화)
+    try {
+      await Promise.all([
+        addCustomIcon(map),
+        addHighlightedIcon(map)
+      ]);
+
+      if (!map || map.getSource("posts")) {
+        isSettingUpRef.current = false;
+        return;
+      }
+
+      // GeoJSON 소스 추가 (클러스터링 활성화)
     map.addSource("posts", {
       type: "geojson",
       data: {
@@ -296,17 +315,19 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
 
     map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
     map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
+    
+      isSettingUpRef.current = false;
+      // VERY IMPORTANT: Apply any data that arrived while we were waiting for images!
+      updateData();
+    } catch (error) {
+      console.error("GlobeMap: Error setting up layers and sources:", error);
+      isSettingUpRef.current = false;
+    }
   };
 
   const updateData = () => {
     const map = mapRef.current;
     if (!map) return;
-
-    if (!map.isStyleLoaded()) {
-      // 스타일이 로드되지 않았으면 로드될 때까지 기다림
-      map.once("styledata", updateData);
-      return;
-    }
 
     const source = map.getSource("posts") as maplibregl.GeoJSONSource;
     if (source) {
@@ -319,6 +340,11 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
         })),
       });
     } else {
+      if (!map.isStyleLoaded()) {
+        // 스타일이 로드되지 않았으면 로드될 때까지 기다림
+        map.once("styledata", updateData);
+        return;
+      }
       setupSourceAndLayers(map);
     }
   };
@@ -334,10 +360,22 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
       attributionControl: false,
       fadeDuration: 0,
       localIdeographFontFamily: "'Noto Sans KR', sans-serif",
+      transformRequest: (url, resourceType) => {
+        // 폰트(Glyphs) 요청 시 에러가 나는 OpenFreeMap 폰트 주소를 기본 MapLibre 폰트로 가로채서 우회
+        if (resourceType === 'Glyphs' && url.includes('tiles.openfreemap.org/fonts')) {
+          const rangeMatch = url.match(/\/([^/]+)\.pbf$/);
+          const range = rangeMatch ? rangeMatch[1] : '0-255';
+          return {
+            url: `https://demotiles.maplibre.org/font/Open%20Sans%20Regular/${range}.pbf`
+          };
+        }
+        return { url };
+      }
     });
 
     // 스타일 이미지 오류 방지 (load 전 미리 등록)
     map.on("styleimagemissing", (e) => {
+      if (e.id === "custom-pin" || e.id === "highlighted-pin") return;
       const canvas = document.createElement("canvas");
       canvas.width = 1;
       canvas.height = 1;
@@ -345,17 +383,7 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
     });
 
     map.on("load", () => {
-      // 폰트 에러 방지를 위해 기본 폰트 주소 변경
-      const style = map.getStyle();
-      if (style) {
-        style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
-        map.setStyle(style);
-      }
-
       map.setProjection({ type: "globe" });
-      addCustomIcon(map);
-      addHighlightedIcon(map);
-
       setupSourceAndLayers(map);
     });
 
