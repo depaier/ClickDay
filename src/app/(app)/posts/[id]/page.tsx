@@ -1,9 +1,62 @@
 import { createClient } from "@/utils/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { PostDetailClient } from "@/components/post/PostDetailClient";
+import type { Metadata } from "next";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    return {
+      title: "페이지를 찾을 수 없습니다 | ClickDay",
+    };
+  }
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("location_name, recipe_name, description, camera_model, image_url")
+    .eq("id", id)
+    .single();
+
+  if (!post) {
+    return {
+      title: "게시물을 찾을 수 없습니다 | ClickDay",
+    };
+  }
+
+  const title = `${post.location_name || post.recipe_name || "사진 공유"} | ClickDay`;
+  const description = post.description || `${post.camera_model || "카메라"}로 촬영된 사진과 지도 위치, 촬영 정보를 확인해보세요.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://clickday.kr/posts/${id}`,
+      images: [
+        {
+          url: post.image_url,
+          width: 1200,
+          height: 1200,
+          alt: post.location_name || "ClickDay 사진",
+        },
+      ],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [post.image_url],
+    },
+  };
 }
 
 export default async function PostDetailPage({ params }: PageProps) {
@@ -76,14 +129,45 @@ export default async function PostDetailPage({ params }: PageProps) {
     isFollowing = !!followData;
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SocialMediaPosting",
+    "@id": `https://clickday.kr/posts/${id}`,
+    url: `https://clickday.kr/posts/${id}`,
+    headline: `${post.location_name || post.recipe_name || "사진 공유"} | ClickDay`,
+    description: post.description || `${post.camera_model || "카메라"}로 촬영된 사진과 지도 위치를 확인해보세요.`,
+    image: post.image_url,
+    datePublished: post.created_at,
+    author: {
+      "@type": "Person",
+      name: profile?.username || "익명 사용자",
+      image: profile?.avatar_url,
+    },
+    contentLocation: post.location_name ? {
+      "@type": "Place",
+      name: post.location_name,
+      geo: (post.latitude && post.longitude) ? {
+        "@type": "GeoCoordinates",
+        latitude: post.latitude,
+        longitude: post.longitude,
+      } : undefined,
+    } : undefined,
+  };
+
   return (
-    <PostDetailClient 
-      post={post}
-      user={user}
-      isOwner={isOwner}
-      isLiked={isLiked}
-      isBookmarked={isBookmarked}
-      isFollowing={isFollowing}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <PostDetailClient 
+        post={post}
+        user={user}
+        isOwner={isOwner}
+        isLiked={isLiked}
+        isBookmarked={isBookmarked}
+        isFollowing={isFollowing}
+      />
+    </>
   );
 }
