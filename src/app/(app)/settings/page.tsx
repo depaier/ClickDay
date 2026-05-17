@@ -32,7 +32,7 @@ export default function SettingsPage() {
   const { user, session, profile, signOut, refreshProfile } = useAuth();
   const { language } = useLanguage();
   const t = translations[language].settings;
-  const { showAlert, showConfirm } = useAlertStore();
+  const { showToast, showConfirm } = useAlertStore();
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -116,7 +116,7 @@ export default function SettingsPage() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      showAlert({ title: translations[language].common.error, message: "세션이 만료됐습니다. 다시 로그인해 주세요.", type: "error" });
+      showToast({ message: "세션이 만료됐습니다. 다시 로그인해 주세요.", type: "error" });
       return;
     }
 
@@ -145,7 +145,7 @@ export default function SettingsPage() {
       await refreshProfile();
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      showAlert({ title: translations[language].common.error, message: t.error, type: "error" });
+      showToast({ message: t.error, type: "error" });
     } finally {
       setUploading(false);
     }
@@ -155,13 +155,13 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!user) return;
     if (!isUsernameValid) {
-      showAlert({ title: translations[language].common.error, message: translations[language].onboarding.nicknameTaken, type: "error" });
+      showToast({ message: translations[language].onboarding.nicknameTaken, type: "error" });
       return;
     }
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      showAlert({ title: translations[language].common.error, message: "세션이 만료됐습니다. 다시 로그인해 주세요.", type: "error" });
+      showToast({ message: "세션이 만료됐습니다. 다시 로그인해 주세요.", type: "error" });
       return;
     }
 
@@ -177,11 +177,11 @@ export default function SettingsPage() {
 
       if (error) throw error;
       await refreshProfile();
-      showAlert({ title: translations[language].common.success, message: t.success, type: "success" });
+      showToast({ message: t.success, type: "success" });
       router.push(`/users/@${formData.username || profile?.username}`);
     } catch (error) {
       console.error("Error updating profile:", error);
-      showAlert({ title: translations[language].common.error, message: t.error, type: "error" });
+      showToast({ message: t.error, type: "error" });
     } finally {
       setLoading(false);
     }

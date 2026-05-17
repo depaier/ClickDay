@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export type AlertType = 'success' | 'error' | 'warning' | 'info' | 'confirm';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface AlertState {
   isOpen: boolean;
@@ -12,6 +13,12 @@ interface AlertState {
   confirmVariant?: 'primary' | 'danger' | 'accent';
   resolvePromise?: (value: boolean) => void;
   
+  // Toast State
+  isToastOpen: boolean;
+  toastMessage: string;
+  toastType: ToastType;
+  toastDuration: number;
+
   // Actions
   showAlert: (options: {
     title: string;
@@ -30,6 +37,14 @@ interface AlertState {
   }) => Promise<boolean>;
   
   closeAlert: (value: boolean) => void;
+
+  showToast: (options: {
+    message: string;
+    type?: ToastType;
+    duration?: number;
+  }) => void;
+
+  closeToast: () => void;
 }
 
 export const useAlertStore = create<AlertState>((set, get) => ({
@@ -40,6 +55,11 @@ export const useAlertStore = create<AlertState>((set, get) => ({
   confirmLabel: '확인',
   cancelLabel: '취소',
   resolvePromise: undefined,
+
+  isToastOpen: false,
+  toastMessage: '',
+  toastType: 'info',
+  toastDuration: 3000,
 
   showAlert: ({ title, message, type = 'info', confirmLabel = '확인', confirmVariant = 'primary' }) => {
     set({
@@ -75,5 +95,18 @@ export const useAlertStore = create<AlertState>((set, get) => ({
       resolvePromise(value);
     }
     set({ isOpen: false, resolvePromise: undefined });
+  },
+
+  showToast: ({ message, type = 'info', duration = 3000 }) => {
+    set({
+      isToastOpen: true,
+      toastMessage: message,
+      toastType: type,
+      toastDuration: duration,
+    });
+  },
+
+  closeToast: () => {
+    set({ isToastOpen: false });
   },
 }));

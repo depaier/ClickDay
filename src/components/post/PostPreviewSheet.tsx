@@ -92,7 +92,7 @@ export function PostPreviewSheet({ post, isLiked = false, isBookmarked = false, 
                   <div>
                     <p className="font-bold text-sm group-hover:text-[var(--accent)] transition-colors">{post.profiles?.username || "photographer"}</p>
                     <p className="text-xs text-gray-500" suppressHydrationWarning>
-                      {post.created_at ? new Date(post.created_at).toLocaleDateString() : t.recently}
+                      {post.created_at ? new Date(post.created_at).toLocaleDateString().replace(/\.$/, '').trim() : t.recently}
                     </p>
                   </div>
                 </Link>

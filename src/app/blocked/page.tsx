@@ -10,7 +10,7 @@ export default function BlockedPage() {
       
       <h1 className="text-3xl font-bold mb-4 font-heading tracking-tight">계정이 차단되었습니다</h1>
       <p className="text-white/60 text-center max-w-md mb-8">
-        귀하의 계정은 커뮤니티 가이드라인 위반으로 인해 활동이 정지되었습니다. 
+        귀하의 계정은 서비스 가이드라인 위반으로 인해 활동이 정지되었습니다. 
         문의 사항이 있으시면 관리자에게 연락해 주세요.
       </p>
 

@@ -294,28 +294,28 @@ function FeedContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
-                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md flex items-center justify-center p-8"
+                className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
               >
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="max-w-md w-full bg-[#111] border border-white/10 p-10 rounded-lg shadow-2xl"
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  className="max-w-[420px] w-full bg-[#0c0c0c] border border-white/[0.08] p-12 rounded-none shadow-[0_30px_100px_rgba(0,0,0,0.95)] text-center relative overflow-hidden"
                 >
-                  <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Lock className="text-[var(--accent)] w-8 h-8" />
-                  </div>
-                  <h2 className="text-xl font-heading tracking-[0.2em] uppercase mb-4 text-center">{gateT.feedTitle}</h2>
-                  <p className="text-gray-400 text-sm mb-8 leading-relaxed text-center">
+                  <div className="w-12 h-1 bg-[var(--accent)] mx-auto mb-8" />
+                  <h2 className="text-xs font-heading font-bold tracking-[0.3em] uppercase mb-4 text-white/90">
+                    {gateT.feedTitle}
+                  </h2>
+                  <p className="text-gray-300 text-sm mb-10 leading-[2.2em] tracking-[0.04em] max-w-[280px] mx-auto whitespace-pre-wrap">
                     {gateT.feedSubtitle}
                   </p>
-                  <Button 
-                    variant="accent"
-                    className="w-full py-6 rounded-full"
+                  <button 
+                    type="button"
+                    className="w-full h-12 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-black font-heading font-bold text-xs tracking-[0.15em] uppercase transition-all rounded-none flex items-center justify-center gap-3 cursor-pointer shadow-lg border-none"
                     onClick={() => router.push('/login')}
                   >
                     {gateT.loginButton}
-                  </Button>
+                  </button>
                 </motion.div>
               </motion.div>
             )}

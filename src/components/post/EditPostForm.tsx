@@ -11,7 +11,6 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { useAlertStore } from "@/store/useAlertStore";
 
-
 interface EditPostFormProps {
   post: any;
 }
@@ -19,15 +18,16 @@ interface EditPostFormProps {
 export function EditPostForm({ post }: EditPostFormProps) {
   const router = useRouter();
   const { language } = useLanguage();
-  const t = translations[language].upload;
+  const tUpload = translations[language].upload;
+  const tPost = translations[language].post;
+  const tCommon = translations[language].common;
   
   const [locationName, setLocationName] = useState(post.location_name || "");
   const [description, setDescription] = useState(post.description || "");
   const [location, setLocation] = useState({ lat: post.latitude, lng: post.longitude });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const { showAlert } = useAlertStore();
-
+  const { showToast } = useAlertStore();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,20 +49,17 @@ export function EditPostForm({ post }: EditPostFormProps) {
 
       if (error) throw error;
 
-      showAlert({
-        title: translations[language].common.success,
-        message: language === 'ko' ? "포스트가 수정되었습니다." : "Post updated successfully!",
+      showToast({
+        message: tPost.editSuccess,
         type: "success"
       });
       router.push(`/posts/${post.id}`);
       router.refresh();
     } catch (error: any) {
-      showAlert({
-        title: translations[language].common.error,
-        message: error.message || (language === 'ko' ? "수정에 실패했습니다." : "Failed to update post."),
+      showToast({
+        message: error.message || tPost.editError,
         type: "error"
       });
-
     } finally {
       setIsUpdating(false);
     }
@@ -70,6 +67,12 @@ export function EditPostForm({ post }: EditPostFormProps) {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-heading tracking-[0.2em] uppercase mb-2">{tPost.edit}</h1>
+        <p className="text-gray-400 mb-8 border-b border-white/10 pb-6">{tPost.editSubtitle}</p>
+      </div>
+
       {/* Image Preview */}
       <div className="relative aspect-video w-full bg-[#111] rounded-sm overflow-hidden border border-white/5">
         <img src={post.image_url} alt="Post" className="w-full h-full object-contain" />
@@ -78,7 +81,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
       {/* Input Fields */}
       <div className="space-y-6">
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.photoTitle}</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{tUpload.photoTitle}</label>
           <input 
             type="text" 
             value={locationName}
@@ -87,7 +90,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{t.description}</label>
+          <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{tUpload.description}</label>
           <textarea 
             rows={4}
             value={description}
@@ -102,19 +105,19 @@ export function EditPostForm({ post }: EditPostFormProps) {
         <div>
           <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm">
             <Camera className="w-4 h-4 mr-2 text-[var(--accent)]" />
-            {t.exifTitle}
+            {tUpload.exifTitle}
           </h2>
           <div className="bg-[#111] p-6 space-y-4 text-sm border border-white/5">
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-gray-500">{t.camera}</span>
+              <span className="text-gray-500">{tUpload.camera}</span>
               <span>{post.camera_model || "-"}</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-gray-500">Aperture</span>
+              <span className="text-gray-500">{tPost.aperture}</span>
               <span>{post.aperture ? `f/${post.aperture}` : "-"}</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-gray-500">Exposure</span>
+              <span className="text-gray-500">{tPost.shutter}</span>
               <span>{post.shutter_speed || "-"}</span>
             </div>
           </div>
@@ -124,7 +127,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
         <div>
           <h2 className="font-heading tracking-wider uppercase flex items-center mb-4 text-sm">
             <MapPin className="w-4 h-4 mr-2 text-[var(--accent)]" />
-            {t.locationTitle}
+            {tUpload.locationTitle}
           </h2>
           <div className="bg-[#111] h-[200px] border border-white/5 relative overflow-hidden">
             <UploadMap location={location} onLocationChange={setLocation} />
@@ -132,7 +135,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
               className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/20 transition-colors"
               onClick={() => setIsModalOpen(true)}
             >
-              <p className="text-white text-xs uppercase tracking-tighter">Click to change location</p>
+              <p className="text-white text-xs uppercase tracking-tighter">{tPost.clickToChangeLoc}</p>
             </div>
           </div>
         </div>
@@ -141,14 +144,14 @@ export function EditPostForm({ post }: EditPostFormProps) {
       {/* Actions */}
       <div className="flex justify-between items-center pt-8 border-t border-white/10">
         <Button variant="ghost" onClick={() => router.back()} className="flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Cancel
+          <ArrowLeft className="w-4 h-4" /> {tCommon.cancel}
         </Button>
         <Button 
           className="px-12 py-6 text-sm font-heading tracking-[0.2em] uppercase flex items-center gap-2"
           onClick={handleSubmit}
           disabled={isUpdating}
         >
-          <Save className="w-4 h-4" /> {isUpdating ? "Updating..." : "Save Changes"}
+          <Save className="w-4 h-4" /> {isUpdating ? tPost.updating : tPost.save}
         </Button>
       </div>
 

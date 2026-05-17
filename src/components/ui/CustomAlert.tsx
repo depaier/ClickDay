@@ -1,8 +1,6 @@
 'use client';
 
 import { useAlertStore } from '@/store/useAlertStore';
-import { Button } from './Button';
-import { CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
@@ -10,7 +8,6 @@ export const CustomAlert = () => {
   const { isOpen, type, title, message, confirmLabel, cancelLabel, confirmVariant, closeAlert } = useAlertStore();
   const [isVisible, setIsVisible] = useState(false);
 
-  // 애니메이션 종료 후 언마운트를 위한 상태 관리
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
@@ -22,72 +19,59 @@ export const CustomAlert = () => {
 
   if (!isVisible && !isOpen) return null;
 
-  const Icon = {
-    success: CheckCircle2,
-    error: AlertCircle,
-    warning: AlertTriangle,
-    info: Info,
-    confirm: Info,
-  }[type];
-
-  const colors = {
-    success: 'text-emerald-500',
-    error: 'text-rose-500',
-    warning: 'text-amber-500',
-    info: 'text-blue-500',
-    confirm: 'text-zinc-500',
-  }[type];
-
   return (
     <div className={cn(
       "fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-300",
       isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
     )}>
-      {/* Overlay: 배경 클릭 시 confirm 타입이 아니면 닫기 */}
+      {/* Overlay: 차분하고 깊은 어두운 배경 */}
       <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+        className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300" 
         onClick={() => type !== 'confirm' && closeAlert(false)}
       />
       
-      {/* Modal Card */}
+      {/* Hasselblad Seamless Dark Web Dialog Card */}
       <div className={cn(
-        "relative w-full max-w-[360px] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-300 transform border border-white/20 dark:border-white/10",
+        "relative w-full max-w-[420px] bg-[#0c0c0c] border border-white/[0.08] shadow-[0_30px_100px_rgba(0,0,0,0.95)] overflow-hidden rounded-none transition-all duration-300 transform text-white",
         isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
       )}>
-        <div className="flex flex-col items-center text-center">
-          {/* Icon Section */}
-          <div className={cn("mb-6 p-4 rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700", colors)}>
-            <Icon size={32} strokeWidth={1.5} />
-          </div>
-          
-          {/* Text Section */}
-          <h2 className="text-xl font-heading font-normal mb-3 tracking-wider uppercase">
+        {/* Header: 투박한 border-b를 완전히 제거하고 여백과 타이포그래피만으로 위계 형성 */}
+        <div className="px-8 pt-8 pb-2 flex items-center justify-between bg-[#0c0c0c]">
+          <h2 className="font-heading text-xs font-bold tracking-[0.25em] uppercase text-white/70">
             {title}
           </h2>
-          
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed mb-10 whitespace-pre-wrap">
+        </div>
+        
+        {/* Body: 헤더와 자연스럽게 이어지는 심리스(Seamless) 캔버스 */}
+        <div className="px-8 py-6 bg-[#0c0c0c] text-left flex items-center min-h-[100px]">
+          <p className="font-body text-sm tracking-[0.04em] text-gray-300 leading-relaxed whitespace-pre-wrap">
             {message}
           </p>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-3 w-full">
-            {type === 'confirm' && (
-              <Button 
-                variant="ghostDark" 
-                className="flex-1 py-6 text-[13px] tracking-[0.1em] border-zinc-200 dark:border-zinc-700 dark:text-white"
-                onClick={() => closeAlert(false)}
-              >
-                {cancelLabel}
-              </Button>
-            )}
-            <Button 
-              variant={confirmVariant || 'primary'} 
-              className="flex-1 py-6 text-[13px] tracking-[0.1em]"
-              onClick={() => closeAlert(true)}
+        </div>
+
+        {/* Action Buttons: 투박한 border-t와 배경 분리를 없애고 하나의 배경 위에서 우아하게 정렬 */}
+        <div className="px-8 pt-4 pb-8 bg-[#0c0c0c] flex items-center justify-end gap-3.5 w-full">
+          {type === 'confirm' && (
+            <button 
+              type="button"
+              className="h-10 px-6 bg-transparent border border-white/10 text-gray-400 hover:border-white/30 hover:text-white hover:bg-white/[0.02] tracking-[0.15em] text-xs font-heading uppercase transition-all rounded-none cursor-pointer"
+              onClick={() => closeAlert(false)}
             >
-              {confirmLabel}
-            </Button>
-          </div>
+              {cancelLabel}
+            </button>
+          )}
+          <button 
+            type="button"
+            className={cn(
+              "h-10 px-7 tracking-[0.15em] text-xs font-heading uppercase transition-all rounded-none border-none cursor-pointer font-medium",
+              confirmVariant === 'danger' && "bg-[#cb2d2d] hover:bg-[#a02323] text-white",
+              confirmVariant === 'accent' && "bg-[#E8B800] hover:bg-[#BF9700] text-black font-bold",
+              (!confirmVariant || confirmVariant === 'primary') && "bg-gradient-to-b from-[#535759] to-[#3b3e40] text-white hover:from-[#6c7073] hover:to-[#535759]"
+            )}
+            onClick={() => closeAlert(true)}
+          >
+            {confirmLabel}
+          </button>
         </div>
       </div>
     </div>
