@@ -51,7 +51,7 @@ function FeedContent() {
   const regionParam = searchParams.get("region");
   const brandParam = searchParams.get("brand");
   const qParam = searchParams.get("q");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
@@ -65,7 +65,8 @@ function FeedContent() {
   const [gateTriggered, setGateTriggered] = useState(false);
   const PAGE_SIZE = 12;
 
-  const showFeedGate = !user && posts.length >= GUEST_LIMIT;
+  // 세션 복원 중(authLoading === true)일 때는 게이트를 트리거하지 않도록 하여 새로고침 시 로그인 창이 뜨는 버그 원천 차단
+  const showFeedGate = !authLoading && !user && posts.length >= GUEST_LIMIT;
 
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(searchParams.toString());

@@ -8,15 +8,14 @@ export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <motion.div
         key={pathname}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{
-          duration: 0.4,
-          ease: [0.22, 1, 0.36, 1], // Custom cubic-bezier for premium feel
+          duration: 0.2,
+          ease: "easeInOut",
         }}
         className="flex-1 flex flex-col"
       >

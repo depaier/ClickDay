@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const username = decodeURIComponent(rawUsername).replace(/^@/, "");
 
   if (username === "undefined") {
-    return { title: "사용자를 찾을 수 없습니다 | ClickDay" };
+    return { title: "ClickDay" };
   }
 
   const supabase = await createClient();
@@ -30,10 +30,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { data: profile } = await query.single();
 
   if (!profile) {
-    return { title: "사용자를 찾을 수 없습니다 | ClickDay" };
+    return { title: "ClickDay" };
   }
 
-  const title = `${profile.username}님의 프로필 | ClickDay`;
+  const title = "ClickDay";
   const description = profile.bio || `${profile.username}님의 ClickDay 프로필입니다. 카메라로 촬영한 멋진 사진과 위치를 확인해보세요.`;
   const image = profile.avatar_url || "/og-image.png";
 
