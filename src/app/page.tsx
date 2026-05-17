@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, Suspense } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PostPreviewSheet } from "@/components/post/PostPreviewSheet";
 import { GlobeMap, type GlobeMapRef } from "@/components/map/GlobeMap";
@@ -27,7 +27,7 @@ const supabaseData = createSupabaseClient(
   }
 );
 
-export default function Home() {
+function HomeContent() {
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [hoveredPost, setHoveredPost] = useState<any | null>(null);
@@ -320,5 +320,13 @@ export default function Home() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="w-full h-screen bg-[#00000A]" />}>
+      <HomeContent />
+    </Suspense>
   );
 }
