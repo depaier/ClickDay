@@ -83,25 +83,14 @@ export function PostDetailClient({ initialPost }: PostDetailClientProps) {
 
   return (
     <>
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start"
-    >
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
       {/* Image Section */}
-      <motion.div 
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        className="bg-[#111] flex items-center justify-center min-h-[60vh] lg:min-h-[80vh] p-4 relative group rounded-sm border border-white/5 overflow-hidden shadow-2xl"
-      >
-        <motion.img 
-          layoutId={`post-image-${post.id}`}
+      <div className="bg-[#111] flex items-center justify-center min-h-[60vh] lg:min-h-[80vh] p-4 relative group rounded-sm border border-white/5 overflow-hidden shadow-2xl">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img 
           src={post.image_url} 
           alt={post.location_name || "Post detail"} 
-          className="max-w-full max-h-[80vh] object-contain cursor-zoom-in"
-          transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+          className="max-w-full max-h-[80vh] object-contain cursor-zoom-in block"
           onClick={() => setIsExpanded(true)}
         />
         
@@ -119,15 +108,10 @@ export function PostDetailClient({ initialPost }: PostDetailClientProps) {
             <Maximize2 className="w-5 h-5" />
           </Button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Info Section */}
-      <motion.div 
-        initial={{ x: 20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.6 }}
-        className="flex flex-col gap-8"
-      >
+      <div className="flex flex-col gap-8">
         {/* User Info & Actions */}
         <div className="flex items-center justify-between border-b border-white/10 pb-6">
           <div className="flex items-center gap-3">
@@ -257,8 +241,8 @@ export function PostDetailClient({ initialPost }: PostDetailClientProps) {
 
         {/* Spacer for mobile bottom bar if needed */}
         <div className="h-4" />
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
 
     {/* Full Screen Expanded Modal */}
     <AnimatePresence>
@@ -283,12 +267,11 @@ export function PostDetailClient({ initialPost }: PostDetailClientProps) {
           </motion.button>
 
           <div className="w-full h-full flex items-center justify-center p-4 md:p-12">
-            <motion.img 
-              layoutId={`post-image-${post.id}`}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
               src={post.image_url} 
               alt={post.location_name || "Post detail"} 
-              className="max-w-full max-h-full object-contain shadow-2xl"
-              transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+              className="max-w-full max-h-full object-contain shadow-2xl block animate-fade-in"
             />
           </div>
         </motion.div>

@@ -76,8 +76,10 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
               {isActive(link.href) && (
                 <motion.div
                   layoutId="nav-underline"
+                  layoutDependency={pathname}
+                  initial={false}
                   className="absolute bottom-0 left-0 right-[0.167em] h-[1px] bg-[var(--accent)]"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                 />
               )}
             </Link>
