@@ -28,9 +28,6 @@ export default async function EditPostPage({ params }: PageProps) {
 
   return (
     <div className="max-w-3xl mx-auto pb-32">
-      <h1 className="text-3xl font-heading tracking-[0.2em] uppercase mb-2">Edit Post</h1>
-      <p className="text-gray-400 mb-8 border-b border-white/10 pb-6">Update your photography details and location.</p>
-      
       <EditPostForm post={post} />
     </div>
   );

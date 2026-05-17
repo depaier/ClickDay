@@ -8,18 +8,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-white text-black hover:bg-gray-200 border border-white rounded-sm",
-        secondary: "bg-[#262b2e] text-white hover:bg-[#3b3e40] border border-[#3b3e40] rounded-sm",
-        ghost: "bg-transparent text-white border border-white/50 hover:border-white hover:bg-white/10 rounded-sm",
-        ghostDark: "bg-transparent text-black border border-black/50 hover:border-black hover:bg-black/5 rounded-sm",
-        accent: "bg-[var(--accent)] text-[var(--accent-text-on)] hover:bg-[var(--accent-dark)] border-none rounded-sm font-bold",
-        store: "bg-white text-black hover:bg-[var(--accent)] hover:text-[var(--accent-text-on)] border-none rounded-sm",
-        danger: "bg-rose-600 text-white hover:bg-rose-700 border-none rounded-sm",
+        primary: "bg-white text-black hover:bg-gray-200 border border-white rounded-none",
+        secondary: "bg-[#262b2e] text-white hover:bg-[#3b3e40] border border-[#3b3e40] rounded-none",
+        ghost: "bg-transparent text-white border border-white/50 hover:border-white hover:bg-white/10 rounded-none",
+        ghostDark: "bg-transparent text-black border border-black/50 hover:border-black hover:bg-black/5 rounded-none",
+        accent: "bg-[var(--accent)] text-[var(--accent-text-on)] hover:bg-[var(--accent-dark)] border-none rounded-none font-bold",
+        store: "bg-white text-black hover:bg-[var(--accent)] hover:text-[var(--accent-text-on)] border-none rounded-none",
+        danger: "bg-rose-600 text-white hover:bg-rose-700 border-none rounded-none",
       },
       size: {
         default: "h-10 px-5 py-2",
-        sm: "h-9 rounded-sm px-4 text-[13px]",
-        lg: "h-12 rounded-sm px-8 text-base",
+        sm: "h-9 rounded-none px-4 text-[13px]",
+        lg: "h-12 rounded-none px-8 text-base",
         icon: "h-10 w-10",
       },
     },

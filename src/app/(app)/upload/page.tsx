@@ -51,7 +51,7 @@ export default function UploadPage() {
 
   const t = translations[language].upload;
   const { user, session, loading: authLoading } = useAuth();
-  const { showAlert } = useAlertStore();
+  const { showToast } = useAlertStore();
   const supabase = createClient();
 
   useEffect(() => {
@@ -122,8 +122,7 @@ export default function UploadPage() {
       selectedFile.name.toLowerCase().endsWith(".heif");
 
     if (!selectedFile.type.startsWith("image/") && !isHeic) {
-      showAlert({
-        title: t.invalidFile,
+      showToast({
         message: t.invalidFileMsg,
         type: "warning"
       });
@@ -337,8 +336,7 @@ export default function UploadPage() {
 
     } catch (error: any) {
       if (error.message === "HEIC_CONVERSION_FAILED") {
-        showAlert({
-          title: t.conversionFailed,
+        showToast({
           message: t.conversionFailedMsg,
           type: "error"
         });
@@ -353,7 +351,7 @@ export default function UploadPage() {
     }
 
 
-  }, [language, t, showAlert]);
+  }, [language, t, showToast]);
 
 
   const onDrop = (e: React.DragEvent) => {
@@ -380,8 +378,7 @@ export default function UploadPage() {
 
   const handleSubmit = async () => {
     if (!file || !location || !user) {
-      showAlert({
-        title: t.missingInfo,
+      showToast({
         message: t.missingInfoMsg,
         type: "warning"
       });
@@ -455,8 +452,7 @@ export default function UploadPage() {
 
       if (dbError) throw dbError;
 
-      showAlert({
-        title: t.published,
+      showToast({
         message: t.publishedMsg,
         type: "success"
       });
@@ -470,8 +466,7 @@ export default function UploadPage() {
         stack: error.stack,
         ...error
       });
-      showAlert({
-        title: t.uploadFailed,
+      showToast({
         message: error.message || t.uploadFailedMsg,
         type: "error"
       });

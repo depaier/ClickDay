@@ -37,7 +37,7 @@ export function ReportButton({
   const { language } = useLanguage();
   const { user } = useAuth();
   const t = translations[language].report;
-  const showAlert = useAlertStore((state) => state.showAlert);
+  const showToast = useAlertStore((state) => state.showToast);
 
   const reasons = [
     { id: "inappropriate", label: t.reasons.inappropriate },
@@ -57,11 +57,9 @@ export function ReportButton({
     try {
       const alreadyReported = await getReportStatus(targetType, targetId);
       if (alreadyReported) {
-        showAlert({
+        showToast({
           type: "info",
-          title: t.title,
           message: t.alreadyReported,
-          confirmLabel: translations[language].common.confirm,
         });
         return;
       }
@@ -101,11 +99,9 @@ export function ReportButton({
       if (error.message === "ALREADY_REPORTED") message = t.alreadyReported;
       else if (error.message === "LIMIT_REACHED") message = t.limitReached;
       
-      showAlert({
+      showToast({
         type: "error",
-        title: t.title,
         message: message,
-        confirmLabel: translations[language].common.confirm,
       });
       setIsOpen(false);
     } finally {

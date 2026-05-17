@@ -56,11 +56,6 @@ export default function SignupPage() {
 
       if (data.user) {
         setIsSignedUp(true);
-        showAlert({
-          title: translations[language].common.success,
-          message: t.signupSuccess,
-          type: "success"
-        });
       }
 
     } catch (err: any) {
@@ -86,19 +81,22 @@ export default function SignupPage() {
 
   if (isSignedUp) {
     return (
-      <div className="w-full max-w-md p-10 bg-[#111] border border-white/10 rounded-sm text-center">
-        <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Mail className="w-8 h-8 text-[var(--accent)]" />
-        </div>
-        <h1 className="text-2xl font-heading tracking-[0.2em] mb-4 uppercase">{translations[language].common.success}</h1>
-        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+      <div className="w-full max-w-md p-12 bg-[#0c0c0c] border border-white/[0.08] shadow-2xl rounded-none text-center my-12">
+        <div className="w-12 h-1 bg-[var(--accent)] mx-auto mb-8" />
+        <h1 className="text-xs font-heading font-bold tracking-[0.3em] mb-4 uppercase text-white/90">
+          {translations[language].common.success}
+        </h1>
+        <p className="text-gray-300 text-sm mb-10 leading-[2.2em] tracking-[0.04em] max-w-[280px] mx-auto">
           {t.signupSuccess}
         </p>
         <Link href="/login" className="block">
-          <Button variant="accent" className="w-full h-12 text-sm flex items-center justify-center gap-2">
+          <button 
+            type="button" 
+            className="w-full h-12 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-black font-heading font-bold text-xs tracking-[0.15em] uppercase transition-all rounded-none flex items-center justify-center gap-3 cursor-pointer shadow-lg"
+          >
             로그인 페이지로 이동
             <ArrowRight size={16} />
-          </Button>
+          </button>
         </Link>
       </div>
     );

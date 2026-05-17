@@ -110,7 +110,7 @@ export function PostDetailClient({
                   {post.profiles?.username || "unknown"}
                 </div>
                 <div className="text-gray-500 text-xs" suppressHydrationWarning>
-                  {new Date(post.created_at).toLocaleDateString()}
+                  {new Date(post.created_at).toLocaleDateString().replace(/\.$/, '').trim()}
                 </div>
               </div>
             </Link>

@@ -29,7 +29,7 @@ export function DeletePostButton({ postId, imageUrl, variant = "default" }: Dele
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { showAlert, showConfirm } = useAlertStore();
+  const { showToast, showConfirm } = useAlertStore();
   
   const handleDelete = async (e?: React.MouseEvent) => {
     if (e) {
@@ -72,8 +72,7 @@ export function DeletePostButton({ postId, imageUrl, variant = "default" }: Dele
 
       if (dbError) throw dbError;
 
-      showAlert({
-        title: t.common.success,
+      showToast({
         message: t.post.deleteSuccess,
         type: "success"
       });
@@ -82,8 +81,7 @@ export function DeletePostButton({ postId, imageUrl, variant = "default" }: Dele
       router.refresh();
     } catch (error: any) {
       console.error("Delete error:", error);
-      showAlert({
-        title: t.common.error,
+      showToast({
         message: error.message || t.common.error,
         type: "error"
       });
