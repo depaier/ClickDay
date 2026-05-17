@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clickday.kr"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clickday.me"),
   title: "ClickDay",
   description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다. 카메라 촬영 위치, EXIF 메타데이터, 촬영 레시피를 지도 위에서 탐색하고 공유하세요.",
   keywords: ["카메라", "사진", "지도", "출사지", "촬영정보", "EXIF", "ClickDay", "클릭데이", "사진레시피"],
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ClickDay | 카메라 사진 + 지도 기반 촬영 정보 공유",
     description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다. 카메라 촬영 위치, EXIF 메타데이터, 촬영 레시피를 지도 위에서 탐색하고 공유하세요.",
-    url: "https://clickday.kr",
+    url: "https://clickday.me",
     siteName: "ClickDay",
     images: [
       {

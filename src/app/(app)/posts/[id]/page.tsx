@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title,
       description,
-      url: `https://clickday.kr/posts/${id}`,
+      url: `https://clickday.me/posts/${id}`,
       images: [
         {
           url: post.image_url,
@@ -95,8 +95,8 @@ export default async function PostDetailPage({ params }: PageProps) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SocialMediaPosting",
-    "@id": `https://clickday.kr/posts/${id}`,
-    url: `https://clickday.kr/posts/${id}`,
+    "@id": `https://clickday.me/posts/${id}`,
+    url: `https://clickday.me/posts/${id}`,
     headline: `${post.location_name || post.recipe_name || "사진 공유"} | ClickDay`,
     description: post.description || `${post.camera_model || "카메라"}로 촬영된 사진과 지도 위치를 확인해보세요.`,
     image: post.image_url,
