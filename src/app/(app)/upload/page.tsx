@@ -66,6 +66,7 @@ export default function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [title, setTitle] = useState("");
   const [locationName, setLocationName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string>("");
@@ -75,40 +76,100 @@ export default function UploadPage() {
   useEffect(() => {
     if (!location) {
       setRegion(null);
+      setLocationName("");
       return;
     }
 
-    const detectRegion = async () => {
+    const detectRegionAndGeocode = async () => {
+      let detectedName = "";
+      let detectedRegion: string | null = null;
+      const acceptLang = language === "ko" ? "ko" : "en";
+
+      const matchRegion = (text: string) => {
+        const str = text.toLowerCase();
+        if (str.includes("seoul") || str.includes("서울")) return "seoul";
+        if (str.includes("gyeonggi") || str.includes("경기")) return "gyeonggi";
+        if (str.includes("incheon") || str.includes("인천")) return "incheon";
+        if (str.includes("gangwon") || str.includes("강원")) return "gangwon";
+        if (str.includes("chungcheong") || str.includes("충청") || str.includes("daejeon") || str.includes("대전") || str.includes("sejong") || str.includes("세종")) return "chungcheong";
+        if (str.includes("jeolla") || str.includes("전라") || str.includes("gwangju") || str.includes("광주")) return "jeolla";
+        if (str.includes("gyeongsang") || str.includes("경상") || str.includes("busan") || str.includes("부산") || str.includes("daegu") || str.includes("대구") || str.includes("ulsan") || str.includes("울산")) return "gyeongsang";
+        if (str.includes("jeju") || str.includes("제주")) return "jeju";
+        return null;
+      };
+
+      // 1. Nominatim API (No custom headers -> Simple GET request, no CORS preflight)
       try {
-        const response = await fetch(
-          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lng}&localityLanguage=en`
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=18&addressdetails=1&accept-language=${acceptLang}`
         );
-        if (!response.ok) return;
-        const data = await response.json();
+        if (nomRes.ok) {
+          const nomData = await nomRes.json();
+          if (nomData && nomData.address) {
+            const country = nomData.address.country;
+            const province = nomData.address.province || nomData.address.state || nomData.address.region;
+            const cityName = nomData.address.city || nomData.address.town || nomData.address.borough || nomData.address.county;
+            const suburb = nomData.address.suburb || nomData.address.quarter || nomData.address.neighbourhood;
 
-        if (data.countryCode !== "KR" && data.countryName !== "South Korea") {
-          setRegion(null);
-          return;
+            const parts = [];
+            if (country) parts.push(country);
+            if (province && province !== country) parts.push(province);
+            if (cityName && cityName !== province) parts.push(cityName);
+            if (suburb && suburb !== cityName) parts.push(suburb);
+
+            if (parts.length > 0) {
+              const separator = language === "ko" ? " " : ", ";
+              detectedName = parts.join(separator);
+            }
+
+            const matched = matchRegion(province || cityName || "");
+            if (matched) detectedRegion = matched;
+          }
         }
-
-        const province = (data.principalSubdivision || data.city || "").toLowerCase();
-
-        if (province.includes("seoul")) setRegion("seoul");
-        else if (province.includes("gyeonggi")) setRegion("gyeonggi");
-        else if (province.includes("incheon")) setRegion("incheon");
-        else if (province.includes("gangwon")) setRegion("gangwon");
-        else if (province.includes("chungcheong")) setRegion("chungcheong");
-        else if (province.includes("jeolla")) setRegion("jeolla");
-        else if (province.includes("gyeongsang")) setRegion("gyeongsang");
-        else if (province.includes("jeju")) setRegion("jeju");
-
       } catch (e) {
-        console.error("Auto region detection failed", e);
+        console.warn("Nominatim fetch failed, trying BigDataCloud fallback...", e);
       }
+
+      // 2. Fallback to BigDataCloud if Nominatim failed
+      if (!detectedName) {
+        try {
+          const bdcRes = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lng}&localityLanguage=${acceptLang}`
+          );
+          if (bdcRes.ok) {
+            const bdcData = await bdcRes.json();
+            const parts = [];
+            if (bdcData.countryName) parts.push(bdcData.countryName);
+            if (bdcData.principalSubdivision && bdcData.principalSubdivision !== bdcData.countryName) parts.push(bdcData.principalSubdivision);
+            if (bdcData.locality && bdcData.locality !== bdcData.principalSubdivision) parts.push(bdcData.locality);
+            else if (bdcData.city && bdcData.city !== bdcData.principalSubdivision) parts.push(bdcData.city);
+
+            if (parts.length > 0) {
+              const separator = language === "ko" ? " " : ", ";
+              detectedName = parts.join(separator);
+            } else {
+              detectedName = bdcData.countryName || "";
+            }
+
+            if (!detectedRegion) {
+              const matched = matchRegion(bdcData.principalSubdivision || bdcData.city || "");
+              if (matched) detectedRegion = matched;
+            }
+          }
+        } catch (e) {
+          console.warn("BigDataCloud fetch also failed", e);
+        }
+      }
+
+      if (detectedName) {
+        setLocationName(detectedName);
+      }
+
+      setRegion(detectedRegion);
     };
 
-    detectRegion();
-  }, [location]);
+    detectRegionAndGeocode();
+  }, [location, language]);
   const [isConverting, setIsConverting] = useState(false);
 
 
@@ -372,6 +433,7 @@ export default function UploadPage() {
     setPreviewUrl(null);
     setExif(null);
     setLocation(null);
+    setTitle("");
     setLocationName("");
     setDescription("");
   };
@@ -439,6 +501,7 @@ export default function UploadPage() {
         latitude: location.lat,
         longitude: location.lng,
         location_name: locationName || "",
+        title: title || "",
         image_url: publicUrl,
         camera_model: exif?.model,
         aperture: exif?.fNumber,
@@ -559,8 +622,8 @@ export default function UploadPage() {
                 <label className="block text-[13px] uppercase tracking-widest text-gray-400 mb-2">{t.photoTitle}</label>
                 <input
                   type="text"
-                  value={locationName}
-                  onChange={(e) => setLocationName(e.target.value)}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder={t.titlePlaceholder}
                   className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-[15px] focus:border-[var(--accent)] outline-none transition-colors"
                 />

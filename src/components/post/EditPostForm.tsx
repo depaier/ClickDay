@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Camera, MapPin, Save, ArrowLeft } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
@@ -23,8 +23,78 @@ export function EditPostForm({ post }: EditPostFormProps) {
   const tCommon = translations[language].common;
   
   const [locationName, setLocationName] = useState(post.location_name || "");
+  const [title, setTitle] = useState(post.title || post.location_name || "");
   const [description, setDescription] = useState(post.description || "");
   const [location, setLocation] = useState({ lat: post.latitude, lng: post.longitude });
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      let detectedName = "";
+      const acceptLang = language === "ko" ? "ko" : "en";
+
+      // 1. Nominatim API (No custom headers -> Simple GET request, no CORS preflight)
+      try {
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=18&addressdetails=1&accept-language=${acceptLang}`
+        );
+        if (nomRes.ok) {
+          const nomData = await nomRes.json();
+          if (nomData && nomData.address) {
+            const country = nomData.address.country;
+            const province = nomData.address.province || nomData.address.state || nomData.address.region;
+            const cityName = nomData.address.city || nomData.address.town || nomData.address.borough || nomData.address.county;
+            const suburb = nomData.address.suburb || nomData.address.quarter || nomData.address.neighbourhood;
+
+            const parts = [];
+            if (country) parts.push(country);
+            if (province && province !== country) parts.push(province);
+            if (cityName && cityName !== province) parts.push(cityName);
+            if (suburb && suburb !== cityName) parts.push(suburb);
+
+            if (parts.length > 0) {
+              const separator = language === "ko" ? " " : ", ";
+              detectedName = parts.join(separator);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Nominatim fetch failed in edit form, trying BigDataCloud fallback...", e);
+      }
+
+      // 2. Fallback to BigDataCloud
+      if (!detectedName) {
+        try {
+          const res = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.lat}&longitude=${location.lng}&localityLanguage=${acceptLang}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const parts = [];
+            if (data.countryName) parts.push(data.countryName);
+            if (data.principalSubdivision && data.principalSubdivision !== data.countryName) parts.push(data.principalSubdivision);
+            if (data.locality && data.locality !== data.principalSubdivision) parts.push(data.locality);
+            else if (data.city && data.city !== data.principalSubdivision) parts.push(data.city);
+
+            if (parts.length > 0) {
+              const separator = language === "ko" ? " " : ", ";
+              detectedName = parts.join(separator);
+            } else if (data.countryName) {
+              detectedName = data.countryName;
+            }
+          }
+        } catch (e) {
+          console.warn("BigDataCloud fetch also failed in edit form", e);
+        }
+      }
+
+      if (detectedName) {
+        setLocationName(detectedName);
+      }
+    };
+    if (location.lat !== post.latitude || location.lng !== post.longitude) {
+      fetchAddress();
+    }
+  }, [location, language, post.latitude, post.longitude]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const { showToast } = useAlertStore();
@@ -40,6 +110,7 @@ export function EditPostForm({ post }: EditPostFormProps) {
       const { error } = await supabase
         .from('posts')
         .update({
+          title: title,
           location_name: locationName,
           description: description,
           latitude: location.lat,
@@ -84,8 +155,8 @@ export function EditPostForm({ post }: EditPostFormProps) {
           <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">{tUpload.photoTitle}</label>
           <input 
             type="text" 
-            value={locationName}
-            onChange={(e) => setLocationName(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="w-full bg-[#111] border border-white/5 rounded-sm p-4 text-sm focus:border-[var(--accent)] outline-none transition-colors"
           />
         </div>

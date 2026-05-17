@@ -136,14 +136,14 @@ export function PostGroupSheet({
                   <div className="flex flex-col justify-between flex-1 min-w-0 py-1">
                     <div>
                       <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-[var(--accent-dark)] transition-colors">
-                        {post.location_name || t.untitled}
+                        {post.title || post.location_name || t.untitled}
                       </h3>
-                      <div className={`flex items-center gap-1 mt-1 text-gray-500 ${!user && 'blur-[4px] select-none opacity-50'}`}>
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <div className={`flex items-start gap-1 mt-1 text-gray-500 ${!user && 'blur-[4px] select-none opacity-50'}`}>
+                        <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" />
                         <GeocodedAddress 
                           latitude={post.latitude} 
                           longitude={post.longitude} 
-                          className="text-[11px] truncate"
+                          className="text-[11px] line-clamp-2"
                           fallback={t.unknown}
                         />
                       </div>
