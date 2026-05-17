@@ -9,6 +9,7 @@ import { translations } from "@/constants/translations";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 import Link from "next/link";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 import { useAuth } from "../providers/AuthProvider";
 
@@ -46,6 +47,15 @@ export function PostGroupSheet({
   const t = translations[language].post;
   const mt = translations[language].map;
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Create a unique key for the group to trigger animations when group changes
   const groupKey = posts ? posts.map(p => p.id).sort().join('-') : 'empty';
 
@@ -54,14 +64,26 @@ export function PostGroupSheet({
       {posts && posts.length > 0 && (
         <motion.div
           key={groupKey}
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
+          initial={isMobile ? { y: "100%" } : { x: "100%" }}
+          animate={isMobile ? { y: 0 } : { x: 0 }}
+          exit={isMobile ? { y: "100%" } : { x: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="absolute right-0 top-[60px] bottom-0 w-full md:w-[400px] bg-white text-black shadow-2xl z-50 border-l border-gray-200 flex flex-col"
+          className={cn(
+            "bg-white text-black z-50 flex flex-col overflow-hidden",
+            isMobile 
+              ? "absolute inset-x-0 bottom-0 h-[55vh] rounded-t-2xl shadow-[0_-10px_25px_rgba(0,0,0,0.15)] border-t border-gray-200"
+              : "absolute right-0 top-[60px] bottom-0 w-[400px] shadow-2xl border-l border-gray-200"
+          )}
         >
+          {/* Mobile Drag Handle */}
+          {isMobile && (
+            <div className="w-full flex justify-center pt-3 pb-1 bg-white flex-shrink-0 cursor-grab active:cursor-grabbing" onClick={onClose}>
+              <div className="w-12 h-1 bg-gray-300 rounded-full" />
+            </div>
+          )}
+
           {/* Header */}
-          <div className="sticky top-0 bg-white/90 backdrop-blur-md z-10 flex justify-between items-center p-4 border-b border-gray-100">
+          <div className="sticky top-0 bg-white/90 backdrop-blur-md z-10 flex justify-between items-center p-4 border-b border-gray-100 flex-shrink-0">
             <div>
               <h2 className="font-heading text-lg font-bold tracking-[0.1em] uppercase text-gray-900">
                 {language === 'ko' ? '주변 사진' : 'Nearby Photos'}
