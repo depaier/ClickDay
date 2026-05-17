@@ -226,25 +226,25 @@ function FeedContent() {
 
   return (
     <div>
-      <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 border-b border-white/10 pb-4">
+        <div className="w-full md:w-auto">
           <h1 className="text-3xl font-heading tracking-[0.2em] uppercase">{t.title}</h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-gray-400 mt-2 break-keep whitespace-normal md:whitespace-nowrap">
             {sortParam === "popular" ? t.popularSubtitle : t.subtitle}
           </p>
         </div>
-        <div className="flex items-center gap-6 font-heading tracking-widest text-[10px] uppercase">
-          <div className="flex gap-6 border-r border-white/10 pr-6 mr-2">
+        <div className="flex items-center gap-4 md:gap-6 font-heading tracking-widest text-[10px] uppercase flex-shrink-0 self-start md:self-auto">
+          <div className="flex gap-4 md:gap-6 border-r border-white/10 pr-4 md:pr-6 mr-1 md:mr-2 flex-shrink-0 whitespace-nowrap">
             <button
               onClick={() => handleSortChange("latest")}
-              className={`transition-all duration-300 pb-1 border-b ${sortParam === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+              className={`transition-all duration-300 pb-1 border-b whitespace-nowrap flex-shrink-0 ${sortParam === "latest" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
                 }`}
             >
               {t.latest}
             </button>
             <button
               onClick={() => handleSortChange("popular")}
-              className={`transition-all duration-300 pb-1 border-b ${sortParam === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
+              className={`transition-all duration-300 pb-1 border-b whitespace-nowrap flex-shrink-0 ${sortParam === "popular" ? "text-[var(--accent)] border-[var(--accent)]" : "text-gray-500 hover:text-white border-transparent"
                 }`}
             >
               {t.popular}
