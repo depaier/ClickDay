@@ -144,7 +144,7 @@ export function PostGroupSheet({
                           latitude={post.latitude} 
                           longitude={post.longitude} 
                           className="text-[11px] line-clamp-2"
-                          fallback={t.unknown}
+                          fallback={post.location_name || t.unknown}
                         />
                       </div>
                     </div>

@@ -14,23 +14,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(id)) {
     return {
-      title: "페이지를 찾을 수 없습니다 | ClickDay",
+      title: "ClickDay",
     };
   }
 
   const { data: post } = await supabase
     .from("posts")
-    .select("location_name, recipe_name, description, camera_model, image_url")
+    .select("title, location_name, recipe_name, description, camera_model, image_url")
     .eq("id", id)
     .single();
 
   if (!post) {
     return {
-      title: "게시물을 찾을 수 없습니다 | ClickDay",
+      title: "ClickDay",
     };
   }
 
-  const title = `${post.location_name || post.recipe_name || "사진 공유"} | ClickDay`;
+  const title = "ClickDay";
   const description = post.description || `${post.camera_model || "카메라"}로 촬영된 사진과 지도 위치, 촬영 정보를 확인해보세요.`;
 
   return {
