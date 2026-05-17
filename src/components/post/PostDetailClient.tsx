@@ -15,27 +15,59 @@ import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostActions } from "@/components/post/PostActions";
 import { ReportButton } from "@/components/post/ReportButton";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 
 interface PostDetailClientProps {
-  post: any;
-  user: any;
-  isOwner: boolean;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  isFollowing: boolean;
+  initialPost: any;
 }
 
-export function PostDetailClient({ 
-  post, 
-  user, 
-  isOwner, 
-  isLiked, 
-  isBookmarked, 
-  isFollowing 
-}: PostDetailClientProps) {
+export function PostDetailClient({ initialPost }: PostDetailClientProps) {
   const { language } = useLanguage();
   const t = translations[language].post;
+  const { user } = useAuth();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [post, setPost] = useState(initialPost);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const isOwner = user?.id === post.user_id;
+
+  // 비로그인 사용자는 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (user === null) {
+      router.replace(`/login?returnTo=/posts/${post.id}`);
+    }
+  }, [user, router, post.id]);
+
+  // 클라이언트에서 좋아요, 북마크, 팔로우 상태 비동기 초고속 조회
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchInteractions = async () => {
+      try {
+        const [likeRes, bookmarkRes] = await Promise.all([
+          supabase.from('likes').select('id').eq('post_id', post.id).eq('user_id', user.id).maybeSingle(),
+          supabase.from('bookmarks').select('id').eq('post_id', post.id).eq('user_id', user.id).maybeSingle(),
+        ]);
+        if (likeRes.data) setIsLiked(true);
+        if (bookmarkRes.data) setIsBookmarked(true);
+
+        if (post.user_id && post.user_id !== user.id) {
+          const followRes = await supabase.from('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', post.user_id).maybeSingle();
+          if (followRes.data) setIsFollowing(true);
+        }
+      } catch (e) {}
+    };
+
+    fetchInteractions();
+  }, [user?.id, post.id, post.user_id, supabase]);
 
   // Lock body scroll when expanded
   useEffect(() => {
@@ -211,7 +243,11 @@ export function PostDetailClient({
           </h3>
           {post.location_name && (
             <div className="text-gray-300 text-sm mb-4 flex items-center gap-1.5">
-              <span>{post.location_name}</span>
+              <GeocodedAddress 
+                latitude={post.latitude} 
+                longitude={post.longitude} 
+                fallback={post.location_name} 
+              />
             </div>
           )}
           <div className="h-[180px] overflow-hidden rounded-sm border border-white/5">
