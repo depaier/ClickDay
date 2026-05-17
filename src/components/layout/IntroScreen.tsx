@@ -54,8 +54,8 @@ export function IntroScreen({ onComplete, showDebug = false }: IntroScreenProps)
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#000002] text-white overflow-hidden select-none z-[70]">
       {/* 백그라운드 미세 성운 글로우 효과 (프리미엄 룩앤필 극대화) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[150px] transition-all duration-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-indigo-500/5 rounded-full blur-[80px] transition-all duration-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/5 rounded-full blur-[150px] transition-all duration-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-amber-500/5 rounded-full blur-[80px] transition-all duration-1000" />
       </div>
 
       {/* 인트로 메인 애니메이션 컨테이너 */}

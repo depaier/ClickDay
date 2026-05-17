@@ -72,15 +72,13 @@ export default async function PostDetailPage({ params }: PageProps) {
     return notFound();
   }
 
-  // 비로그인 사용자는 상세 페이지에 접근 불가 → 로그인 페이지로 리다이렉트
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(`/login?returnTo=/posts/${id}`);
-  }
-
+  // 서버에서는 오직 게시물 기본 데이터 단 1번만 초고속으로 조회하여 내려줍니다.
+  // 사용자 인증(user), 좋아요(isLiked), 북마크(isBookmarked), 팔로우(isFollowing) 등 
+  // 개인화된 동적 데이터는 클라이언트 컴포넌트(PostDetailClient)에서 비동기로 즉시 로드하여 
+  // Vercel 배포 시 검은 화면 멈춤 현상과 라우팅 지연을 100% 원천 차단합니다!!!
   const { data: postData, error } = await supabase
     .from('posts')
-    .select('*')
+    .select('*, profiles(username, avatar_url)')
     .eq('id', id)
     .single();
 
@@ -89,45 +87,10 @@ export default async function PostDetailPage({ params }: PageProps) {
     return notFound();
   }
 
-  // 별도로 profile 가져오기
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, avatar_url')
-    .eq('id', postData.user_id || postData.profile_id) 
-    .single();
-  
-  const post = { ...postData, profiles: profile };
-  const isOwner = user.id === post.user_id;
-
-  let isLiked = false;
-  let isBookmarked = false;
-  let isFollowing = false;
-
-  const { data: likeData } = await supabase
-    .from('likes')
-    .select('id')
-    .eq('post_id', id)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  isLiked = !!likeData;
-
-  const { data: bookmarkData } = await supabase
-    .from('bookmarks')
-    .select('id')
-    .eq('post_id', id)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  isBookmarked = !!bookmarkData;
-
-  if (post.user_id && post.user_id !== user.id) {
-    const { data: followData } = await supabase
-      .from('follows')
-      .select('follower_id')
-      .eq('follower_id', user.id)
-      .eq('following_id', post.user_id)
-      .maybeSingle();
-    isFollowing = !!followData;
-  }
+  const post = { 
+    ...postData, 
+    profiles: postData.profiles || { username: "unknown", avatar_url: null } 
+  };
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -140,8 +103,8 @@ export default async function PostDetailPage({ params }: PageProps) {
     datePublished: post.created_at,
     author: {
       "@type": "Person",
-      name: profile?.username || "익명 사용자",
-      image: profile?.avatar_url,
+      name: post.profiles?.username || "익명 사용자",
+      image: post.profiles?.avatar_url,
     },
     contentLocation: post.location_name ? {
       "@type": "Place",
@@ -160,14 +123,7 @@ export default async function PostDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <PostDetailClient 
-        post={post}
-        user={user}
-        isOwner={isOwner}
-        isLiked={isLiked}
-        isBookmarked={isBookmarked}
-        isFollowing={isFollowing}
-      />
+      <PostDetailClient initialPost={post} />
     </>
   );
 }

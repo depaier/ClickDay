@@ -15,27 +15,59 @@ import { translations } from "@/constants/translations";
 import { motion, AnimatePresence } from "framer-motion";
 import { PostActions } from "@/components/post/PostActions";
 import { ReportButton } from "@/components/post/ReportButton";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 
 interface PostDetailClientProps {
-  post: any;
-  user: any;
-  isOwner: boolean;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  isFollowing: boolean;
+  initialPost: any;
 }
 
-export function PostDetailClient({ 
-  post, 
-  user, 
-  isOwner, 
-  isLiked, 
-  isBookmarked, 
-  isFollowing 
-}: PostDetailClientProps) {
+export function PostDetailClient({ initialPost }: PostDetailClientProps) {
   const { language } = useLanguage();
   const t = translations[language].post;
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [post, setPost] = useState(initialPost);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const isOwner = user?.id === post.user_id;
+
+  // 비로그인 사용자는 로그인 페이지로 리다이렉트 (세션 복원 중인 loading 상태일 때는 튕겨내지 않음)
+  useEffect(() => {
+    if (!loading && user === null) {
+      router.replace(`/login?returnTo=/posts/${post.id}`);
+    }
+  }, [user, loading, router, post.id]);
+
+  // 클라이언트에서 좋아요, 북마크, 팔로우 상태 비동기 초고속 조회
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchInteractions = async () => {
+      try {
+        const [likeRes, bookmarkRes] = await Promise.all([
+          supabase.from('likes').select('id').eq('post_id', post.id).eq('user_id', user.id).maybeSingle(),
+          supabase.from('bookmarks').select('id').eq('post_id', post.id).eq('user_id', user.id).maybeSingle(),
+        ]);
+        if (likeRes.data) setIsLiked(true);
+        if (bookmarkRes.data) setIsBookmarked(true);
+
+        if (post.user_id && post.user_id !== user.id) {
+          const followRes = await supabase.from('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', post.user_id).maybeSingle();
+          if (followRes.data) setIsFollowing(true);
+        }
+      } catch (e) {}
+    };
+
+    fetchInteractions();
+  }, [user?.id, post.id, post.user_id, supabase]);
 
   // Lock body scroll when expanded
   useEffect(() => {
@@ -51,25 +83,14 @@ export function PostDetailClient({
 
   return (
     <>
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start"
-    >
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
       {/* Image Section */}
-      <motion.div 
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        className="bg-[#111] flex items-center justify-center min-h-[60vh] lg:min-h-[80vh] p-4 relative group rounded-sm border border-white/5 overflow-hidden shadow-2xl"
-      >
-        <motion.img 
-          layoutId={`post-image-${post.id}`}
+      <div className="bg-[#111] flex items-center justify-center min-h-[60vh] lg:min-h-[80vh] p-4 relative group rounded-sm border border-white/5 overflow-hidden shadow-2xl">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img 
           src={post.image_url} 
           alt={post.location_name || "Post detail"} 
-          className="max-w-full max-h-[80vh] object-contain cursor-zoom-in"
-          transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+          className="max-w-full max-h-[80vh] object-contain cursor-zoom-in block"
           onClick={() => setIsExpanded(true)}
         />
         
@@ -87,15 +108,10 @@ export function PostDetailClient({
             <Maximize2 className="w-5 h-5" />
           </Button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Info Section */}
-      <motion.div 
-        initial={{ x: 20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.6 }}
-        className="flex flex-col gap-8"
-      >
+      <div className="flex flex-col gap-8">
         {/* User Info & Actions */}
         <div className="flex items-center justify-between border-b border-white/10 pb-6">
           <div className="flex items-center gap-3">
@@ -211,7 +227,11 @@ export function PostDetailClient({
           </h3>
           {post.location_name && (
             <div className="text-gray-300 text-sm mb-4 flex items-center gap-1.5">
-              <span>{post.location_name}</span>
+              <GeocodedAddress 
+                latitude={post.latitude} 
+                longitude={post.longitude} 
+                fallback={post.location_name} 
+              />
             </div>
           )}
           <div className="h-[180px] overflow-hidden rounded-sm border border-white/5">
@@ -221,8 +241,8 @@ export function PostDetailClient({
 
         {/* Spacer for mobile bottom bar if needed */}
         <div className="h-4" />
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
 
     {/* Full Screen Expanded Modal */}
     <AnimatePresence>
@@ -247,12 +267,11 @@ export function PostDetailClient({
           </motion.button>
 
           <div className="w-full h-full flex items-center justify-center p-4 md:p-12">
-            <motion.img 
-              layoutId={`post-image-${post.id}`}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
               src={post.image_url} 
               alt={post.location_name || "Post detail"} 
-              className="max-w-full max-h-full object-contain shadow-2xl"
-              transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+              className="max-w-full max-h-full object-contain shadow-2xl block animate-fade-in"
             />
           </div>
         </motion.div>
