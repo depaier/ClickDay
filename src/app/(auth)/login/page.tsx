@@ -7,12 +7,16 @@ import { Input } from "@/components/ui/Input";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 const supabase = createClient();
 
-export default function LoginPage() {
+function LoginForm() {
   const { language } = useLanguage();
   const t = translations[language].auth;
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -40,7 +44,7 @@ export default function LoginPage() {
       if (loginError) throw loginError;
 
       if (data.user) {
-        window.location.href = "/";
+        window.location.href = returnTo;
       }
     } catch (err: any) {
       setError(err.message);
@@ -54,7 +58,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
         },
       });
       if (error) throw error;
@@ -136,5 +140,13 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-md p-8 bg-[#111] border border-white/10 rounded-sm animate-pulse h-[500px]" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

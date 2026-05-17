@@ -40,13 +40,7 @@ export const UploadMap: React.FC<UploadMapProps> = ({ location, onLocationChange
       center: initialCenter,
       zoom: location ? 15 : 2,
       attributionControl: false,
-    });
-
-    map.on("load", () => {
-      map.setProjection({ type: "globe" });
-      setTimeout(() => {
-        if (mapRef.current) map.resize();
-      }, 100);
+      localIdeographFontFamily: "'Noto Sans KR', sans-serif",
     });
 
     // 스타일 이미지 오류 방지
@@ -57,7 +51,19 @@ export const UploadMap: React.FC<UploadMapProps> = ({ location, onLocationChange
       map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
     });
 
-    // 미리보기 지도이므로 클릭 이벤트(위치 변경)는 제거합니다.
+    map.on("load", () => {
+      // 폰트 에러 방지
+      const style = map.getStyle();
+      if (style) {
+        style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
+        map.setStyle(style);
+      }
+      
+      map.setProjection({ type: "globe" });
+      setTimeout(() => {
+        if (mapRef.current) map.resize();
+      }, 100);
+    });  // 미리보기 지도이므로 클릭 이벤트(위치 변경)는 제거합니다.
     // 위치 수정이 필요할 경우 팝업을 이용하도록 설계합니다.
 
     mapRef.current = map;

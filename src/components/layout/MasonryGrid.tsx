@@ -12,9 +12,10 @@ interface MasonryGridProps {
 }
 
 const defaultBreakpoints = {
-  default: 3,
-  1100: 3,
-  700: 2,
+  default: 5,
+  1600: 4,
+  1200: 3,
+  800: 2,
   500: 1
 };
 

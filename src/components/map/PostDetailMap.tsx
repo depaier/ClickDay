@@ -39,9 +39,25 @@ export const PostDetailMap: React.FC<PostDetailMapProps> = ({ latitude, longitud
       zoom: 13,
       attributionControl: false,
       interactive: false,
+      localIdeographFontFamily: "'Noto Sans KR', sans-serif",
+    });
+
+    // 스타일 이미지 오류 방지
+    map.on("styleimagemissing", (e) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
     });
 
     map.on("load", () => {
+      // 폰트 에러 방지
+      const style = map.getStyle();
+      if (style) {
+        style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
+        map.setStyle(style);
+      }
+      
       map.setProjection({ type: "globe" });
       
       new maplibregl.Marker({

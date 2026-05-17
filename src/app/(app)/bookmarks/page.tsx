@@ -12,7 +12,7 @@ export default function BookmarksPage() {
       </div>
 
       <MasonryGrid>
-        {[1,2,3].map((item) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((item) => (
           <Link href={`/posts/${item}`} key={item} className="group cursor-pointer block mb-6">
             <div className="relative overflow-hidden bg-[#222] rounded-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}

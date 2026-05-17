@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/Button";
-import { X } from "lucide-react";
+import { LocateFixed, X } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
+import { motion } from "framer-motion";
 
 interface LocationPickerModalProps {
   onClose: () => void;
@@ -28,9 +29,25 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
       center: [currentCenter.lng, currentCenter.lat],
       zoom: 15,
       attributionControl: false,
+      localIdeographFontFamily: "'Noto Sans KR', sans-serif",
+    });
+
+    // 스타일 이미지 오류 방지 (load 전 미리 등록)
+    map.on("styleimagemissing", (e) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
     });
 
     map.on("load", () => {
+      // 폰트 에러 방지
+      const style = map.getStyle();
+      if (style) {
+        style.glyphs = "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf";
+        map.setStyle(style);
+      }
+
       map.setProjection({ type: "globe" });
       map.resize();
 
@@ -53,17 +70,27 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
       setCurrentCenter({ lat: center.lat, lng: center.lng });
     });
 
-    // 스타일 이미지 오류 방지
-    map.on("styleimagemissing", (e) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1;
-      canvas.height = 1;
-      map.addImage(e.id, canvas.getContext("2d")!.getImageData(0, 0, 1, 1));
-    });
-
     mapRef.current = map;
     return () => map.remove();
   }, []);
+
+  const handleMyLocation = () => {
+    if (!navigator.geolocation || !mapRef.current) return;
+    
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        mapRef.current?.flyTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 15,
+          essential: true
+        });
+      },
+      (err) => {
+        console.error("LocationPicker: Error getting current location:", err);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
 
   const handleSave = () => {
     onSave(currentCenter);
@@ -95,6 +122,19 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({ onClos
               {/* 그림자 효과 */}
               <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[2px] w-2 h-1 bg-black/40 rounded-full blur-[1px]" />
             </div>
+          </div>
+
+          {/* My Location Button */}
+          <div className="absolute bottom-6 right-6 z-10">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleMyLocation}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-2xl group"
+              title="My Location"
+            >
+              <LocateFixed size={18} className="group-hover:text-[var(--accent)] transition-colors" />
+            </motion.button>
           </div>
         </div>
 

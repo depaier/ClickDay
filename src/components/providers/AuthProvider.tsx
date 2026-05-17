@@ -3,15 +3,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 const supabase = createClient();
+
+// Dedicated read-only client that never acquires the auth refresh lock.
+// Used for profile reads so refreshProfile() works even after alt-tab.
+const readClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+);
 
 interface Profile {
   id: string;
   username: string;
+  display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
   instagram: string | null;
+  onboarded: boolean;
+  interests: string[];
+  role: 'user' | 'admin';
+  is_blocked: boolean;
 }
 
 interface AuthContextType {
@@ -39,9 +53,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await readClient
       .from("profiles")
-      .select("id, username, avatar_url, bio, instagram")
+      .select("id, username, display_name, avatar_url, bio, instagram, onboarded, interests, role, is_blocked")
       .eq("id", userId)
       .single();
 
@@ -58,11 +72,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const res = await Promise.race([
             supabase.auth.getSession(),
-            new Promise<{data: {session: null}}>((resolve) => setTimeout(() => resolve({data: {session: null}}), 1000))
+            new Promise<{ data: { session: null } }>((resolve) => setTimeout(() => resolve({ data: { session: null } }), 1000))
           ]);
           session = res.data.session;
-        } catch(e) {}
-        
+        } catch (e) { }
+
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {

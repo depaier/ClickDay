@@ -8,6 +8,10 @@ import { useLanguage } from "../providers/LanguageProvider";
 import { translations } from "@/constants/translations";
 import { GeocodedAddress } from "@/components/map/GeocodedAddress";
 import Link from "next/link";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+import { useAuth } from "../providers/AuthProvider";
 
 interface Post {
   id: string | number;
@@ -39,8 +43,18 @@ export function PostGroupSheet({
   onClose 
 }: PostGroupSheetProps) {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const t = translations[language].post;
   const mt = translations[language].map;
+
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Create a unique key for the group to trigger animations when group changes
   const groupKey = posts ? posts.map(p => p.id).sort().join('-') : 'empty';
@@ -50,14 +64,26 @@ export function PostGroupSheet({
       {posts && posts.length > 0 && (
         <motion.div
           key={groupKey}
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
+          initial={isMobile ? { y: "100%" } : { x: "100%" }}
+          animate={isMobile ? { y: 0 } : { x: 0 }}
+          exit={isMobile ? { y: "100%" } : { x: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="absolute right-0 top-[60px] bottom-0 w-full md:w-[400px] bg-white text-black shadow-2xl z-50 border-l border-gray-200 flex flex-col"
+          className={cn(
+            "bg-white text-black z-50 flex flex-col overflow-hidden",
+            isMobile 
+              ? "absolute inset-x-0 bottom-0 h-[55vh] rounded-t-2xl shadow-[0_-10px_25px_rgba(0,0,0,0.15)] border-t border-gray-200"
+              : "absolute right-0 top-[60px] bottom-0 w-[400px] shadow-2xl border-l border-gray-200"
+          )}
         >
+          {/* Mobile Drag Handle */}
+          {isMobile && (
+            <div className="w-full flex justify-center pt-3 pb-1 bg-white flex-shrink-0 cursor-grab active:cursor-grabbing" onClick={onClose}>
+              <div className="w-12 h-1 bg-gray-300 rounded-full" />
+            </div>
+          )}
+
           {/* Header */}
-          <div className="sticky top-0 bg-white/90 backdrop-blur-md z-10 flex justify-between items-center p-4 border-b border-gray-100">
+          <div className="sticky top-0 bg-white/90 backdrop-blur-md z-10 flex justify-between items-center p-4 border-b border-gray-100 flex-shrink-0">
             <div>
               <h2 className="font-heading text-lg font-bold tracking-[0.1em] uppercase text-gray-900">
                 {language === 'ko' ? '주변 사진' : 'Nearby Photos'}
@@ -92,10 +118,12 @@ export function PostGroupSheet({
                   {/* Thumbnail */}
                   <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 shadow-inner">
                     {post.image_url ? (
-                      <img 
+                      <Image 
                         src={post.image_url} 
                         alt={post.location_name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        fill
+                        sizes="96px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -110,7 +138,7 @@ export function PostGroupSheet({
                       <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-[var(--accent-dark)] transition-colors">
                         {post.location_name || t.untitled}
                       </h3>
-                      <div className="flex items-center gap-1 mt-1 text-gray-500">
+                      <div className={`flex items-center gap-1 mt-1 text-gray-500 ${!user && 'blur-[4px] select-none opacity-50'}`}>
                         <MapPin className="w-3 h-3 flex-shrink-0" />
                         <GeocodedAddress 
                           latitude={post.latitude} 
@@ -122,35 +150,35 @@ export function PostGroupSheet({
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 border border-white">
+                      <Link 
+                        href={`/users/@${post.profiles?.username}`} 
+                        className="flex items-center gap-2 group/profile"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 border border-white group-hover/profile:border-[var(--accent)] transition-colors">
                           <img 
                             src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles?.username || "user"}`} 
                             alt={post.profiles?.username} 
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="text-[11px] font-medium text-gray-600 truncate max-w-[80px]">
+                        <span className="text-[11px] font-medium text-gray-600 truncate max-w-[80px] group-hover/profile:text-[var(--accent-dark)] transition-colors">
                           {post.profiles?.username}
                         </span>
-                      </div>
-                      
-                      <Link href={`/posts/${post.id}`} onClick={(e) => e.stopPropagation()}>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="
-                            h-7 px-3 text-[10px] font-bold uppercase tracking-tighter transition-all duration-300
-                            bg-gray-200 text-gray-500
-                            group-hover:bg-[var(--accent)] group-hover:text-black
-                            hover:!bg-[var(--accent-dark)] hover:!text-white
-                            active:scale-95 active:!bg-black active:!text-white
-                          "
-                        >
-                          {t.viewPost}
-                          <ChevronRight className="w-3 h-3 ml-1" />
-                        </Button>
                       </Link>
+                      
+                      {user ? (
+                        <Link href={`/posts/${post.id}`} onClick={(e) => e.stopPropagation()}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-3 text-[10px] font-bold uppercase tracking-tighter transition-all duration-300 bg-gray-200 text-gray-500 group-hover:bg-[var(--accent)] group-hover:text-black hover:!bg-[var(--accent-dark)] hover:!text-white active:scale-95 active:!bg-black active:!text-white"
+                          >
+                            {t.viewPost}
+                            <ChevronRight className="w-3 h-3 ml-1" />
+                          </Button>
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
 

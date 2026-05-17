@@ -1,13 +1,11 @@
-"use client";
+'use client';
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapPin, Heart } from "lucide-react";
-import { LikeButton } from "./LikeButton";
-import { BookmarkButton } from "./BookmarkButton";
 import { GeocodedAddress } from "../map/GeocodedAddress";
 import { cn } from "@/lib/utils";
+import { useAuth } from "../providers/AuthProvider";
 
 interface PostCardProps {
   post: {
@@ -30,6 +28,56 @@ interface PostCardProps {
 export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  const imageContent = (
+    <div className={cn(
+      "relative overflow-hidden bg-[#222] rounded-sm border border-white/5 transition-all duration-300",
+      !isImageLoaded && "aspect-[4/5] bg-white/5 animate-pulse"
+    )}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img 
+        src={post.image_url} 
+        alt={post.location_name || "Post"} 
+        onLoad={() => setIsImageLoaded(true)}
+        onError={() => setIsImageLoaded(true)}
+        className={cn(
+          "w-full h-auto transition-all duration-700 block",
+          isImageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105 absolute inset-0"
+        )}
+      />
+      
+      {/* Overlay with minimalist stats (Likes & Location only) */}
+      <div className={cn(
+        "absolute inset-0 bg-black/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center p-6 text-center z-10",
+        !isImageLoaded && "hidden"
+      )}>
+        {/* Likes Count */}
+        <div className="flex items-center gap-2 mb-3">
+          <Heart size={18} className="fill-white text-white" />
+          <span className="font-heading text-sm tracking-widest text-white font-bold">{post.like_count || 0}</span>
+        </div>
+        
+        {/* Detailed Address (Geocoded) - isHovered 분기 제거하여 마우스 아웃 시 텍스트 깜빡임 원천 차단 */}
+        {user && (
+          <div className="flex items-center justify-center text-white/70 text-[10px] tracking-widest uppercase">
+            <MapPin className="w-3 h-3 mr-1.5 text-[var(--accent)] flex-shrink-0" />
+            {post.latitude && post.longitude ? (
+              <GeocodedAddress 
+                latitude={post.latitude} 
+                longitude={post.longitude} 
+                className="line-clamp-1"
+                fallback={post.location_name}
+              />
+            ) : (
+              <span className="line-clamp-1">{post.location_name}</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div 
@@ -37,78 +85,18 @@ export function PostCard({ post, isLiked, isBookmarked = false }: PostCardProps)
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link href={`/posts/${post.id}`} className="block cursor-pointer">
-        <div className="relative overflow-hidden bg-[#222] rounded-sm border border-white/5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={post.image_url} 
-            alt={post.location_name || "Post"} 
-            className="w-full h-auto group-hover:scale-105 transition-transform duration-500 block"
-          />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 text-center">
-            {/* Photographer Link */}
-            {post.profiles && (
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/users/@${post.profiles?.username}`);
-                }}
-                className="mb-4 flex flex-col items-center group/user"
-              >
-                <div className="w-10 h-10 rounded-full border border-white/20 overflow-hidden mb-2 group-hover/user:border-[var(--accent)] transition-colors">
-                  <img src={post.profiles.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.profiles.username}`} alt="avatar" className="w-full h-full object-cover" />
-                </div>
-                <span className="text-[10px] font-heading tracking-widest uppercase group-hover/user:text-[var(--accent)] transition-colors">
-                  {post.profiles.username}
-                </span>
-              </button>
-            )}
-
-            <div className="flex items-center gap-4 mb-2">
-              <div className="flex items-center gap-1.5">
-                <Heart size={18} className="fill-white text-white" />
-                <span className="font-heading text-sm tracking-widest">{post.like_count || 0}</span>
-              </div>
-            </div>
-            
-            {post.location_name && (
-              <h3 className="font-heading tracking-[0.2em] uppercase text-[10px] text-white/90 line-clamp-1 mb-1">
-                {post.location_name}
-              </h3>
-            )}
-            
-            <div className="flex items-center text-white/60 text-[9px] tracking-wider uppercase">
-              <MapPin className="w-3 h-3 mr-1 text-[var(--accent)]" />
-              {/* @ts-ignore - post might not have lat/lng but GeocodedAddress handles it */}
-              {(post.latitude && post.longitude && isHovered) ? (
-                <GeocodedAddress 
-                  latitude={post.latitude} 
-                  longitude={post.longitude} 
-                  className="line-clamp-1"
-                  fallback={post.location_name}
-                />
-              ) : (
-                post.location_name
-              )}
-            </div>
-          </div>
-        </div>
-      </Link>
-      
-      {/* Overlay Actions (Visible on hover or mobile) */}
-      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-        <LikeButton 
-          postId={post.id} 
-          initialLikeCount={post.like_count} 
-          initialIsLiked={isLiked}
-          className="bg-black/50 backdrop-blur-md border-white/5"
-        />
-        <BookmarkButton
-          postId={post.id}
-          initialIsBookmarked={isBookmarked}
-          className="bg-black/50 backdrop-blur-md border-white/5"
-        />
+      {/* Only link to detail if logged in */}
+      <div 
+        className="block cursor-pointer"
+        onClick={() => {
+          if (user) {
+            router.push(`/posts/${post.id}`);
+          } else {
+            router.push('/login');
+          }
+        }}
+      >
+        {imageContent}
       </div>
     </div>
   );

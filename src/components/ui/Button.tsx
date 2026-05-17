@@ -4,22 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 uppercase tracking-[1.8px] font-heading font-normal",
+  "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 uppercase tracking-[1.5px] font-heading",
   {
     variants: {
       variant: {
-        primary: "bg-[linear-gradient(#535759,#3b3e40)] text-white hover:bg-[linear-gradient(#6c7073,#535759)] active:bg-[linear-gradient(#3b3e40,#535759)] border-none rounded-none tracking-[0.15em]",
-        ghost: "bg-transparent text-white border border-white hover:bg-white/10 rounded-none",
-        ghostDark: "bg-transparent text-black border border-black hover:bg-black/5 rounded-none",
-        accent: "bg-[var(--accent)] text-[var(--accent-text-on)] hover:bg-[var(--accent-dark)] border-none rounded-none tracking-[0.15em]",
-        store: "bg-white text-black hover:bg-[var(--accent)] hover:text-[var(--accent-text-on)] border-none rounded-none tracking-[0.15em]",
-        danger: "bg-rose-600 text-white hover:bg-rose-700 border-none rounded-none tracking-[0.15em]",
+        primary: "bg-white text-black hover:bg-gray-200 border border-white rounded-none",
+        secondary: "bg-[#262b2e] text-white hover:bg-[#3b3e40] border border-[#3b3e40] rounded-none",
+        ghost: "bg-transparent text-white border border-white/50 hover:border-white hover:bg-white/10 rounded-none",
+        ghostDark: "bg-transparent text-black border border-black/50 hover:border-black hover:bg-black/5 rounded-none",
+        accent: "bg-[var(--accent)] text-[var(--accent-text-on)] hover:bg-[var(--accent-dark)] border-none rounded-none font-bold",
+        store: "bg-white text-black hover:bg-[var(--accent)] hover:text-[var(--accent-text-on)] border-none rounded-none",
+        danger: "bg-rose-600 text-white hover:bg-rose-700 border-none rounded-none",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-10 px-5 py-2",
+        sm: "h-9 rounded-none px-4 text-[13px]",
+        lg: "h-12 rounded-none px-8 text-base",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

@@ -14,9 +14,10 @@ import { translations } from "@/constants/translations";
 interface DeletePostButtonProps {
   postId: string | number;
   imageUrl?: string;
+  variant?: "default" | "menu";
 }
 
-export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
+export function DeletePostButton({ postId, imageUrl, variant = "default" }: DeletePostButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const { language } = useLanguage();
@@ -28,9 +29,14 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { showAlert, showConfirm } = useAlertStore();
+  const { showToast, showConfirm } = useAlertStore();
   
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     const confirmed = await showConfirm({
       title: t.post.delete,
       message: t.post.deleteConfirm,
@@ -66,8 +72,7 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
 
       if (dbError) throw dbError;
 
-      showAlert({
-        title: t.common.success,
+      showToast({
         message: t.post.deleteSuccess,
         type: "success"
       });
@@ -76,8 +81,7 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
       router.refresh();
     } catch (error: any) {
       console.error("Delete error:", error);
-      showAlert({
-        title: t.common.error,
+      showToast({
         message: error.message || t.common.error,
         type: "error"
       });
@@ -87,6 +91,19 @@ export function DeletePostButton({ postId, imageUrl }: DeletePostButtonProps) {
       setIsDeleting(false);
     }
   };
+
+  if (variant === "menu") {
+    return (
+      <button 
+        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left"
+        onClick={handleDelete}
+        disabled={isDeleting}
+      >
+        <Trash2 className="w-4 h-4" /> 
+        {isDeleting ? translations[language].settings.saving : t.post.delete}
+      </button>
+    );
+  }
 
   return (
     <Button 

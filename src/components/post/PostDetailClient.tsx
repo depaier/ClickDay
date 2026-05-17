@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { MapPin, Heart, Bookmark, Camera, Edit, Clock, Aperture, Maximize2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useState, useEffect } from "react";
+import { MapPin, Camera, Maximize2, X } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import { DeletePostButton } from "@/components/post/DeletePostButton";
 import { LikeButton } from "@/components/post/LikeButton";
@@ -12,7 +12,9 @@ import Link from "next/link";
 import { PostDetailMap } from "@/components/map/PostDetailMap";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { translations } from "@/constants/translations";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { PostActions } from "@/components/post/PostActions";
+import { ReportButton } from "@/components/post/ReportButton";
 
 interface PostDetailClientProps {
   post: any;
@@ -33,8 +35,22 @@ export function PostDetailClient({
 }: PostDetailClientProps) {
   const { language } = useLanguage();
   const t = translations[language].post;
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Lock body scroll when expanded
+  useEffect(() => {
+    if (isExpanded) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isExpanded]);
 
   return (
+    <>
     <motion.div 
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -48,14 +64,28 @@ export function PostDetailClient({
         transition={{ delay: 0.2, duration: 0.8 }}
         className="bg-[#111] flex items-center justify-center min-h-[60vh] lg:min-h-[80vh] p-4 relative group rounded-sm border border-white/5 overflow-hidden shadow-2xl"
       >
-        <img 
+        <motion.img 
+          layoutId={`post-image-${post.id}`}
           src={post.image_url} 
           alt={post.location_name || "Post detail"} 
-          className="max-w-full max-h-[80vh] object-contain transition-transform duration-700 hover:scale-[1.02]"
+          className="max-w-full max-h-[80vh] object-contain cursor-zoom-in"
+          transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+          onClick={() => setIsExpanded(true)}
         />
         
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-           <Maximize2 className="text-white/50 w-12 h-12" />
+        {/* Expand Button - Bottom Right */}
+        <div className="absolute bottom-6 right-6 z-10">
+          <Button
+            variant="secondary"
+            size="icon"
+            className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border-white/10 text-white hover:bg-black/70 hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(true);
+            }}
+          >
+            <Maximize2 className="w-5 h-5" />
+          </Button>
         </div>
       </motion.div>
 
@@ -80,7 +110,7 @@ export function PostDetailClient({
                   {post.profiles?.username || "unknown"}
                 </div>
                 <div className="text-gray-500 text-xs" suppressHydrationWarning>
-                  {new Date(post.created_at).toLocaleDateString()}
+                  {new Date(post.created_at).toLocaleDateString().replace(/\.$/, '').trim()}
                 </div>
               </div>
             </Link>
@@ -93,6 +123,11 @@ export function PostDetailClient({
                 initialIsFollowing={isFollowing} 
               />
             )}
+            <PostActions 
+              postId={post.id} 
+              isOwner={isOwner} 
+              imageUrl={post.image_url} 
+            />
           </div>
         </div>
 
@@ -118,7 +153,6 @@ export function PostDetailClient({
                 initialIsBookmarked={isBookmarked}
                 variant="ghost"
                 size="icon"
-                className="bg-white/5 border-white/10 rounded-full w-10 h-10"
                 iconClassName="text-white"
               />
             </div>
@@ -173,25 +207,50 @@ export function PostDetailClient({
             <MapPin className="w-4 h-4 mr-2" />
             {t.location}
           </h3>
-          <div className="h-[250px] overflow-hidden">
+          <div className="h-[180px] overflow-hidden">
              <PostDetailMap latitude={post.latitude} longitude={post.longitude} />
           </div>
         </div>
 
-        {/* Action Buttons for Owner */}
-        {isOwner && (
-          <div className="flex gap-4 p-4 bg-white/5 rounded-sm border border-white/10 mt-auto">
-            <Link href={`/posts/${post.id}/edit`} className="flex-1">
-              <Button variant="accent" className="w-full h-12 flex items-center justify-center gap-2">
-                <Edit className="w-4 h-4" /> {t.edit}
-              </Button>
-            </Link>
-            <div className="flex-1">
-              <DeletePostButton postId={post.id} imageUrl={post.image_url} />
-            </div>
-          </div>
-        )}
+        {/* Spacer for mobile bottom bar if needed */}
+        <div className="h-4" />
       </motion.div>
     </motion.div>
+
+    {/* Full Screen Expanded Modal */}
+    <AnimatePresence>
+      {isExpanded && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-sm cursor-zoom-out"
+          onClick={() => setIsExpanded(false)}
+        >
+          {/* Close Button */}
+          <motion.button
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors p-2"
+            onClick={() => setIsExpanded(false)}
+          >
+            <X className="w-8 h-8" />
+          </motion.button>
+
+          <div className="w-full h-full flex items-center justify-center p-4 md:p-12">
+            <motion.img 
+              layoutId={`post-image-${post.id}`}
+              src={post.image_url} 
+              alt={post.location_name || "Post detail"} 
+              className="max-w-full max-h-full object-contain shadow-2xl"
+              transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+            />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
