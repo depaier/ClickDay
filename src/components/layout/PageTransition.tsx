@@ -8,20 +8,8 @@ export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={pathname}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{
-          duration: 0.15,
-          ease: "easeInOut",
-        }}
-        className="flex-1 flex flex-col"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div key={pathname} className="flex-1 flex flex-col animate-fade-in">
+      {children}
+    </div>
   );
 }
