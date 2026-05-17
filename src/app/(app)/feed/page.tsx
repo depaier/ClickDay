@@ -141,7 +141,7 @@ function FeedContent() {
       let query = supabaseData.from("posts").select("*, profiles(username, avatar_url)");
 
       if (qParam) {
-        query = query.or(`location_name.ilike.%${qParam}%,description.ilike.%${qParam}%,tags.cs.{"${qParam}"}`);
+        query = query.or(`title.ilike.%${qParam}%,location_name.ilike.%${qParam}%,description.ilike.%${qParam}%,tags.cs.{"${qParam}"}`);
       }
       if (regionParam) {
         query = query.eq("region", regionParam);

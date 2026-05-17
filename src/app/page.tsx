@@ -64,7 +64,7 @@ function HomeContent() {
     isFetchingRef.current = true;
     try {
       const { data, error } = await supabaseData.from('posts').select(`
-        id, user_id, latitude, longitude, location_name,
+        id, user_id, latitude, longitude, location_name, title,
         image_url, camera_model, focal_length, aperture,
         shutter_speed, iso, created_at, description, tags,
         recipe_name, recipe_type, like_count,
@@ -81,7 +81,7 @@ function HomeContent() {
           ...post,
           lat: post.latitude,
           lng: post.longitude,
-          title: post.location_name
+          title: post.title || post.location_name
         }));
         setPosts(formattedPosts);
       }
