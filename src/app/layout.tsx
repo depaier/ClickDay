@@ -22,18 +22,18 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://clickday.me"),
-  title: "ClickDay",
-  description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다. 카메라 촬영 위치, EXIF 메타데이터, 촬영 레시피를 지도 위에서 탐색하고 공유하세요.",
-  keywords: ["카메라", "사진", "지도", "출사지", "촬영정보", "EXIF", "ClickDay", "클릭데이", "사진레시피"],
+  title: "ClickDay | 클릭데이",
+  description: "촬영 위치, EXIF 데이터, 카메라 설정까지. 사진의 모든 정보를 지도 위에서 공유하세요.",
+  keywords: ["ClickDay", "클릭데이", "카메라", "사진", "지도", "출사지", "촬영정보", "EXIF", "사진레시피"],
   authors: [{ name: "ClickDay Team" }],
   openGraph: {
-    title: "ClickDay | 카메라 사진 + 지도 기반 촬영 정보 공유",
-    description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다. 카메라 촬영 위치, EXIF 메타데이터, 촬영 레시피를 지도 위에서 탐색하고 공유하세요.",
+    title: "ClickDay | 클릭데이",
+    description: "촬영 위치, EXIF 데이터, 카메라 설정까지. 사진의 모든 정보를 지도 위에서 공유하세요.",
     url: "https://clickday.me",
     siteName: "ClickDay",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://clickday.me/og-image.png",
         width: 1200,
         height: 630,
         alt: "ClickDay 대표 이미지",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ClickDay | 카메라 사진 + 지도 기반 홍보 및 촬영 정보 공유",
-    description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다. 카메라 촬영 위치, EXIF 메타데이터, 촬영 레시피를 지도 위에서 탐색하고 공유하세요.",
-    images: ["/og-image.png"],
+    title: "ClickDay | 클릭데이",
+    description: "촬영 위치, EXIF 데이터, 카메라 설정까지. 사진의 모든 정보를 지도 위에서 공유하세요.",
+    images: ["https://clickday.me/og-image.png"],
   },
   robots: {
     index: true,
@@ -70,11 +70,12 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "ClickDay",
-    url: "https://clickday.kr",
-    description: "찍은 곳, 찍은 방법 - 지도 위에서 만나다. 카메라 촬영 위치, EXIF 메타데이터, 촬영 레시피를 지도 위에서 탐색하고 공유하세요.",
+    alternateName: ["클릭데이", "Click Day"],
+    url: "https://clickday.me",
+    description: "촬영 위치, EXIF 데이터, 카메라 설정까지. 사진의 모든 정보를 지도 위에서 공유하세요.",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://clickday.kr/feed?q={search_term_string}",
+      target: "https://clickday.me/feed?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };

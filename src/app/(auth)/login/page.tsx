@@ -9,6 +9,7 @@ import { translations } from "@/constants/translations";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const supabase = createClient();
 
@@ -24,6 +25,7 @@ function LoginForm() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -93,15 +95,25 @@ function LoginForm() {
         </div>
         <div>
           <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">{t.password}</label>
-          <Input 
-            variant="onDark" 
-            type="password" 
-            name="password"
-            placeholder="••••••••" 
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+          <div className="relative">
+            <Input 
+              variant="onDark" 
+              type={showPassword ? "text" : "password"} 
+              name="password"
+              placeholder="••••••••" 
+              value={formData.password}
+              onChange={handleChange}
+              className="pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
 
         <Button variant="accent" type="submit" className="w-full mt-4 h-12 text-sm" disabled={loading}>
