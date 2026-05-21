@@ -237,7 +237,7 @@ function HomeContent() {
   const t = translations[language];
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#00000A] text-white">
+    <div className="relative w-full h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <Navbar variant="transparent" />
 
       <div className="absolute inset-0">
@@ -325,7 +325,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="w-full h-screen bg-[#00000A]" />}>
+    <Suspense fallback={<div className="w-full h-screen bg-[var(--bg-primary)]" />}>
       <HomeContent />
     </Suspense>
   );
