@@ -31,7 +31,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
       <nav
         className={cn(
           "h-[60px] w-full flex items-center justify-between px-5 font-heading text-[12px] font-normal tracking-[0.167em] uppercase z-50 transition-colors duration-300",
-          variant === "transparent" ? "absolute top-0 text-white bg-black" : "bg-black text-white sticky top-0"
+          variant === "transparent" ? "absolute top-0 text-[var(--text-primary)] bg-[var(--bg-primary)]/50 backdrop-blur-md" : "bg-[var(--bg-nav)] text-[var(--text-primary)] border-b border-[var(--border-divider)] sticky top-0"
         )}
       >
         {/* Left Menu / Brand */}
@@ -66,7 +66,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
               href={link.href}
               className={cn(
                 "relative py-1 transition-colors duration-300 hover:text-[var(--accent)]",
-                isActive(link.href) ? "text-[var(--accent)]" : "text-white/70"
+                isActive(link.href) ? "text-[var(--accent)]" : "text-[var(--text-muted)]"
               )}
             >
               {link.label}
@@ -103,7 +103,7 @@ export function Navbar({ variant = "sticky" }: { variant?: "transparent" | "stic
             animate={{ opacity: 1, backdropFilter: "blur(10px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center gap-8 md:hidden"
+            className="fixed inset-0 bg-[var(--bg-primary)]/95 backdrop-blur-lg z-[100] flex flex-col items-center justify-center gap-8 md:hidden"
           >
             <motion.button 
               initial={{ scale: 0.5, opacity: 0 }}

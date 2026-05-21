@@ -420,7 +420,7 @@ const GlobeMapComponent = forwardRef<GlobeMapRef, GlobeMapProps>(({
   }, [highlightedPostId]);
 
   return (
-    <div ref={mapContainer} className="w-full h-full bg-[#00000A]" />
+    <div ref={mapContainer} className="w-full h-full bg-[var(--bg-primary)]" />
   );
 });
 
