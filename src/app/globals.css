@@ -5,49 +5,49 @@
     /* Primitive Colors */
     --black: #000000;
     --white: #ffffff;
-    --yellow: #E8B800;
-    --yellow-dark: #BF9700;
+    --yellow: #FFD60A; /* 더 밝고 맑은 옐로우 골드 */
+    --yellow-dark: #FFC107;
     
-    --gray-100: #e6e6e6;
-    --gray-200: #d8d8d8;
-    --gray-300: #666666;
-    --gray-400: #535759;
-    --gray-500: #3b3e40;
-    --gray-600: #262b2e;
-    --gray-700: #6c7073;
+    --gray-100: #f5f6f8;
+    --gray-200: #e4e7eb;
+    --gray-300: #9aa2ac; /* 조금 더 밝아진 회색 텍스트 대응 */
+    --gray-400: #7b8490;
+    --gray-500: #4b5563;
+    --gray-600: #374151;
+    --gray-700: #1f2937;
 
     --blue: #0070d5;
     --blue-hover: #2490e3;
     --blue-active: #0058b0;
-    --red-error: #cb2d2d;
+    --red-error: #ff453a; /* 조금 더 선명해진 다크 에러 레드 */
 
-    /* Semantic Colors */
-    --bg-primary: #000000;
-    --bg-secondary: #111111;
-    --bg-nav: #000000;
-    --bg-navbar: #111111;
-    --bg-overlay: rgba(0,0,0,0.6);
+    /* Semantic Colors (Premium High-Contrast Dark Theme) */
+    --bg-primary: #0E1012;     /* 세련되고 부드러운 다크 차콜 */
+    --bg-secondary: #1A1D20;   /* 주배경과 확실히 구분되는 2차 카드 배경 */
+    --bg-nav: #0B0C0E;         /* 고정 내비게이션 전용 헤더 배경 */
+    --bg-navbar: #1A1D20;
+    --bg-overlay: rgba(14, 16, 18, 0.75);
     
-    --text-primary: #ffffff;
-    --text-on-dark: #ffffff;
-    --text-muted: rgba(255,255,255,0.65);
-    --text-bold: rgba(255,255,255,0.85);
-    --text-accent: #E8B800;
+    --text-primary: #FFFFFF;
+    --text-on-dark: #FFFFFF;
+    --text-muted: rgba(255, 255, 255, 0.78); /* 65% -> 78% 보조 텍스트 가독성 극대화 */
+    --text-bold: rgba(255, 255, 255, 0.95);  /* 85% -> 95% 명확한 볼드체 */
+    --text-accent: #FFD60A;                 /* 시선을 끄는 고선명 포인트 골드 */
     
-    --border-default: rgba(255,255,255,0.15);
-    --border-divider: #333333;
+    --border-default: rgba(255, 255, 255, 0.16);
+    --border-divider: #2C2F33;               /* #333333 -> #2C2F33으로 명확한 구획선 제공 */
 
     /* Hasselblad specific Design System Vars */
-    --accent: #E8B800;
-    --accent-dark: #BF9700;
+    --accent: #FFD60A;
+    --accent-dark: #FFC107;
     --accent-text-on: #000000;
-    --button-bg: rgba(0,0,0,0.04);
-    --button-bg-hover: rgba(0,0,0,0.06);
-    --button-bg-active: rgba(0,0,0,0.15);
-    --button-primary-bg: linear-gradient(#535759, #3b3e40);
-    --button-primary-bg-hover: linear-gradient(#6c7073, #535759);
+    --button-bg: rgba(255, 255, 255, 0.06);
+    --button-bg-hover: rgba(255, 255, 255, 0.10);
+    --button-bg-active: rgba(255, 255, 255, 0.18);
+    --button-primary-bg: linear-gradient(#4b5563, #374151);
+    --button-primary-bg-hover: linear-gradient(#6b7280, #4b5563);
     --button-primary-text-color: #fff;
-    --link-color: #0070d5;
+    --link-color: #38bdf8;
   }
 }
 
@@ -98,12 +98,15 @@
 
 body {
   background-color: var(--bg-primary);
-  color: var(--text-on-dark);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.6;
-  letter-spacing: 0.03em;
+  line-height: 1.65; /* 1.6 -> 1.65로 행간을 확보하여 빽빽하지 않은 느낌 부여 */
+  letter-spacing: 0.025em; /* 0.03em -> 0.025em 자간 최적화 */
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
